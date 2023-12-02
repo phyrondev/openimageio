@@ -12,10 +12,6 @@ auto ImageBuf_file_format_name(OIIO::ImageBuf const& buf) -> char const* {
     return buf.file_format_name().c_str();
 }
 
-auto ImageBuf_WrapMode_from_string(char const* name) -> OIIO::ImageBuf::WrapMode {
-    return OIIO::ImageBuf::WrapMode_from_string(name);
-}
-
 }
 
 BBL_MODULE(oiio) {
@@ -175,7 +171,6 @@ BBL_MODULE(oiio) {
 
     bbl::fn(&bblext::ImageBuf_name);
     bbl::fn(&bblext::ImageBuf_file_format_name);
-    bbl::fn(&bblext::ImageBuf_WrapMode_from_string);
 
     bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
         .smartptr_to<OIIO::ImageBuf>()
