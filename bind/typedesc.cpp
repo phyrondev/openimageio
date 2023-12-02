@@ -6,6 +6,12 @@
 BBL_MODULE(oiio) {
 
     bbl::Class<OIIO::TypeDesc>()
+        .value_type()
+        .f(&OIIO::TypeDesc::basetype)
+        .f(&OIIO::TypeDesc::aggregate)
+        .f(&OIIO::TypeDesc::vecsemantics)
+        .f(&OIIO::TypeDesc::reserved)
+        .f(&OIIO::TypeDesc::arraylen)
         .ctor(bbl::Class<OIIO::TypeDesc>::Ctor<OIIO::TypeDesc::BASETYPE, OIIO::TypeDesc::AGGREGATE, OIIO::TypeDesc::VECSEMANTICS, int>("btype", "agg", "semantics", "arraylen"), "ctor_00")
         .ctor(bbl::Class<OIIO::TypeDesc>::Ctor<OIIO::TypeDesc::BASETYPE, int>("btype", "arraylen"), "ctor_01")
         .ctor(bbl::Class<OIIO::TypeDesc>::Ctor<OIIO::TypeDesc::BASETYPE, OIIO::TypeDesc::AGGREGATE, int>("btype", "agg", "arraylen"), "ctor_02")

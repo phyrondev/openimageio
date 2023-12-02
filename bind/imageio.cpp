@@ -5,6 +5,15 @@
 BBL_MODULE(oiio) {
 
     bbl::Class<OIIO::ROI>()
+        .value_type()
+        .f(&OIIO::ROI::xbegin)
+        .f(&OIIO::ROI::xend)
+        .f(&OIIO::ROI::ybegin)
+        .f(&OIIO::ROI::yend)
+        .f(&OIIO::ROI::zbegin)
+        .f(&OIIO::ROI::zend)
+        .f(&OIIO::ROI::chbegin)
+        .f(&OIIO::ROI::chend)
         .ctor(bbl::Class<OIIO::ROI>::Ctor<>(), "default")
         .ctor(bbl::Class<OIIO::ROI>::Ctor<int, int, int, int, int, int, int, int>("xbegin", "xend", "ybegin", "yend", "zbegin", "zend", "chbegin", "chend"), "with_dimensions")
         .m(&OIIO::ROI::defined)
