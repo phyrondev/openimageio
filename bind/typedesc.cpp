@@ -1,4 +1,5 @@
 #include <babble>
+#include <babble-std>
 
 #include <OpenImageIO/imagebuf.h>
 
@@ -23,10 +24,11 @@ BBL_MODULE(oiio) {
         .m(&OIIO::TypeDesc::is_floating_point)
         .m(&OIIO::TypeDesc::is_signed)
         .m(&OIIO::TypeDesc::is_unknown)
-        .m(&OIIO::TypeDesc::operator bool)
-        .m(&OIIO::TypeDesc::fromstring)
+        .m(bbl::Wrap(&OIIO::TypeDesc::fromstring, [](OIIO::TypeDesc& _this, char const* typestring) -> size_t {
+            return _this.fromstring(typestring);
+        }))
         .m(&OIIO::TypeDesc::operator==, "op_eq")
-        .m(&OIIO::TypeDesc::operator!=, "op_neq")
+        // .m(&OIIO::TypeDesc::operator!=, "op_neq")
         .m(&OIIO::TypeDesc::equivalent)
         .m(&OIIO::TypeDesc::is_vec2)
         .m(&OIIO::TypeDesc::is_vec3)
@@ -34,8 +36,15 @@ BBL_MODULE(oiio) {
         .m(&OIIO::TypeDesc::is_box2)
         .m(&OIIO::TypeDesc::is_box3)
         .m(&OIIO::TypeDesc::unarray)
-        .m(&OIIO::TypeDesc::operator<, "op_lt")
+        // .m(&OIIO::TypeDesc::operator<, "op_lt")
         .m(&OIIO::TypeDesc::basetype_merge)
-        .m(&OIIO::TypeDesc::operator=, "op_assign")
+    ;
+
+    bbl::Enum<OIIO::TypeDesc::AGGREGATE>();
+    bbl::Enum<OIIO::TypeDesc::BASETYPE>();
+    bbl::Enum<OIIO::TypeDesc::VECSEMANTICS>();
+
+    bbl::Class<std::vector<OIIO::TypeDesc>>("TypeDescVector")
+        BBL_STD_VECTOR_METHODS(OIIO::TypeDesc)
     ;
 }

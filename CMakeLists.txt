@@ -10,7 +10,9 @@ include(GNUInstallDirs)
 set(bindfiles 
   bind/bbl-misc.cpp
   bind/attrdelegate.cpp
+  bind/deepdata.cpp
   bind/imagebuf.cpp
+  bind/imagecache.cpp
   bind/imageio.cpp
   bind/paramlist.cpp
   bind/typedesc.cpp
@@ -24,10 +26,11 @@ bbl_translate_binding(
     COMPILE_ARGS 
         -DNOMINMAX 
         -D_MT 
+        -Wno-macro-redefined
 )
 
 target_link_libraries(oiio-c PUBLIC OpenImageIO::OpenImageIO)
-# target_compile_definitions(oiio-c PRIVATE NOMINMAX)
+target_compile_definitions(oiio-c PRIVATE NOMINMAX)
 
 # This is just here to trigger generation of compile commands for the bind file so we get LSP functionality in the bind file
 add_library(bind-dummy ${bindfiles})

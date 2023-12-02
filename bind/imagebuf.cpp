@@ -2,6 +2,22 @@
 
 #include <OpenImageIO/imagebuf.h>
 
+namespace bblext {
+
+auto ImageBuf_name(OIIO::ImageBuf const& buf) -> char const* {
+    return buf.name().c_str();
+}
+
+auto ImageBuf_file_format_name(OIIO::ImageBuf const& buf) -> char const* {
+    return buf.file_format_name().c_str();
+}
+
+auto ImageBuf_WrapMode_from_string(char const* name) -> OIIO::ImageBuf::WrapMode {
+    return OIIO::ImageBuf::WrapMode_from_string(name);
+}
+
+}
+
 BBL_MODULE(oiio) {
 
     bbl::Class<OIIO::ImageBuf>()
@@ -43,7 +59,8 @@ BBL_MODULE(oiio) {
         // .m((void (OIIO::ImageBuf::*)(cspan<OIIO::TypeDesc>))
         //     &OIIO::ImageBuf::set_write_format, "set_write_format_01")
         .m(&OIIO::ImageBuf::set_write_tiles)
-        .m(&OIIO::ImageBuf::set_write_ioproxy)
+        /// TODO: rvalue reference
+        // .m(&OIIO::ImageBuf::set_write_ioproxy)
         .m((const OIIO::ImageBuf & (OIIO::ImageBuf::*)(const OIIO::ImageBuf &))
             &OIIO::ImageBuf::operator=, "op_assign_00")
         .m((const OIIO::ImageBuf & (OIIO::ImageBuf::*)(OIIO::ImageBuf &&))
@@ -58,25 +75,13 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageBuf::getchannel)
         .m((void (OIIO::ImageBuf::*)(int, int, int, float *, int, OIIO::ImageBuf::WrapMode) const)
             &OIIO::ImageBuf::getpixel, "getpixel")
-        // .m((void (OIIO::ImageBuf::*)(int, int, float *, int) const)
-        //     &OIIO::ImageBuf::getpixel, "getpixel_01")
         .m(&OIIO::ImageBuf::interppixel)
         .m(&OIIO::ImageBuf::interppixel_NDC)
         .m(&OIIO::ImageBuf::interppixel_NDC_full)
         .m(&OIIO::ImageBuf::interppixel_bicubic)
         .m(&OIIO::ImageBuf::interppixel_bicubic_NDC)
-        // .m((void (OIIO::ImageBuf::*)(int, int, cspan<float>))
-        //     &OIIO::ImageBuf::setpixel, "setpixel_00")
-        // .m((void (OIIO::ImageBuf::*)(int, int, int, cspan<float>))
-        //     &OIIO::ImageBuf::setpixel, "setpixel_01")
-        // .m((void (OIIO::ImageBuf::*)(int, cspan<float>))
-        //     &OIIO::ImageBuf::setpixel, "setpixel_02")
-        // .m((void (OIIO::ImageBuf::*)(int, int, const float *, int))
-        //     &OIIO::ImageBuf::setpixel, "setpixel_03")
         .m((void (OIIO::ImageBuf::*)(int, int, int, const float *, int))
             &OIIO::ImageBuf::setpixel, "setpixel")
-        // .m((void (OIIO::ImageBuf::*)(int, const float *, int))
-        //     &OIIO::ImageBuf::setpixel, "setpixel_05")
         .m(&OIIO::ImageBuf::get_pixels)
         .m(&OIIO::ImageBuf::set_pixels)
         .m(&OIIO::ImageBuf::initialized)
@@ -88,8 +93,8 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageBuf::get_thumbnail)
         .m(&OIIO::ImageBuf::set_thumbnail)
         .m(&OIIO::ImageBuf::clear_thumbnail)
-        .m(&OIIO::ImageBuf::name)
-        .m(&OIIO::ImageBuf::file_format_name)
+        // .m(&OIIO::ImageBuf::name)
+        // .m(&OIIO::ImageBuf::file_format_name)
         .m(&OIIO::ImageBuf::subimage)
         .m(&OIIO::ImageBuf::nsubimages)
         .m(&OIIO::ImageBuf::miplevel)
@@ -144,21 +149,6 @@ BBL_MODULE(oiio) {
             &OIIO::ImageBuf::threads, "threads_00")
         .m((int (OIIO::ImageBuf::*)() const)
             &OIIO::ImageBuf::threads, "threads_01")
-        // .m((void (OIIO::ImageBuf::*)(string_view) const)
-        //     &OIIO::ImageBuf::error, "error_00")
-        /** TODO: instantiate this template
-        .m((void (OIIO::ImageBuf::*)(const char *, const Args &...) const)
-            &OIIO::ImageBuf::error, "error_01")
-        */
-        /** TODO: instantiate this template
-        .m(&OIIO::ImageBuf::errorfmt)
-        */
-        /** TODO: instantiate this template
-        .m(&OIIO::ImageBuf::errorf)
-        */
-        /** TODO: instantiate this template
-        .m(&OIIO::ImageBuf::fmterror)
-        */
         .m(&OIIO::ImageBuf::has_error)
         .m(&OIIO::ImageBuf::geterror)
         .m(&OIIO::ImageBuf::deep)
@@ -178,8 +168,21 @@ BBL_MODULE(oiio) {
             &OIIO::ImageBuf::deepdata, "deepdata")
         .m((const OIIO::DeepData * (OIIO::ImageBuf::*)() const)
             &OIIO::ImageBuf::deepdata, "deepdata_const")
-        .m(&OIIO::ImageBuf::WrapMode_from_string)
+        .m(bbl::Wrap(&OIIO::ImageBuf::WrapMode_from_string, [](char const* name) -> OIIO::ImageBuf::WrapMode {
+            return OIIO::ImageBuf::WrapMode_from_string(name);
+        }))
     ;
+
+    bbl::fn(&bblext::ImageBuf_name);
+    bbl::fn(&bblext::ImageBuf_file_format_name);
+    bbl::fn(&bblext::ImageBuf_WrapMode_from_string);
+
+    bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
+        .smartptr_to<OIIO::ImageBuf>()
+    ;
+
+    bbl::Enum<OIIO::ImageBuf::IBStorage>();
+    bbl::Enum<OIIO::ImageBuf::WrapMode>();
 
     bbl::Class<OIIO::ImageBuf::IteratorBase>()
         .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, OIIO::ImageBuf::WrapMode>("ib", "wrap"), "ctor_00")

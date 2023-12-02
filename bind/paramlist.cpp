@@ -39,9 +39,6 @@ BBL_MODULE(oiio) {
         .m((void (OIIO::ParamValue::*)(OIIO::ParamValue::Interp))
             &OIIO::ParamValue::interp, "interp_01")
         .m(&OIIO::ParamValue::is_nonlocal)
-        /** TODO: instantiate this template
-        .m(&OIIO::ParamValue::get)
-        */
         .m(&OIIO::ParamValue::get_int)
         .m(&OIIO::ParamValue::get_int_indexed)
         .m(&OIIO::ParamValue::get_float)
@@ -52,61 +49,49 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ParamValue::get_ustring_indexed)
     ;
 
-    // bbl::Class<OIIO::ParamValue::(unnamed union at C:\Users\alanglands\packages\oiio\2.3.16.0\80e249bbcb53f8a3bc3602645377e9f10521481a\include\OpenImageIO\paramlist.h:215:5)>()
-    //     .value_type()
-    //     .f(&OIIO::ParamValue::(anonymous union)::localval)
-    //     .f(&OIIO::ParamValue::(anonymous union)::ptr)
-    //     .ctor(bbl::Class<OIIO::ParamValue::(unnamed union at C:\Users\alanglands\packages\oiio\2.3.16.0\80e249bbcb53f8a3bc3602645377e9f10521481a\include\OpenImageIO\paramlist.h:215:5)>::Ctor<>(), "default")
-    // ;
+    bbl::Enum<OIIO::ParamValue::Interp>();
 
     bbl::Class<OIIO::ParamValueList>()
         .ctor(bbl::Class<OIIO::ParamValueList>::Ctor<>(), "default")
         .m(&OIIO::ParamValueList::grow)
-        // .m((iterator (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, bool))
-        //     &OIIO::ParamValueList::find, "find_00")
-        // .m((iterator (OIIO::ParamValueList::*)(OIIO::ustring, OIIO::TypeDesc, bool))
-        //     &OIIO::ParamValueList::find, "find_01")
-        // .m((const_iterator (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, bool) const)
-        //     &OIIO::ParamValueList::find, "find_02")
-        // .m((const_iterator (OIIO::ParamValueList::*)(OIIO::ustring, OIIO::TypeDesc, bool) const)
-        //     &OIIO::ParamValueList::find, "find_03")
-        // .m((ParamValue * (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, bool))
-        //     &OIIO::ParamValueList::find_pv, "find_pv_00")
-        // .m((const OIIO::ParamValue * (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, bool) const)
-        //     &OIIO::ParamValueList::find_pv, "find_pv_01")
-        .m(&OIIO::ParamValueList::get_int)
-        .m(&OIIO::ParamValueList::get_float)
-        .m(&OIIO::ParamValueList::get_string)
-        .m(&OIIO::ParamValueList::get_ustring)
-        .m(&OIIO::ParamValueList::remove)
-        .m(&OIIO::ParamValueList::contains)
+        .m(bbl::Wrap((OIIO::ParamValue * (OIIO::ParamValueList::*)(OIIO::string_view, OIIO::TypeDesc, bool))
+            &OIIO::ParamValueList::find_pv, [](OIIO::ParamValueList& _this, char const* name, OIIO::TypeDesc type, bool casesensitive) -> OIIO::ParamValue* {
+                return _this.find_pv(name, type, casesensitive);
+            }), "find")
+        .m(bbl::Wrap((OIIO::ParamValue const* (OIIO::ParamValueList::*)(OIIO::string_view, OIIO::TypeDesc, bool) const)
+            &OIIO::ParamValueList::find_pv, [](OIIO::ParamValueList const& _this, char const* name, OIIO::TypeDesc type, bool casesensitive) -> OIIO::ParamValue const* {
+                return _this.find_pv(name, type, casesensitive);
+            }), "find_const")
+        .m(bbl::Wrap(&OIIO::ParamValueList::get_int, [](OIIO::ParamValueList const& _this, char const* name, int defaultval, bool casesensitive, bool convert) -> int {
+            return _this.get_int(name, defaultval, casesensitive, convert);
+        }))
+        .m(bbl::Wrap(&OIIO::ParamValueList::get_float, [](OIIO::ParamValueList const& _this, char const* name, float defaultval, bool casesensitive, bool convert) -> float {
+            return _this.get_float(name, defaultval, casesensitive, convert);
+        }))
+        .m(bbl::Wrap(&OIIO::ParamValueList::get_string, [](OIIO::ParamValueList const& _this, char const* name, char const* defaultval, bool casesensitive, bool convert, char const** result, long long* len) -> void {
+            auto sv = _this.get_string(name, defaultval, casesensitive, convert);
+            *result = sv.c_str();
+            *len = sv.size();
+        }))
+        .m(bbl::Wrap(&OIIO::ParamValueList::remove, [](OIIO::ParamValueList& _this, char const* name, OIIO::TypeDesc type, bool casesensitive) -> void {
+            _this.remove(name, type, casesensitive);
+        }))
+        .m(bbl::Wrap(&OIIO::ParamValueList::contains, [](OIIO::ParamValueList& _this, char const* name, OIIO::TypeDesc type, bool casesensitive) -> bool {
+            return _this.contains(name, type, casesensitive);
+        }))
         .m((void (OIIO::ParamValueList::*)(const OIIO::ParamValue &, bool))
-            &OIIO::ParamValueList::add_or_replace, "add_or_replace_00")
-        // .m((void (OIIO::ParamValueList::*)(ParamValue &&, bool))
-        //     &OIIO::ParamValueList::add_or_replace, "add_or_replace_01")
-        // .m((void (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, int, const void *))
-        //     &OIIO::ParamValueList::attribute, "attribute_00")
-        // .m((void (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, const void *))
-        //     &OIIO::ParamValueList::attribute, "attribute_01")
-        // .m((void (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, string_view))
-        //     &OIIO::ParamValueList::attribute, "attribute_02")
-        // .m((void (OIIO::ParamValueList::*)(string_view, int))
-        //     &OIIO::ParamValueList::attribute, "attribute_03")
-        // .m((void (OIIO::ParamValueList::*)(string_view, unsigned int))
-        //     &OIIO::ParamValueList::attribute, "attribute_04")
-        // .m((void (OIIO::ParamValueList::*)(string_view, float))
-        //     &OIIO::ParamValueList::attribute, "attribute_05")
-        // .m((void (OIIO::ParamValueList::*)(string_view, string_view))
-        //     &OIIO::ParamValueList::attribute, "attribute_06")
-        .m(&OIIO::ParamValueList::getattributetype)
-        // .m((bool (OIIO::ParamValueList::*)(string_view, OIIO::TypeDesc, void *, bool) const)
-        //     &OIIO::ParamValueList::getattribute, "getattribute_00")
-        // .m((bool (OIIO::ParamValueList::*)(string_view, std::string &, bool) const)
-        //     &OIIO::ParamValueList::getattribute, "getattribute_01")
-        // .m((bool (OIIO::ParamValueList::*)(string_view, int, OIIO::TypeDesc, void *, bool) const)
-        //     &OIIO::ParamValueList::getattribute_indexed, "getattribute_indexed_00")
-        // .m((bool (OIIO::ParamValueList::*)(string_view, int, std::string &, bool) const)
-        //     &OIIO::ParamValueList::getattribute_indexed, "getattribute_indexed_01")
+            &OIIO::ParamValueList::add_or_replace, "add_or_replace")
+        .m(bbl::Wrap((void (OIIO::ParamValueList::*)(OIIO::string_view, OIIO::TypeDesc, int, const void *))
+            &OIIO::ParamValueList::attribute, [](OIIO::ParamValueList& _this, char const* name, OIIO::TypeDesc type, int nvalues, void const* data) -> void {
+                _this.attribute(name, type, nvalues, data);
+            }), "attribute")
+        .m(bbl::Wrap(&OIIO::ParamValueList::getattributetype, [](OIIO::ParamValueList const& _this, char const* name, bool casesensitive) -> OIIO::TypeDesc {
+            return _this.getattributetype(name, casesensitive);
+        }))
+        .m(bbl::Wrap((bool (OIIO::ParamValueList::*)(OIIO::string_view, OIIO::TypeDesc, void *, bool) const)
+            &OIIO::ParamValueList::getattribute, [](OIIO::ParamValueList const& _this, char const* name, OIIO::TypeDesc type, void* value, bool casesensitive) -> bool {
+                return _this.getattribute(name, type, value, casesensitive);
+            }), "getattribute")
         .m(&OIIO::ParamValueList::sort)
         .m(&OIIO::ParamValueList::merge)
         .m(&OIIO::ParamValueList::free)
