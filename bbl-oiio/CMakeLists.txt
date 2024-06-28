@@ -1,17 +1,18 @@
 cmake_minimum_required(VERSION 3.15)
 project(oiio VERSION 0.1 LANGUAGES C CXX)
 
-find_package(OpenImageIO 2.3 REQUIRED)
-find_package(babble 0.5 CONFIG REQUIRED)
+find_package(OpenImageIO 2.4 REQUIRED)
+find_package(babble 0.7 CONFIG REQUIRED)
 
 include(GNUInstallDirs)
 
 # The bindfile contains all our binding definitions
-set(bindfiles 
+set(bindfiles
   bind/bbl-misc.cpp
   bind/attrdelegate.cpp
   bind/deepdata.cpp
   bind/imagebuf.cpp
+  bind/imagebufalgo.cpp
   bind/imagecache.cpp
   bind/imageio.cpp
   bind/paramlist.cpp
@@ -21,11 +22,11 @@ set(bindfiles
 
 bbl_translate_binding(
     oiio
-    BINDFILES 
+    BINDFILES
         ${bindfiles}
-    COMPILE_ARGS 
-        -DNOMINMAX 
-        -D_MT 
+    COMPILE_ARGS
+        -DNOMINMAX
+        -D_MT
         -Wno-macro-redefined
 )
 
@@ -37,14 +38,14 @@ add_library(bind-dummy ${bindfiles})
 target_link_libraries(bind-dummy babble::bind OpenImageIO::OpenImageIO)
 
 install(
-  TARGETS 
+  TARGETS
     oiio-c
-  LIBRARY 
+  LIBRARY
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE 
+  ARCHIVE
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME 
+  RUNTIME
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-  INCLUDES 
+  INCLUDES
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

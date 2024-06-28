@@ -2,6 +2,154 @@
 
 #include <OpenImageIO/imagebuf.h>
 
+
+// bindfile
+namespace bblext {
+    int ImageSpec_get_x(OIIO::ImageSpec const& self) {
+        return self.x;
+    }
+
+    void ImageSpec_set_x(OIIO::ImageSpec& self, int value) {
+        self.x = value;
+    }
+
+    int ImageSpec_get_y(OIIO::ImageSpec const& self) {
+        return self.y;
+    }
+
+    void ImageSpec_set_y(OIIO::ImageSpec& self, int value) {
+        self.y = value;
+    }
+
+    int ImageSpec_get_z(OIIO::ImageSpec const& self) {
+        return self.z;
+    }
+
+    void ImageSpec_set_z(OIIO::ImageSpec& self, int value) {
+        self.z = value;
+    }
+
+    int ImageSpec_get_width(OIIO::ImageSpec const& self) {
+        return self.width;
+    }
+
+    void ImageSpec_set_width(OIIO::ImageSpec& self, int value) {
+        self.width = value;
+    }
+
+    int ImageSpec_get_height(OIIO::ImageSpec const& self) {
+        return self.height;
+    }
+
+    void ImageSpec_set_height(OIIO::ImageSpec& self, int value) {
+        self.height = value;
+    }
+
+    int ImageSpec_get_depth(OIIO::ImageSpec const& self) {
+        return self.depth;
+    }
+
+    void ImageSpec_set_depth(OIIO::ImageSpec& self, int value) {
+        self.depth = value;
+    }
+
+    int ImageSpec_get_full_x(OIIO::ImageSpec const& self) {
+        return self.full_x;
+    }
+
+    void ImageSpec_set_full_x(OIIO::ImageSpec& self, int value) {
+        self.full_x = value;
+    }
+
+    int ImageSpec_get_full_y(OIIO::ImageSpec const& self) {
+        return self.full_y;
+    }
+
+    void ImageSpec_set_full_y(OIIO::ImageSpec& self, int value) {
+        self.full_y = value;
+    }
+
+    int ImageSpec_get_full_z(OIIO::ImageSpec const& self) {
+        return self.full_z;
+    }
+
+    void ImageSpec_set_full_z(OIIO::ImageSpec& self, int value) {
+        self.full_z = value;
+    }
+
+    int ImageSpec_get_full_width(OIIO::ImageSpec const& self) {
+        return self.full_width;
+    }
+
+    void ImageSpec_set_full_width(OIIO::ImageSpec& self, int value) {
+        self.full_width = value;
+    }
+
+    int ImageSpec_get_full_height(OIIO::ImageSpec const& self) {
+        return self.full_height;
+    }
+
+    void ImageSpec_set_full_height(OIIO::ImageSpec& self, int value) {
+        self.full_height = value;
+    }
+
+    int ImageSpec_get_full_depth(OIIO::ImageSpec const& self) {
+        return self.full_depth;
+    }
+
+    void ImageSpec_set_full_depth(OIIO::ImageSpec& self, int value) {
+        self.full_depth = value;
+    }
+
+    int ImageSpec_get_tile_width(OIIO::ImageSpec const& self) {
+        return self.tile_width;
+    }
+
+    void ImageSpec_set_tile_width(OIIO::ImageSpec& self, int value) {
+        self.tile_width = value;
+    }
+
+    int ImageSpec_get_tile_height(OIIO::ImageSpec const& self) {
+        return self.tile_height;
+    }
+
+    void ImageSpec_set_tile_height(OIIO::ImageSpec& self, int value) {
+        self.tile_height = value;
+    }
+
+    int ImageSpec_get_tile_depth(OIIO::ImageSpec const& self) {
+        return self.tile_depth;
+    }
+
+    void ImageSpec_set_tile_depth(OIIO::ImageSpec& self, int value) {
+        self.tile_depth = value;
+    }
+
+    int ImageSpec_get_nchannels(OIIO::ImageSpec const& self) {
+        return self.nchannels;
+    }
+
+    void ImageSpec_set_nchannels(OIIO::ImageSpec& self, int value) {
+        self.nchannels = value;
+    }
+
+    unsigned char ImageSpec_get_format_basetype(OIIO::ImageSpec const& self) {
+        return self.format.basetype;
+    }
+
+    void ImageSpec_set_format_basetype(OIIO::ImageSpec& self, unsigned char value) {
+        self.format.basetype = value;
+    }
+    /*
+    std::vector<OIIO::TypeDesc> const& ImageSpec_get_channel_formats_ref(OIIO::ImageSpec const& self) {
+        return self.format;
+    }
+
+    void ImageSpec_set_channelformats(OIIO::ImageSpec& self, std::vector<OIIO::TypeDesc> const& value) {
+        self.channelformats = value;
+    }*/
+}
+
 BBL_MODULE(oiio) {
 
     bbl::Class<OIIO::ROI>()
@@ -30,6 +178,7 @@ BBL_MODULE(oiio) {
     ;
 
     bbl::Class<OIIO::ImageSpec>()
+        //.value_type()
         .ctor(bbl::Class<OIIO::ImageSpec>::Ctor<OIIO::TypeDesc>("format"), "new")
         // .ctor(bbl::Class<OIIO::ImageSpec>::Ctor<OIIO::string_view>("format"), "with_named_type")
         .ctor(bbl::Class<OIIO::ImageSpec>::Ctor<int, int, int, OIIO::TypeDesc>("xres", "yres", "nchans", "fmt"), "with_dimensions")
@@ -64,7 +213,7 @@ BBL_MODULE(oiio) {
         .m((void (*)(OIIO::stride_t &, OIIO::TypeDesc, int))
             &OIIO::ImageSpec::auto_stride, "auto_stride_02")
         .m(bbl::Wrap((void (OIIO::ImageSpec::*)(OIIO::string_view, OIIO::TypeDesc, const void *))
-            &OIIO::ImageSpec::attribute, 
+            &OIIO::ImageSpec::attribute,
             [](OIIO::ImageSpec& _this, char const* name, OIIO::TypeDesc type, void const* data) -> void {
                 _this.attribute(name, type, data);
             }), "attribute"
@@ -76,12 +225,12 @@ BBL_MODULE(oiio) {
             }
         ))
         .m(bbl::Wrap((OIIO::ParamValue * (OIIO::ImageSpec::*)(OIIO::string_view, OIIO::TypeDesc, bool))
-            &OIIO::ImageSpec::find_attribute, 
+            &OIIO::ImageSpec::find_attribute,
             [](OIIO::ImageSpec& _this, char const* name, OIIO::TypeDesc type, bool casesensitive) -> OIIO::ParamValue* {
                 return _this.find_attribute(name, type, casesensitive);
             }), "find_attribute")
         .m(bbl::Wrap((OIIO::ParamValue const* (OIIO::ImageSpec::*)(OIIO::string_view, OIIO::TypeDesc, bool) const)
-            &OIIO::ImageSpec::find_attribute, 
+            &OIIO::ImageSpec::find_attribute,
             [](OIIO::ImageSpec const& _this, char const* name, OIIO::TypeDesc type, bool casesensitive) -> OIIO::ParamValue const* {
                 return _this.find_attribute(name, type, casesensitive);
             }), "find_attribute_const")
@@ -120,6 +269,43 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageSpec::copy_dimensions)
         .m(&OIIO::ImageSpec::undefined)
     ;
+
+    // As ImageSpec is opaque we need to declare a bunch of getters/setters
+    // manually declare until babble does it for us automagically, one day.
+    bbl::fn(&bblext::ImageSpec_get_x);
+    bbl::fn(&bblext::ImageSpec_set_x);
+    bbl::fn(&bblext::ImageSpec_get_y);
+    bbl::fn(&bblext::ImageSpec_set_y);
+    bbl::fn(&bblext::ImageSpec_get_z);
+    bbl::fn(&bblext::ImageSpec_set_z);
+    bbl::fn(&bblext::ImageSpec_get_width);
+    bbl::fn(&bblext::ImageSpec_set_width);
+    bbl::fn(&bblext::ImageSpec_get_height);
+    bbl::fn(&bblext::ImageSpec_set_height);
+    bbl::fn(&bblext::ImageSpec_get_depth);
+    bbl::fn(&bblext::ImageSpec_set_depth);
+    bbl::fn(&bblext::ImageSpec_get_full_x);
+    bbl::fn(&bblext::ImageSpec_set_full_x);
+    bbl::fn(&bblext::ImageSpec_get_full_y);
+    bbl::fn(&bblext::ImageSpec_set_full_y);
+    bbl::fn(&bblext::ImageSpec_get_full_z);
+    bbl::fn(&bblext::ImageSpec_set_full_z);
+    bbl::fn(&bblext::ImageSpec_get_full_width);
+    bbl::fn(&bblext::ImageSpec_set_full_width);
+    bbl::fn(&bblext::ImageSpec_get_full_height);
+    bbl::fn(&bblext::ImageSpec_set_full_height);
+    bbl::fn(&bblext::ImageSpec_get_full_depth);
+    bbl::fn(&bblext::ImageSpec_set_full_depth);
+    bbl::fn(&bblext::ImageSpec_get_tile_width);
+    bbl::fn(&bblext::ImageSpec_set_tile_width);
+    bbl::fn(&bblext::ImageSpec_get_tile_height);
+    bbl::fn(&bblext::ImageSpec_set_tile_height);
+    bbl::fn(&bblext::ImageSpec_get_tile_depth);
+    bbl::fn(&bblext::ImageSpec_set_tile_depth);
+    bbl::fn(&bblext::ImageSpec_get_nchannels);
+    bbl::fn(&bblext::ImageSpec_set_nchannels);
+    bbl::fn(&bblext::ImageSpec_get_format_basetype);
+    bbl::fn(&bblext::ImageSpec_set_format_basetype);
 
     bbl::Enum<OIIO::ImageSpec::SerialFormat>();
     bbl::Enum<OIIO::ImageSpec::SerialVerbose>();
@@ -174,41 +360,25 @@ BBL_MODULE(oiio) {
         .m((bool (OIIO::ImageInput::*)(int, int, float *))
             &OIIO::ImageInput::read_scanline, "read_scanline_01")
         .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t))
-            &OIIO::ImageInput::read_scanlines, "read_scanlines_00")
-        .m((bool (OIIO::ImageInput::*)(int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t))
-            &OIIO::ImageInput::read_scanlines, "read_scanlines_01")
-        .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t))
-            &OIIO::ImageInput::read_scanlines, "read_scanlines_02")
+            &OIIO::ImageInput::read_scanlines, "read_scanlines")
         .m((bool (OIIO::ImageInput::*)(int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t))
             &OIIO::ImageInput::read_tile, "read_tile_00")
         .m((bool (OIIO::ImageInput::*)(int, int, int, float *))
             &OIIO::ImageInput::read_tile, "read_tile_01")
         .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, int, int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t))
-            &OIIO::ImageInput::read_tiles, "read_tiles_00")
-        .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t))
-            &OIIO::ImageInput::read_tiles, "read_tiles_01")
-        .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t))
-            &OIIO::ImageInput::read_tiles, "read_tiles_02")
+            &OIIO::ImageInput::read_tiles, "read_tiles")
         // .m((bool (OIIO::ImageInput::*)(int, int, int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t, ProgressCallback, void *))
         //     &OIIO::ImageInput::read_image, "read_image_00")
         // .m((bool (OIIO::ImageInput::*)(OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t, ProgressCallback, void *))
         //     &OIIO::ImageInput::read_image, "read_image_01")
         // .m((bool (OIIO::ImageInput::*)(int, int, OIIO::TypeDesc, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t, ProgressCallback, void *))
         //     &OIIO::ImageInput::read_image, "read_image_02")
-        .m((bool (OIIO::ImageInput::*)(float *))
-            &OIIO::ImageInput::read_image, "read_image_03")
         .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, int, OIIO::DeepData &))
-            &OIIO::ImageInput::read_native_deep_scanlines, "read_native_deep_scanlines_00")
-        .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, OIIO::DeepData &))
-            &OIIO::ImageInput::read_native_deep_scanlines, "read_native_deep_scanlines_01")
+            &OIIO::ImageInput::read_native_deep_scanlines, "read_native_deep_scanlines")
         .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, int, int, int, int, OIIO::DeepData &))
-            &OIIO::ImageInput::read_native_deep_tiles, "read_native_deep_tiles_00")
-        .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, int, int, int, OIIO::DeepData &))
-            &OIIO::ImageInput::read_native_deep_tiles, "read_native_deep_tiles_01")
+            &OIIO::ImageInput::read_native_deep_tiles, "read_native_deep_tiles")
         .m((bool (OIIO::ImageInput::*)(int, int, OIIO::DeepData &))
-            &OIIO::ImageInput::read_native_deep_image, "read_native_deep_image_00")
-        .m((bool (OIIO::ImageInput::*)(OIIO::DeepData &))
-            &OIIO::ImageInput::read_native_deep_image, "read_native_deep_image_01")
+            &OIIO::ImageInput::read_native_deep_image, "read_native_deep_image")
         .m(&OIIO::ImageInput::read_native_scanline)
         .m((bool (OIIO::ImageInput::*)(int, int, int, int, int, void *))
             &OIIO::ImageInput::read_native_scanlines, "read_native_scanlines_00")

@@ -4,13 +4,14 @@
 
 namespace bblext {
 
+/*
 auto ImageBuf_name(OIIO::ImageBuf const& buf) -> char const* {
     return buf.name().c_str();
 }
 
 auto ImageBuf_file_format_name(OIIO::ImageBuf const& buf) -> char const* {
     return buf.file_format_name().c_str();
-}
+}*/
 
 }
 
@@ -18,35 +19,35 @@ BBL_MODULE(oiio) {
 
     bbl::Class<OIIO::ImageBuf>()
         .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<>(), "default")
-        // .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<string_view, int, int, ImageCache *, const OIIO::ImageSpec *, Filesystem::IOProxy *>("name", "subimage", "miplevel", "imagecache", "config", "ioproxy"), "ctor_01")
-        // .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<string_view, ImageCache *>("name", "imagecache"), "ctor_02")
-        // .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<const OIIO::ImageSpec &, InitializePixels>("spec", "zero"), "ctor_03")
-        // .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<string_view, const OIIO::ImageSpec &, InitializePixels>("name", "spec", "zero"), "ctor_04")
-        // .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<const OIIO::ImageSpec &, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t>("spec", "buffer", "xstride", "ystride", "zstride"), "ctor_05")
-        // .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<string_view, const OIIO::ImageSpec &, void *>("name", "spec", "buffer"), "ctor_06")
+        .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<OIIO::string_view, int, int, OIIO::ImageCache *, const OIIO::ImageSpec *, OIIO::Filesystem::IOProxy *>("name", "subimage", "miplevel", "imagecache", "config", "ioproxy"), "ctor_01")
+        .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<OIIO::string_view, OIIO::ImageCache *>("name", "imagecache"), "ctor_02")
+        .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<const OIIO::ImageSpec &, OIIO::InitializePixels>("spec", "zero"), "ctor_03")
+        .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<OIIO::string_view, const OIIO::ImageSpec &, OIIO::InitializePixels>("name", "spec", "zero"), "ctor_04")
+        .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<const OIIO::ImageSpec &, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t>("spec", "buffer", "xstride", "ystride", "zstride"), "ctor_05")
+        .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<OIIO::string_view, const OIIO::ImageSpec &, void *>("name", "spec", "buffer"), "ctor_06")
         .m(&OIIO::ImageBuf::clear)
         .m((void (OIIO::ImageBuf::*)())
             &OIIO::ImageBuf::reset, "reset_00")
-        // .m((void (OIIO::ImageBuf::*)(string_view, ImageCache *))
-        //     &OIIO::ImageBuf::reset, "reset_01")
-        // .m((void (OIIO::ImageBuf::*)(string_view, int, int, ImageCache *, const ImageSpec *, Filesystem::IOProxy *))
-        //     &OIIO::ImageBuf::reset, "reset_02")
+        //.m((void (OIIO::ImageBuf::*)(OIIO::string_view, OIIO::ImageCache *))
+        //    &OIIO::ImageBuf::reset, "reset_01")
+        //.m((void (OIIO::ImageBuf::*)(OIIO::string_view, int, int, OIIO::ImageCache *, const OIIO::ImageSpec *, OIIO::Filesystem::IOProxy *))
+        //    &OIIO::ImageBuf::reset, "reset_02")
         .m((void (OIIO::ImageBuf::*)(const OIIO::ImageSpec &, OIIO::InitializePixels))
             &OIIO::ImageBuf::reset, "reset_03")
-        // .m((void (OIIO::ImageBuf::*)(string_view, const OIIO::ImageSpec &, OIIO::InitializePixels))
-        //     &OIIO::ImageBuf::reset, "reset_04")
+        //.m((void (OIIO::ImageBuf::*)(OIIO::string_view, const OIIO::ImageSpec &, OIIO::InitializePixels))
+        //    &OIIO::ImageBuf::reset, "reset_04")
         .m((void (OIIO::ImageBuf::*)(const OIIO::ImageSpec &, void *, OIIO::stride_t, OIIO::stride_t, OIIO::stride_t))
             &OIIO::ImageBuf::reset, "reset_05")
         .m(&OIIO::ImageBuf::make_writable)
         .m(&OIIO::ImageBuf::make_writeable)
-        // .m((bool (OIIO::ImageBuf::*)(int, int, bool, OIIO::TypeDesc, OIIO::ProgressCallback, void *))
+        //.m((bool (OIIO::ImageBuf::*)(int, int, bool, OIIO::TypeDesc, OIIO::ProgressCallback, void *))
         //     &OIIO::ImageBuf::read, "read_00")
         // .m((bool (OIIO::ImageBuf::*)(int, int, int, int, bool, OIIO::TypeDesc, OIIO::ProgressCallback, void *))
         //     &OIIO::ImageBuf::read, "read_01")
         // .m(&OIIO::ImageBuf::init_spec)
-        // .m((bool (OIIO::ImageBuf::*)(string_view, OIIO::TypeDesc, string_view, OIIO::ProgressCallback, void *) const)
+        // .m((bool (OIIO::ImageBuf::*)(OIIO::string_view, OIIO::TypeDesc, OIIO::string_view, OIIO::ProgressCallback, void *) const)
         //     &OIIO::ImageBuf::write, "write_00")
-        // .m((bool (OIIO::ImageBuf::*)(string_view, string_view, OIIO::ProgressCallback, void *) const)
+        // .m((bool (OIIO::ImageBuf::*)(OIIO::string_view, OIIO::string_view, OIIO::ProgressCallback, void *) const)
         //     &OIIO::ImageBuf::write, "write_01")
         // .m((bool (OIIO::ImageBuf::*)(ImageOutput *, OIIO::ProgressCallback, void *) const)
         //     &OIIO::ImageBuf::write, "write_02")
@@ -73,7 +74,7 @@ BBL_MODULE(oiio) {
             &OIIO::ImageBuf::getpixel, "getpixel")
         .m(&OIIO::ImageBuf::interppixel)
         .m(&OIIO::ImageBuf::interppixel_NDC)
-        .m(&OIIO::ImageBuf::interppixel_NDC_full)
+        //.m(&OIIO::ImageBuf::interppixel_NDC_full)
         .m(&OIIO::ImageBuf::interppixel_bicubic)
         .m(&OIIO::ImageBuf::interppixel_bicubic_NDC)
         .m((void (OIIO::ImageBuf::*)(int, int, int, const float *, int))
@@ -89,8 +90,8 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageBuf::get_thumbnail)
         .m(&OIIO::ImageBuf::set_thumbnail)
         .m(&OIIO::ImageBuf::clear_thumbnail)
-        // .m(&OIIO::ImageBuf::name)
-        // .m(&OIIO::ImageBuf::file_format_name)
+        .m(&OIIO::ImageBuf::name)
+        .m(&OIIO::ImageBuf::file_format_name)
         .m(&OIIO::ImageBuf::subimage)
         .m(&OIIO::ImageBuf::nsubimages)
         .m(&OIIO::ImageBuf::miplevel)
@@ -169,8 +170,8 @@ BBL_MODULE(oiio) {
         }))
     ;
 
-    bbl::fn(&bblext::ImageBuf_name);
-    bbl::fn(&bblext::ImageBuf_file_format_name);
+    //bbl::fn(&bblext::ImageBuf_name);
+    //bbl::fn(&bblext::ImageBuf_file_format_name);
 
     bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
         .smartptr_to<OIIO::ImageBuf>()
@@ -180,10 +181,10 @@ BBL_MODULE(oiio) {
     bbl::Enum<OIIO::ImageBuf::WrapMode>();
 
     bbl::Class<OIIO::ImageBuf::IteratorBase>()
-        .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, OIIO::ImageBuf::WrapMode>("ib", "wrap"), "ctor_00")
-        .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, const OIIO::ROI &, OIIO::ImageBuf::WrapMode>("ib", "roi", "wrap"), "ctor_01")
-        .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, int, int, int, int, int, int, OIIO::ImageBuf::WrapMode>("ib", "xbegin", "xend", "ybegin", "yend", "zbegin", "zend", "wrap"), "ctor_02")
-        .m(&OIIO::ImageBuf::IteratorBase::assign_base)
+        // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, OIIO::ImageBuf::WrapMode>("ib", "wrap"), "ctor_00")
+        // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, const OIIO::ROI &, OIIO::ImageBuf::WrapMode>("ib", "roi", "wrap"), "ctor_01")
+        // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, int, int, int, int, int, int, OIIO::ImageBuf::WrapMode>("ib", "xbegin", "xend", "ybegin", "yend", "zbegin", "zend", "wrap"), "ctor_02")
+        // .m(&OIIO::ImageBuf::IteratorBase::assign_base)
         .m(&OIIO::ImageBuf::IteratorBase::x)
         .m(&OIIO::ImageBuf::IteratorBase::y)
         .m(&OIIO::ImageBuf::IteratorBase::z)

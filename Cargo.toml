@@ -1,0 +1,11 @@
+[package]
+name = "oiio"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
+
+[dependencies]
+anyhow = "1"
+num_enum = "0.7"

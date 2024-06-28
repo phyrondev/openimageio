@@ -15,7 +15,7 @@ BBL_MODULE(oiio) {
         // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, ustring>("_name", "value"), "ctor_07")
         // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, string_view>("_name", "value"), "ctor_08")
         // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, TypeDesc, string_view>("_name", "type", "value"), "ctor_09")
-        .ctor(bbl::Class<OIIO::ParamValue>::Ctor<const OIIO::ParamValue &, bool>("p", "_copy"), "ctor_10")
+        // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<const OIIO::ParamValue &, bool>("p", "_copy"), "ctor_10")
         .m((void (OIIO::ParamValue::*)(OIIO::ustring, OIIO::TypeDesc, int, OIIO::ParamValue::Interp, const void *, bool))
             &OIIO::ParamValue::init, "init_00")
         .m((void (OIIO::ParamValue::*)(OIIO::ustring, OIIO::TypeDesc, int, const void *, bool))
