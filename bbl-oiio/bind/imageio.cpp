@@ -189,7 +189,7 @@ namespace bblext {
         self.channelnames.reserve(size);
     }
 
-    void ImageSpec_push_channelname(OIIO::ImageSpec& self, std::string value) {
+    void ImageSpec_push_channelname(OIIO::ImageSpec& self, std::string const& value) {
         self.channelnames.push_back(value);
     }
 }

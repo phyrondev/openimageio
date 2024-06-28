@@ -1,6 +1,8 @@
 use crate::*;
 use std::{marker::PhantomData, path::Path};
 
+use camino::Utf8Path;
+
 pub struct StringView<'a> {
     ptr: *mut oiio_StringView_t,
     // _marker needs to be invariant in 'a.
@@ -17,6 +19,25 @@ impl<'a> From<&'a Path> for StringView<'a> {
             oiio_StringView_ctor(
                 os_str_path.as_encoded_bytes().as_ptr() as *const _,
                 os_str_path.len().try_into().unwrap(),
+                &mut ptr as *mut _ as *mut _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl<'a> From<&'a Utf8Path> for StringView<'a> {
+    fn from(path: &'a Utf8Path) -> Self {
+        let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
+        let str_path = path.as_str();
+        unsafe {
+            oiio_StringView_ctor(
+                str_path.as_ptr() as *const _,
+                str_path.len().try_into().unwrap(),
                 &mut ptr as *mut _ as *mut _,
             );
 

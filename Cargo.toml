@@ -8,5 +8,6 @@ bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
 
 [dependencies]
 anyhow = "1"
+camino = "1.1.7"
 num_enum = "0.7"
 once_cell = { version = "1.19.0", features = ["parking_lot"] }

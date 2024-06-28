@@ -183,8 +183,10 @@ impl From<ImageSpecConfig> for ImageSpec {
                 i.channel_name.len(),
             );
             for name in i.channel_name.iter() {
-                // construct std::string
-                //oiio_ImageSpec_push_channelname(ptr, name);
+                oiio_ImageSpec_push_channelname(
+                    ptr,
+                    OiioString::new(name).as_ptr(),
+                );
             }
 
             oiio_ImageSpec_set_alpha_channel(

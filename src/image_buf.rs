@@ -1,12 +1,10 @@
 use crate::*;
 use anyhow::{anyhow, Result};
-use std::{
-    ffi::c_int, marker::PhantomData, mem::MaybeUninit, path::Path, ptr,
-    sync::Arc,
-};
+use camino::Utf8Path;
+use std::{ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr, sync::Arc};
 
 #[derive(Default, Debug)]
-enum WrapMode {
+pub enum WrapMode {
     #[default]
     Default,
     Black,
@@ -42,12 +40,11 @@ pub enum ImageBufStorage {
 /// Stores an entire image.
 ///
 /// Provides an API for reading, writing, and manipulating images as a single
-/// unit, without the need to worry about any of the details of storage or I/O.
+/// unit, without the need to worry about any details of storage or I/O.
 ///
-/// All I/O involving (that is, calls to read or write) are implemented
-/// underneath in terms of [`ImageCache`], [`ImageInput`], and [`ImageOutput`].
-/// I.e. they  work with all of the image file formats supported by this crate.
-
+/// All calls that read or write are implementedunderneath in terms of
+/// [`ImageCache`], [`ImageInput`], and [`ImageOutput`]. I.e. they work with all
+/// of the image file formats supported by this crate.
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ImageBuf<'a>(Arc<ImageBufInner<'a>>);
 
@@ -84,7 +81,7 @@ impl<'a> ImageBuf<'a> {
     }
 
     pub fn from_file(
-        file: &Path,
+        file: &Utf8Path,
         sub_image: Option<u32>,
         mip_level: Option<u32>,
         image_cache: Option<ImageCache>,
@@ -126,6 +123,31 @@ impl<'a> ImageBuf<'a> {
         });
     }
 
+    /*/
+    pub fn write(
+        &self,
+        file: &Utf8Path,
+        type_desc: Option<TypeDesc>,
+        file_format: Option<&str>,
+    ) -> Result<(), String> {
+        if !(oiio_ImageBuf_write00(
+            self.0.ptr,
+            StringView::from(file).as_raw_ptr_mut(),
+            ptr::null(),
+            StringView::from(file_format.unwrap_or("")).as_raw_ptr_mut(),
+            ptr::null(),
+            ptr::null(),
+        )) {
+            Err(self.error(Some(true)).unwrap_or("Unknown error".into()))
+        } else {
+            Ok(())
+        }
+    }*/
+}
+
+// Getters.
+impl<'a> ImageBuf<'a> {
+    #[inline]
     pub fn storage(&self) -> ImageBufStorage {
         let mut storage = MaybeUninit::<ImageBufStorage>::uninit();
         unsafe {
@@ -134,6 +156,7 @@ impl<'a> ImageBuf<'a> {
         }
     }
 
+    #[inline]
     pub fn channel_count(&self) -> usize {
         let mut count = std::mem::MaybeUninit::<c_int>::uninit();
         unsafe {
@@ -141,10 +164,7 @@ impl<'a> ImageBuf<'a> {
             count.assume_init() as _
         }
     }
-}
 
-// Getters.
-impl<'a> ImageBuf<'a> {
     #[inline]
     pub fn roi(&self) -> Roi {
         let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
@@ -174,6 +194,11 @@ impl<'a> ImageBuf<'a> {
     pub fn region_of_interest_full(&self) -> RegionOfInterest {
         self.roi_full()
     }
+
+    /*
+    pub fn spec(&self) -> ImageSpec {
+        let mut dst = MaybeUninit::<ImageSpec>::uninit();
+    }*/
 }
 
 impl<'a> ImageBuf<'a> {
@@ -190,11 +215,9 @@ impl<'a> ImageBuf<'a> {
                 self.0.ptr,
                 self.0.ptr,
                 other.0.ptr,
-                unsafe {
-                    std::mem::transmute::<Roi, oiio_ROI_t>(
-                        roi.unwrap_or(self.roi()),
-                    )
-                },
+                std::mem::transmute::<Roi, oiio_ROI_t>(
+                    roi.unwrap_or(self.roi()),
+                ),
                 thread_count.unwrap_or_default() as _,
                 &mut is_error as *mut _ as *mut _,
             );
@@ -241,19 +264,19 @@ mod tests {
 
     #[test]
     fn it_works() {
-        use std::path::PathBuf;
+        use camino::Utf8Path;
 
-        let image_cache = ImageCache::new_shared();
+        //let image_cache = ImageCache::shared(false);
 
         let image_buf = ImageBuf::from_file(
-            &PathBuf::from("assets/j0.3toD__F16_RGBA.exr"),
+            &Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
             None,
             None,
-            Some(image_cache),
-            None,
+            None, //Some(image_cache),
+            None::<ImageSpec>,
         );
 
-        println!("Storage:      {:?}", image_buf.storage());
+        println!("Storage:       {:?}", image_buf.storage());
         println!("Channel Count: {:?}", image_buf.channel_count());
     }
 }

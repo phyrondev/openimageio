@@ -20,6 +20,19 @@ impl From<*mut oiio_String_t> for OiioString {
 }
 
 impl OiioString {
+    pub fn new(s: &str) -> OiioString {
+        let mut ptr = MaybeUninit::<*mut oiio_String_t>::uninit();
+
+        unsafe {
+            oiio_String_ctor(
+                s.as_ptr() as _,
+                s.len().try_into().unwrap(),
+                &mut ptr as *mut _ as *mut _,
+            );
+            Self(ptr.assume_init())
+        }
+    }
+
     pub fn to_string(self) -> String {
         unsafe {
             let mut ptr = MaybeUninit::<*const c_char>::uninit();
