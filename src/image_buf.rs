@@ -1,6 +1,9 @@
 use crate::*;
 use anyhow::{anyhow, Result};
-use std::{ffi::c_int, marker::PhantomData, mem::MaybeUninit, path::Path, ptr};
+use std::{
+    ffi::c_int, marker::PhantomData, mem::MaybeUninit, path::Path, ptr,
+    sync::Arc,
+};
 
 #[derive(Default, Debug)]
 enum WrapMode {
@@ -36,15 +39,32 @@ pub enum ImageBufStorage {
     ImageCache = oiio_IBStorage::oiio_IBStorage_IMAGECACHE.0 as _,
 }
 
-#[derive(Debug)]
-pub struct ImageBuf<'a> {
+/// Stores an entire image.
+///
+/// Provides an API for reading, writing, and manipulating images as a single
+/// unit, without the need to worry about any of the details of storage or I/O.
+///
+/// All I/O involving (that is, calls to read or write) are implemented
+/// underneath in terms of [`ImageCache`], [`ImageInput`], and [`ImageOutput`].
+/// I.e. they  work with all of the image file formats supported by this crate.
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ImageBuf<'a>(Arc<ImageBufInner<'a>>);
+
+/// The actual `ImageBuf` and a marker for the lifetime.
+///
+/// We need a lifetime as an `ImageBuf` can reference external memory (to
+/// the `ImageBuf`) and me must make sure that this outlives `self`.
+///
+/// We wrap this in an [`Arc`] in [`ImageBuf`] to make sure `drop()` is only
+/// ever called when the last clone ceases existing.
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub(crate) struct ImageBufInner<'a> {
     ptr: *mut oiio_ImageBuf_t,
-    // We need a lifetime as an ImageBuf can reference external memory (to the
-    // ImageBuf) and me must make sure that this outlives `self`.
     _marker: PhantomData<*mut &'a ()>,
 }
 
-impl<'a> Drop for ImageBuf<'a> {
+impl<'a> Drop for ImageBufInner<'a> {
     fn drop(&mut self) {
         unsafe { oiio_ImageBuf_dtor(self.ptr) };
     }
@@ -54,13 +74,13 @@ impl<'a> ImageBuf<'a> {
     pub fn new() -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
-        Self {
+        Self(Arc::new(ImageBufInner {
             ptr: unsafe {
                 oiio_ImageBuf_default(&mut ptr as *mut _ as *mut _);
                 ptr.assume_init()
             },
             _marker: PhantomData,
-        }
+        }))
     }
 
     pub fn from_file(
@@ -73,7 +93,7 @@ impl<'a> ImageBuf<'a> {
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
-        Self {
+        Self(Arc::new(ImageBufInner {
             ptr: unsafe {
                 oiio_ImageBuf_ctor_01(
                     StringView::from(file).as_raw_ptr_mut(),
@@ -91,22 +111,25 @@ impl<'a> ImageBuf<'a> {
                 ptr.assume_init()
             },
             _marker: PhantomData,
-        }
+        }))
     }
 
     pub fn reset(&mut self) {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
-        self.ptr = unsafe {
+        self.0 = Arc::new(unsafe {
             oiio_ImageBuf_reset_00(&mut ptr as *mut _ as *mut _);
-            ptr.assume_init()
-        };
+            ImageBufInner {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        });
     }
 
     pub fn storage(&self) -> ImageBufStorage {
         let mut storage = MaybeUninit::<ImageBufStorage>::uninit();
         unsafe {
-            oiio_ImageBuf_storage(self.ptr, &mut storage as *mut _ as *mut _);
+            oiio_ImageBuf_storage(self.0.ptr, &mut storage as *mut _ as *mut _);
             storage.assume_init()
         }
     }
@@ -114,7 +137,7 @@ impl<'a> ImageBuf<'a> {
     pub fn channel_count(&self) -> usize {
         let mut count = std::mem::MaybeUninit::<c_int>::uninit();
         unsafe {
-            oiio_ImageBuf_nchannels(self.ptr, &mut count as *mut _ as *mut _);
+            oiio_ImageBuf_nchannels(self.0.ptr, &mut count as *mut _ as *mut _);
             count.assume_init() as _
         }
     }
@@ -127,7 +150,7 @@ impl<'a> ImageBuf<'a> {
         let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
 
         unsafe {
-            oiio_ImageBuf_roi(self.ptr, &mut dst as *mut _ as *mut _);
+            oiio_ImageBuf_roi(self.0.ptr, &mut dst as *mut _ as *mut _);
             dst.assume_init()
         }
     }
@@ -142,7 +165,7 @@ impl<'a> ImageBuf<'a> {
         let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
 
         unsafe {
-            oiio_ImageBuf_roi_full(self.ptr, &mut dst as *mut _ as *mut _);
+            oiio_ImageBuf_roi_full(self.0.ptr, &mut dst as *mut _ as *mut _);
             dst.assume_init()
         }
     }
@@ -164,9 +187,9 @@ impl<'a> ImageBuf<'a> {
 
         unsafe {
             oiio_ImageBufAlgo_over(
-                self.ptr,
-                self.ptr,
-                other.ptr,
+                self.0.ptr,
+                self.0.ptr,
+                other.0.ptr,
                 unsafe {
                     std::mem::transmute::<Roi, oiio_ROI_t>(
                         roi.unwrap_or(self.roi()),
@@ -191,7 +214,7 @@ impl<'a> ImageBuf<'a> {
 
         if unsafe {
             oiio_ImageBuf_geterror(
-                self.ptr,
+                self.0.ptr,
                 clear.unwrap_or(true),
                 &mut error as *mut _ as *mut _,
             )

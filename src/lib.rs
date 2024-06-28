@@ -1,5 +1,5 @@
 mod ffi;
-pub use ffi::*;
+use ffi::*;
 
 mod image_buf;
 pub use image_buf::*;
