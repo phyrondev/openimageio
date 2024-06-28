@@ -140,15 +140,60 @@ namespace bblext {
     void ImageSpec_set_format_basetype(OIIO::ImageSpec& self, unsigned char value) {
         self.format.basetype = value;
     }
-    /*
-    std::vector<OIIO::TypeDesc> const& ImageSpec_get_channel_formats_ref(OIIO::ImageSpec const& self) {
-        return self.format;
+
+    std::vector<OIIO::TypeDesc> const& ImageSpec_get_channelformats_ref(OIIO::ImageSpec const& self) {
+        return self.channelformats;
     }
 
-    void ImageSpec_set_channelformats(OIIO::ImageSpec& self, std::vector<OIIO::TypeDesc> const& value) {
+    void ImageSpec_set_channelformats(OIIO::ImageSpec& self, std::vector<OIIO::TypeDesc> value) {
         self.channelformats = value;
-    }*/
+    }
+
+    int ImageSpec_get_alpha_channel(OIIO::ImageSpec const& self) {
+        return self.alpha_channel;
+    }
+
+    void ImageSpec_set_alpha_channel(OIIO::ImageSpec& self, int value) {
+        self.alpha_channel = value;
+    }
+
+    int ImageSpec_get_z_channel(OIIO::ImageSpec const& self) {
+
+        return self.z_channel;
+    }
+
+    void ImageSpec_set_z_channel(OIIO::ImageSpec& self, int value) {
+        self.z_channel = value;
+    }
+
+    bool ImageSpec_get_deep(OIIO::ImageSpec const& self) {
+        return self.deep;
+    }
+
+    void ImageSpec_set_deep(OIIO::ImageSpec& self, bool value) {
+        self.deep = value;
+    }
+
+    void ImageSpec_clear_and_reserve_channelformats(OIIO::ImageSpec& self, size_t size) {
+        self.channelformats.clear();
+        self.channelformats.reserve(size);
+    }
+
+    void ImageSpec_push_channelformat(OIIO::ImageSpec& self, OIIO::TypeDesc value) {
+        self.channelformats
+        .push_back(value);
+    }
+
+    void ImageSpec_clear_and_reserve_channelnames(OIIO::ImageSpec& self, size_t size) {
+        self.channelnames.clear();
+        self.channelnames.reserve(size);
+    }
+
+    void ImageSpec_push_channelname(OIIO::ImageSpec& self, std::string value) {
+        self.channelnames.push_back(value);
+    }
 }
+
 
 BBL_MODULE(oiio) {
 
@@ -270,7 +315,7 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageSpec::undefined)
     ;
 
-    // As ImageSpec is opaque we need to declare a bunch of getters/setters
+    // As `ImageSpec` is opaque we need to declare a bunch of getters/setters
     // manually declare until babble does it for us automagically, one day.
     bbl::fn(&bblext::ImageSpec_get_x);
     bbl::fn(&bblext::ImageSpec_set_x);
@@ -306,6 +351,18 @@ BBL_MODULE(oiio) {
     bbl::fn(&bblext::ImageSpec_set_nchannels);
     bbl::fn(&bblext::ImageSpec_get_format_basetype);
     bbl::fn(&bblext::ImageSpec_set_format_basetype);
+    bbl::fn(&bblext::ImageSpec_get_channelformats_ref);
+    bbl::fn(&bblext::ImageSpec_set_channelformats);
+    bbl::fn(&bblext::ImageSpec_get_alpha_channel);
+    bbl::fn(&bblext::ImageSpec_set_alpha_channel);
+    bbl::fn(&bblext::ImageSpec_get_z_channel);
+    bbl::fn(&bblext::ImageSpec_set_z_channel);
+    bbl::fn(&bblext::ImageSpec_get_deep);
+    bbl::fn(&bblext::ImageSpec_set_deep);
+    bbl::fn(&bblext::ImageSpec_clear_and_reserve_channelformats);
+    bbl::fn(&bblext::ImageSpec_push_channelformat);
+    bbl::fn(&bblext::ImageSpec_clear_and_reserve_channelnames);
+    bbl::fn(&bblext::ImageSpec_push_channelname);
 
     bbl::Enum<OIIO::ImageSpec::SerialFormat>();
     bbl::Enum<OIIO::ImageSpec::SerialVerbose>();

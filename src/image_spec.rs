@@ -5,23 +5,20 @@ enum ChannelFormat {
     Uniform(BaseType),
     PerChannel(Vec<BaseType>),
 }
-
-/// Holds data that are required to describe nearly any image, and an extensible
-/// list of arbitrary attributes that can hold metadata that may be user-defined
-/// or specific to individual file formats.
-///
-/// This is holds data on the Rust side
-///
 /// Describes the data format of an image -- dimensions, layout,
 /// number and meanings of image channels.
 ///
+/// Can be used to describe nearly any image, and an extensible
+/// list of arbitrary attributes that can hold metadata that may be user-defined
+/// or specific to individual file formats.
+///
 /// The `width`, height` & `depth` are the size of the data of this image, i.e.,
-/// the number of pixels in each dimension.  A `depth` greater than 1
+/// the number of pixels in each dimension.  A `depth` greater than `1`
 /// indicates a 3D 'volumetric' image.
 ///
-/// The `x`, `y` & `z` fields indicate the *origin* of the pixel data of the image. These default to `0`, but
-/// setting them differently may indicate that this image is offset from the
-/// usual origin.
+/// The `x`, `y` & `z` fields indicate the *origin* of the pixel data of the
+/// image. These default to `0`, but setting them differently may indicate that
+/// this image is offset from the usual origin.
 ///
 /// Therefore the pixel data are defined over pixel coordinates
 ///    `[x .. x + width - 1]` horizontally,
@@ -30,8 +27,9 @@ enum ChannelFormat {
 ///
 /// The analogous `full_width`, `full_height`, `full_depth` and `full_x`,
 /// `full_y` & `full_z` fields define a *full* or *display* image window over
-/// the region `[full_x .. full_x + full_width - 1]`` horizontally, `[full_y .. full_y + full_height - 1]` vertically, and
-/// `[full_z .. full_z + full_depth  -1]` in depth.
+/// the region `[full_x .. full_x + full_width - 1]`` horizontally, `[full_y ..
+/// full_y + full_height - 1]` vertically, and `[full_z .. full_z + full_depth
+/// -1]` in depth.
 ///
 /// Having the full display window different from the pixel data window can
 /// be helpful in cases where you want to indicate that your image is a
@@ -89,10 +87,10 @@ pub struct ImageSpecConfig {
     /// will indicate a single default data format for applications that
     /// don't wish to support per-channel formats (usually this will be the
     /// format of the channel that has the most precision).
-    channel_format: Vec<TypeDesc>,
+    channel_format: ChannelFormat,
     /// The names of each channel, in order. Typically this will be `"R"`,
     /// `"G"`, `"B"`, `"A"` (alpha), `"Z"` (depth), or other arbitrary names.
-    channel_names: Vec<String>,
+    channel_name: Vec<String>,
     /// The index of the channel that represents *alpha* (pixel coverage and/or
     /// transparency).
     ///
@@ -120,7 +118,7 @@ pub struct ImageSpecConfig {
     extra_attribs: ParamValueList,*/
 }
 
-struct ImageSpec {
+pub struct ImageSpec {
     ptr: *mut oiio_ImageSpec_t,
 }
 
@@ -136,7 +134,70 @@ impl From<ImageSpecConfig> for ImageSpec {
 
             let ptr = ptr.assume_init();
 
-            // TODO: initalize all fields of the `oiio_ImageSpec_t`.
+            oiio_ImageSpec_set_x(ptr, i.x);
+            oiio_ImageSpec_set_y(ptr, i.y);
+            oiio_ImageSpec_set_z(ptr, i.z);
+            oiio_ImageSpec_set_width(ptr, i.width as _);
+            oiio_ImageSpec_set_height(ptr, i.height as _);
+            oiio_ImageSpec_set_depth(ptr, i.depth as _);
+            oiio_ImageSpec_set_full_x(ptr, i.full_x);
+            oiio_ImageSpec_set_full_y(ptr, i.full_y);
+            oiio_ImageSpec_set_full_z(ptr, i.full_z);
+            oiio_ImageSpec_set_full_width(ptr, i.full_width as _);
+            oiio_ImageSpec_set_full_height(ptr, i.full_height as _);
+            oiio_ImageSpec_set_full_depth(ptr, i.full_depth as _);
+            oiio_ImageSpec_set_tile_width(ptr, i.tile_width as _);
+            oiio_ImageSpec_set_tile_height(ptr, i.tile_height as _);
+            oiio_ImageSpec_set_tile_depth(ptr, i.tile_depth as _);
+            oiio_ImageSpec_set_nchannels(ptr, i.channel_name.len() as _);
+
+            match &i.channel_format {
+                ChannelFormat::Uniform(format) => {
+                    oiio_ImageSpec_set_format(
+                        ptr,
+                        oiio_TypeDesc_t {
+                            basetype: (*format).into(),
+                            ..Default::default()
+                        },
+                    );
+                }
+                ChannelFormat::PerChannel(formats) => {
+                    oiio_ImageSpec_clear_and_reserve_channelformats(
+                        ptr,
+                        formats.len(),
+                    );
+                    for format in formats.iter() {
+                        oiio_ImageSpec_push_channelformat(
+                            ptr,
+                            oiio_TypeDesc_t {
+                                basetype: (*format).into(),
+                                ..Default::default()
+                            },
+                        );
+                    }
+                }
+            }
+
+            oiio_ImageSpec_clear_and_reserve_channelnames(
+                ptr,
+                i.channel_name.len(),
+            );
+            for name in i.channel_name.iter() {
+                // construct std::string
+                //oiio_ImageSpec_push_channelname(ptr, name);
+            }
+
+            oiio_ImageSpec_set_alpha_channel(
+                ptr,
+                i.alpha_channel_index.map(|i| i as _).unwrap_or(-1),
+            );
+            oiio_ImageSpec_set_z_channel(
+                ptr,
+                i.z_channel_index.map(|i| i as _).unwrap_or(-1),
+            );
+            oiio_ImageSpec_set_deep(ptr, i.deep);
+
+            // TODO: set `extra_attribs`
 
             Self { ptr }
         }
@@ -185,12 +246,18 @@ impl ImageSpec {
 }
 
 impl ImageSpec {
-    fn as_raw_ptr(&self) -> *const oiio_ImageSpec_t {
+    pub fn as_raw_ptr(&self) -> *const oiio_ImageSpec_t {
         self.ptr
     }
 
-    fn as_raw_ptr_mut(&self) -> *mut oiio_ImageSpec_t {
+    pub fn as_raw_ptr_mut(&self) -> *mut oiio_ImageSpec_t {
         self.ptr
+    }
+}
+
+impl Default for ImageSpec {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

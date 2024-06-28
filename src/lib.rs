@@ -1,12 +1,11 @@
 mod ffi;
 pub use ffi::*;
 
-//mod image_buf;
-//pub use image_buf::*;
-/*
+mod image_buf;
+pub use image_buf::*;
+
 mod image_cache;
 pub use image_cache::*;
-*/
 
 mod image_spec;
 pub use image_spec::*;

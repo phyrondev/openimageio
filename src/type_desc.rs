@@ -39,7 +39,7 @@ pub enum BaseType {
 }
 
 /// Describes whether a [`TypeDesc`] is a simple scalar of one of the
-/// [`BaseTypes`]s, or one of several simple aggregates.
+/// [`BaseType`]s, or one of several simple aggregates.
 ///
 /// Note that aggregates and arrays _enuare different. A `TypeDesc(F32, 3)`
 /// is an array of three `f32`s, a `TypeDesc(F32, Aggregate::Vec3)` is a single
@@ -99,13 +99,13 @@ pub enum VecSemantics {
     Vector = oiio_VECSEMANTICS::oiio_VECSEMANTICS_VECTOR.0 as _,
     /// A surface normal.
     Normal = oiio_VECSEMANTICS::oiio_VECSEMANTICS_NORMAL.0 as _,
-    /// An `i32[2]` representing the standard four byte encoding of an
+    /// An `u8[4]` representing the standard four byte encoding of an
     /// [SMPTE timecode](https://en.wikipedia.org/wiki/SMPTE_timecode).
     TimeCode = oiio_VECSEMANTICS::oiio_VECSEMANTICS_TIMECODE.0 as _,
-    /// An `i32[7]` representing the standard 28 byte encoding of an SMPTE
+    /// An `u8[28]` representing the standard 28 byte encoding of an SMPTE
     /// keycode.
     KeyCode = oiio_VECSEMANTICS::oiio_VECSEMANTICS_KEYCODE.0 as _,
-    /// A [`Aggregate::Vec2`]`representing a rational number -- `val[0]` ÷
+    /// A [`Aggregate::Vec2`] representing a rational number -- `val[0]` ÷
     /// `val[1]`.
     Rational = oiio_VECSEMANTICS::oiio_VECSEMANTICS_RATIONAL.0 as _,
     /// An [`[Aggregate::Vec2; 2]`](Aggregate::Vec2) or
@@ -129,33 +129,38 @@ pub struct TypeDesc {
     array_len: Option<ArrayLen>,
 }
 
-impl From<*const oiio_TypeDesc_t> for TypeDesc {
-    fn from(t: *const oiio_TypeDesc_t) -> Self {
-        let t = unsafe { t.as_ref().unwrap() };
-        Self {
-            base_type: match t.basetype {
-                b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 as u8 == b => None,
-                b => b.try_into().ok(),
-            },
-            aggregate: t.aggregate.try_into().unwrap(),
-            vec_semantics: match t.vecsemantics {
-                b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 as u8
-                    == b
-                    || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0
+impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
+    type Error = ();
+
+    fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
+        match unsafe { t.as_ref() } {
+            None => return Err(()),
+            Some(t) => Ok(Self {
+                base_type: match t.basetype {
+                    b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 as u8 == b => None,
+                    b => b.try_into().ok(),
+                },
+                aggregate: t.aggregate.try_into().unwrap(),
+                vec_semantics: match t.vecsemantics {
+                    b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0
                         as u8
-                        == b =>
-                {
-                    None
-                }
-                v => v.try_into().ok(),
-            },
-            array_len: match t.arraylen {
-                l if 0 == l || l < -1 => None,
-                -1 => Some(ArrayLen::Unspecific),
-                l => l.try_into().ok().map(|l: c_int| {
-                    ArrayLen::Specific(NonZeroUsize::new(l as _).unwrap())
-                }),
-            },
+                        == b
+                        || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0
+                            as u8
+                            == b =>
+                    {
+                        None
+                    }
+                    v => v.try_into().ok(),
+                },
+                array_len: match t.arraylen {
+                    l if 0 == l || l < -1 => None,
+                    -1 => Some(ArrayLen::Unspecific),
+                    l => l.try_into().ok().map(|l: c_int| {
+                        ArrayLen::Specific(NonZeroUsize::new(l as _).unwrap())
+                    }),
+                },
+            }),
         }
     }
 }

@@ -17,6 +17,7 @@ BBL_MODULE(oiio) {
     ;
 
     bbl::Class<std::string>("String")
+        .ctor(bbl::Class<std::string>::Ctor<const char*, size_t>("s", "count"), "ctor" )
         .m(&std::string::c_str)
         .m((const char* (std::string::*)() const)
            &std::string::data, "data")
