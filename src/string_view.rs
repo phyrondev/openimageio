@@ -11,6 +11,38 @@ pub struct StringView<'a> {
     _marker: PhantomData<*mut &'a ()>,
 }
 
+impl<'a> Default for StringView<'a> {
+    fn default() -> Self {
+        let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
+        unsafe {
+            oiio_StringView_ctor_default(&mut ptr as *mut _ as *mut _);
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl<'a> From<&'a str> for StringView<'a> {
+    fn from(string: &'a str) -> Self {
+        let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
+        unsafe {
+            oiio_StringView_ctor(
+                string.as_ptr() as *const _,
+                string.len().try_into().unwrap(),
+                &mut ptr as *mut _ as *mut _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
 impl<'a> From<&'a Path> for StringView<'a> {
     fn from(path: &'a Path) -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();

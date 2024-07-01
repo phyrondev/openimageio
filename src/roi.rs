@@ -6,6 +6,7 @@ use std::{
     //ptr::copy_nonoverlapping,
 };
 
+#[derive(Clone, Debug, Default)]
 #[repr(C)]
 pub struct RegionOfInterest {
     pub x: Range<c_int>,
@@ -33,4 +34,12 @@ impl From<*const oiio_Roi_t> for RegionOfInterest {
     }
 }*/
 
-impl RegionOfInterest {}
+impl RegionOfInterest {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn all() -> Self {
+        Self::default()
+    }
+}

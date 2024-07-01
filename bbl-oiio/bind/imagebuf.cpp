@@ -4,14 +4,17 @@
 
 namespace bblext {
 
-/*
-auto ImageBuf_name(OIIO::ImageBuf const& buf) -> char const* {
+/*auto ImageBuf_name(OIIO::ImageBuf const& buf) -> char const* {
     return buf.name().c_str();
 }
 
 auto ImageBuf_file_format_name(OIIO::ImageBuf const& buf) -> char const* {
     return buf.file_format_name().c_str();
 }*/
+
+bool ImageBuf_write(OIIO::ImageBuf const& buf, OIIO::string_view const file_name, OIIO::string_view const file_format) {
+    return buf.write(file_name, OIIO::TypeUnknown, file_format);
+}
 
 }
 
@@ -171,6 +174,7 @@ BBL_MODULE(oiio) {
 
     //bbl::fn(&bblext::ImageBuf_name);
     //bbl::fn(&bblext::ImageBuf_file_format_name);
+    bbl::fn(&bblext::ImageBuf_write);
 
     bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
         .smartptr_to<OIIO::ImageBuf>()

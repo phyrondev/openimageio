@@ -67,9 +67,9 @@ fn main() -> Result<()> {
         None::<ImageSpec>,
     );
 
-    image_buf_a.over(&image_buf_b, None, Some(16));
+    image_buf_a.over(&image_buf_b, None, None);
 
-    image_buf_a.save("over.exr")?;
+    image_buf_a.write("over.exr")?;
 
     Ok(())
 }
@@ -83,7 +83,6 @@ Install [`babble`](https://github.com/anderslanglands/babble).
 
 As of this writing `openimageio` depends on `babble` ≥ `v0.7` and the latest binary release
 is `v0.6`. As such you need to [build `babble` from source](https://github.com/anderslanglands/babble?tab=readme-ov-file#building-babble-from-source).
-
 
 #### Debian/Ubuntu
 

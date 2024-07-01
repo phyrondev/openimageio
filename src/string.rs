@@ -5,22 +5,23 @@ use std::{
     slice,
 };
 
-pub(crate) struct OiioString(*mut oiio_String_t);
+// Wraps a C++ String.
+pub(crate) struct String(*mut oiio_String_t);
 
-impl Drop for OiioString {
+impl Drop for String {
     fn drop(&mut self) {
         unsafe { oiio_String_dtor(self.0) };
     }
 }
 
-impl From<*mut oiio_String_t> for OiioString {
-    fn from(s: *mut oiio_String_t) -> OiioString {
+impl From<*mut oiio_String_t> for String {
+    fn from(s: *mut oiio_String_t) -> String {
         Self(s)
     }
 }
 
-impl OiioString {
-    pub fn new(s: &str) -> OiioString {
+impl String {
+    pub fn new(s: &str) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_String_t>::uninit();
 
         unsafe {
@@ -33,7 +34,7 @@ impl OiioString {
         }
     }
 
-    pub fn to_string(self) -> String {
+    pub fn to_string(&self) -> std::string::String {
         unsafe {
             let mut ptr = MaybeUninit::<*const c_char>::uninit();
             oiio_String_data(self.0, &mut ptr as *mut _ as *mut _);
@@ -41,7 +42,7 @@ impl OiioString {
             let mut size = MaybeUninit::<c_ulong>::uninit();
             oiio_String_size(self.0, &mut size as *mut _ as *mut _);
 
-            String::from_utf8_unchecked(
+            std::string::String::from_utf8_unchecked(
                 slice::from_raw_parts(
                     ptr.assume_init() as _,
                     size.assume_init() as _,

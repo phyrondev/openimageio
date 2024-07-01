@@ -1,6 +1,6 @@
 use crate::*;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::{ffi::c_int, num::NonZeroUsize};
+use std::num::NonZeroUsize;
 
 /// Descrives the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.
@@ -134,7 +134,7 @@ impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
 
     fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
         match unsafe { t.as_ref() } {
-            None => return Err(()),
+            None => Err(()),
             Some(t) => Ok(Self {
                 base_type: match t.basetype {
                     b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 as u8 == b => None,
@@ -156,9 +156,9 @@ impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
                 array_len: match t.arraylen {
                     l if 0 == l || l < -1 => None,
                     -1 => Some(ArrayLen::Unspecific),
-                    l => l.try_into().ok().map(|l: c_int| {
-                        ArrayLen::Specific(NonZeroUsize::new(l as _).unwrap())
-                    }),
+                    l => Some(ArrayLen::Specific(
+                        NonZeroUsize::new(l as _).unwrap(),
+                    )),
                 },
             }),
         }

@@ -17,12 +17,9 @@ fn set_or_get_persist(persist: bool) -> bool {
     if persist {
         PERSIST.get_or_init(|| ());
         true
-    } else
-    // Have we set the cache to persist?
-    if PERSIST.get().is_some() {
-        true
     } else {
-        false
+        // Have we set the cache to persist?
+        PERSIST.get().is_some()
     }
 }
 
@@ -68,6 +65,12 @@ fn set_or_get_persist(persist: bool) -> bool {
 
 pub struct ImageCache {
     ptr: *mut oiio_ImageCache_t,
+}
+
+impl Default for ImageCache {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ImageCache {

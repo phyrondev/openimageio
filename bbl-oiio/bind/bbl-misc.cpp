@@ -17,6 +17,7 @@ BBL_MODULE(oiio) {
     ;
 
     bbl::Class<std::string>("String")
+        .ctor(bbl::Class<std::string>::Ctor(), "ctor_default" )
         .ctor(bbl::Class<std::string>::Ctor<const char*, size_t>("s", "count"), "ctor" )
         .m(&std::string::c_str)
         .m((const char* (std::string::*)() const)
@@ -25,6 +26,7 @@ BBL_MODULE(oiio) {
     ;
 
     bbl::Class<OIIO::string_view>("StringView")
+        .ctor(bbl::Class<OIIO::string_view>::Ctor(), "ctor_default" )
         .ctor(bbl::Class<OIIO::string_view>::Ctor<const char*, size_t>("s", "count"), "ctor" )
         .m(&OIIO::string_view::data)
         .m(&OIIO::string_view::size)

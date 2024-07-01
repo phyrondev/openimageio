@@ -14,9 +14,13 @@ BBL_MODULE(oiio) {
 
     // over()
     bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, const OIIO::ImageBuf&, OIIO::ROI, int))
+        &OIIO::ImageBufAlgo::over, "ImageBufAlgo_over_self");
+
+    // over()
+    bbl::fn((OIIO::ImageBuf (*)(const OIIO::ImageBuf&, const OIIO::ImageBuf&, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::over, "ImageBufAlgo_over");
 
     // zover()
     bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, const OIIO::ImageBuf&, bool, OIIO::ROI, int))
-        &OIIO::ImageBufAlgo::zover, "ImageBufAlgo_zover");
+        &OIIO::ImageBufAlgo::zover, "ImageBufAlgo_zover_self");
 }
