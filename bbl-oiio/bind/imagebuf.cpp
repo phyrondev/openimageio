@@ -16,6 +16,10 @@ bool ImageBuf_write(OIIO::ImageBuf const& buf, OIIO::string_view const file_name
     return buf.write(file_name, OIIO::TypeUnknown, file_format);
 }
 
+bool ImageBuf_write_with_spec(OIIO::ImageBuf const& buf, OIIO::string_view const file_name, OIIO::TypeDesc type_desc, OIIO::string_view const file_format) {
+    return buf.write(file_name, type_desc, file_format);
+}
+
 }
 
 BBL_MODULE(oiio) {
@@ -175,6 +179,7 @@ BBL_MODULE(oiio) {
     //bbl::fn(&bblext::ImageBuf_name);
     //bbl::fn(&bblext::ImageBuf_file_format_name);
     bbl::fn(&bblext::ImageBuf_write);
+    bbl::fn(&bblext::ImageBuf_write_with_spec);
 
     bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
         .smartptr_to<OIIO::ImageBuf>()

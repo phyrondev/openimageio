@@ -47,9 +47,12 @@ pub enum ImageBufStorage {
 /// Provides an API for reading, writing, and manipulating images as a single
 /// unit, without the need to worry about any details of storage or I/O.
 ///
-/// All calls that read or write are implementedunderneath in terms of
+/// All calls that read or write are implemented underneath in terms of
 /// [`ImageCache`], [`ImageInput`], and [`ImageOutput`]. I.e. they work with all
 /// of the image file formats supported by this crate.
+///
+/// This has a lifetime so we can tie lifetimes of optional dependencies to it.
+/// E.g. an that of an `ImageCache`.
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct ImageBuf<'a> {
     ptr: *mut oiio_ImageBuf_t,
@@ -267,16 +270,84 @@ impl<'a> ImageBuf<'a> {
 
 #[cfg(feature = "compositing")]
 impl<'a> ImageBuf<'a> {
-    pub fn over(
+    fn do_zero(&mut self, roi: Option<Roi>, thread_count: Option<u16>) -> bool {
+        let mut is_ok = MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBufAlgo_zero(
+                self.ptr,
+                std::mem::transmute::<Roi, oiio_ROI_t>(
+                    roi.unwrap_or(self.roi()),
+                ),
+                thread_count.unwrap_or_default() as _,
+                &mut is_ok as *mut _ as *mut _,
+            );
+
+            is_ok.assume_init()
+        }
+    }
+
+    pub fn zero(&mut self, roi: Option<Roi>, thread_count: Option<u16>) {
+        if !self.do_zero(roi, thread_count) || self.is_error() {
+            error!("{}", self.error(Some(true)).unwrap_or(UNKNOWN_ERROR.into()))
+        }
+    }
+
+    pub fn try_zero(
+        &mut self,
+        roi: Option<Roi>,
+        thread_count: Option<u16>,
+    ) -> Result<()> {
+        if !self.do_zero(roi, thread_count) || self.is_error() {
+            Err(anyhow!(self
+                .error(Some(true))
+                .unwrap_or(UNKNOWN_ERROR.into())))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn do_noise(
+        &mut self,
+        noise_type: &str,
+        a: f32,
+        b: f32,
+        monochromatic: Option<bool>,
+        seed: Option<i32>,
+        roi: Option<Roi>,
+        thread_count: Option<u16>,
+    ) -> bool {
+        let mut is_ok = MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBufAlgo_noise(
+                self.ptr,
+                StringView::from(noise_type).as_raw_ptr_mut(),
+                a,
+                b,
+                monochromatic.unwrap_or_default(),
+                seed.unwrap_or_default(),
+                std::mem::transmute::<Roi, oiio_ROI_t>(
+                    roi.unwrap_or(self.roi()),
+                ),
+                thread_count.unwrap_or_default() as _,
+                &mut is_ok as *mut _ as *mut _,
+            );
+
+            is_ok.assume_init()
+        }
+    }
+
+    fn do_over(
         &mut self,
         other: &ImageBuf,
         roi: Option<Roi>,
         thread_count: Option<u16>,
-    ) {
+    ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
-            oiio_ImageBufAlgo_over_self(
+            oiio_ImageBufAlgo_over(
                 self.ptr,
                 self.ptr,
                 other.ptr,
@@ -287,12 +358,18 @@ impl<'a> ImageBuf<'a> {
                 &mut is_ok as *mut _ as *mut _,
             );
 
-            if !is_ok.assume_init() || self.is_error() {
-                error!(
-                    "{}",
-                    self.error(Some(true)).unwrap_or(UNKNOWN_ERROR.into())
-                )
-            }
+            is_ok.assume_init()
+        }
+    }
+
+    pub fn over(
+        &mut self,
+        other: &ImageBuf,
+        roi: Option<Roi>,
+        thread_count: Option<u16>,
+    ) {
+        if !self.do_over(other, roi, thread_count) || self.is_error() {
+            error!("{}", self.error(Some(true)).unwrap_or(UNKNOWN_ERROR.into()))
         }
     }
 
@@ -302,27 +379,12 @@ impl<'a> ImageBuf<'a> {
         roi: Option<Roi>,
         thread_count: Option<u16>,
     ) -> Result<()> {
-        let mut is_ok = MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBufAlgo_over_self(
-                self.ptr,
-                self.ptr,
-                other.ptr,
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    roi.unwrap_or(Roi::all()),
-                ),
-                thread_count.unwrap_or_default() as _,
-                &mut is_ok as *mut _ as *mut _,
-            );
-
-            if !is_ok.assume_init() || self.is_error() {
-                Err(anyhow!(self
-                    .error(Some(true))
-                    .unwrap_or(UNKNOWN_ERROR.into())))
-            } else {
-                Ok(())
-            }
+        if !self.do_over(other, roi, thread_count) || self.is_error() {
+            Err(anyhow!(self
+                .error(Some(true))
+                .unwrap_or(UNKNOWN_ERROR.into())))
+        } else {
+            Ok(())
         }
     }
 }
