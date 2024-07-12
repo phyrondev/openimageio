@@ -1,10 +1,20 @@
 use crate::{String as OiioString, *};
 use anyhow::{anyhow, Result};
 use camino::Utf8Path;
-use log::error;
 use std::{
     ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr, string::String,
 };
+
+#[cfg(feature = "algorithms")]
+mod algorithms;
+
+mod internal;
+
+/// Convenience type alias for developers familiar with the OpenImageIO C++ API.
+pub type ImageBuf<'a> = ImageBuffer<'a>;
+
+/// This is a placeholder for now.
+pub struct IoProxy;
 
 #[derive(Default, Debug)]
 pub enum WrapMode {
@@ -16,29 +26,27 @@ pub enum WrapMode {
     Mirror,
 }
 
-static UNKNOWN_ERROR: &str = "unknown error";
-
 #[repr(C)]
 #[derive(Debug)]
-pub enum ImageBufStorage {
-    /// An [`ImageBuf`] that doesn't represent any image at all (either
+pub enum ImageBufferStorage {
+    /// An [`ImageBuffer`] that doesn't represent any image at all (either
     /// because it is newly constructed with the default constructor,
     /// or had an error during construction).
     Uninitialized = oiio_IBStorage::oiio_IBStorage_UNINITIALIZED.0 as _,
     /// "Local storage" is allocated to hold the image pixels internal to the
-    /// [`ImageBuf`]. This memory will be freed when the `ImageBuf` is
+    /// [`ImageBuffer`]. This memory will be freed when the `ImageBuffer` is
     /// destroyed.
     Local = oiio_IBStorage::oiio_IBStorage_LOCALBUFFER.0 as _,
-    /// The [`ImageBuf`] 'wraps' pixel memory already allocated and owned by
+    /// The [`ImageBuffer`] 'wraps' pixel memory already allocated and owned by
     /// the calling application. The caller will continue to own that
-    /// memory and be responsible for freeing it after the `ImageBuf` is
+    /// memory and be responsible for freeing it after the `ImageBuffer` is
     /// destroyed.
     App = oiio_IBStorage::oiio_IBStorage_APPBUFFER.0 as _,
-    /// The [`ImageBuf`] is 'backed' by an [`ImageCache`], which will
+    /// The [`ImageBuffer`] is 'backed' by an [`ImageCache`], which will
     /// automatically be used to retrieve pixels when requested, but the
-    /// `ImageBuf` will not allocate separate storage for it. This brings
+    /// `ImageBuffer` will not allocate separate storage for it. This brings
     /// all the advantages of the `ImageCache`, but can only be used for
-    /// read-only `ImageBuf`'s that reference a stored image file.
+    /// read-only `ImageBuffer`'s that reference a stored image file.
     ImageCache = oiio_IBStorage::oiio_IBStorage_IMAGECACHE.0 as _,
 }
 
@@ -51,21 +59,28 @@ pub enum ImageBufStorage {
 /// [`ImageCache`], [`ImageInput`], and [`ImageOutput`]. I.e. they work with all
 /// of the image file formats supported by this crate.
 ///
-/// This has a lifetime so we can tie lifetimes of optional dependencies to it.
-/// E.g. an that of an `ImageCache`.
+/// This has an explicit lifetime so we that lifetimes of optional dependencies
+/// can be tied to it. E.g. that of an `ImageCache`.
+///
+/// # For C++ Developers
+///
+/// The name was changed to not contain abbreviations. The original name,
+/// [`ImageBuf`] is available behind a `type` alias.
+///
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/index.html)
 #[derive(Debug, Hash, PartialEq, Eq)]
-pub struct ImageBuf<'a> {
+pub struct ImageBuffer<'a> {
     ptr: *mut oiio_ImageBuf_t,
     _marker: PhantomData<*mut &'a ()>,
 }
 
-impl<'a> Default for ImageBuf<'a> {
+impl<'a> Default for ImageBuffer<'a> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> Clone for ImageBuf<'a> {
+impl<'a> Clone for ImageBuffer<'a> {
     fn clone(&self) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
         unsafe {
@@ -85,13 +100,13 @@ impl<'a> Clone for ImageBuf<'a> {
     }
 }
 
-impl<'a> Drop for ImageBuf<'a> {
+impl<'a> Drop for ImageBuffer<'a> {
     fn drop(&mut self) {
         unsafe { oiio_ImageBuf_dtor(self.ptr) };
     }
 }
 
-impl<'a> ImageBuf<'a> {
+impl<'a> ImageBuffer<'a> {
     pub fn new() -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
@@ -110,7 +125,7 @@ impl<'a> ImageBuf<'a> {
         mip_level: Option<u32>,
         image_cache: Option<&'a ImageCache>,
         image_spec: Option<impl Into<ImageSpec>>,
-        //io_proxy: Option<IoProxy>
+        _io_proxy: Option<IoProxy>,
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
@@ -124,7 +139,7 @@ impl<'a> ImageBuf<'a> {
                         .map(|c| c.as_raw_ptr_mut())
                         .unwrap_or(ptr::null_mut()),
                     image_spec
-                        .map(|s| s.into().as_raw_ptr_mut())
+                        .map(|s| s.into().as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
                     ptr::null_mut() as _,
                     &mut ptr as *mut _ as *mut _,
@@ -167,7 +182,7 @@ impl<'a> ImageBuf<'a> {
             if !is_ok.assume_init() || self.is_error() {
                 Err(anyhow!(self
                     .error(Some(true))
-                    .unwrap_or("ImageBuf::write(): unknown error".into())))
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
             } else {
                 Ok(())
             }
@@ -175,11 +190,11 @@ impl<'a> ImageBuf<'a> {
     }
 }
 
-// Getters.
-impl<'a> ImageBuf<'a> {
+/// # Getters
+impl<'a> ImageBuffer<'a> {
     #[inline]
-    pub fn storage(&self) -> ImageBufStorage {
-        let mut storage = MaybeUninit::<ImageBufStorage>::uninit();
+    pub fn storage(&self) -> ImageBufferStorage {
+        let mut storage = MaybeUninit::<ImageBufferStorage>::uninit();
         unsafe {
             oiio_ImageBuf_storage(self.ptr, &mut storage as *mut _ as *mut _);
             storage.assume_init()
@@ -195,8 +210,13 @@ impl<'a> ImageBuf<'a> {
         }
     }
 
+    #[inline(always)]
+    pub fn roi(&self) -> RegionOfInterest {
+        self.region_of_interest()
+    }
+
     #[inline]
-    pub fn roi(&self) -> Roi {
+    pub fn region_of_interest(&self) -> RegionOfInterest {
         let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
 
         unsafe {
@@ -205,13 +225,8 @@ impl<'a> ImageBuf<'a> {
         }
     }
 
-    #[inline(always)]
-    pub fn region_of_interest(&self) -> RegionOfInterest {
-        self.roi()
-    }
-
     #[inline]
-    pub fn roi_full(&self) -> Roi {
+    pub fn roi_full(&self) -> RegionOfInterest {
         let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
 
         unsafe {
@@ -268,143 +283,23 @@ impl<'a> ImageBuf<'a> {
     }
 }
 
-#[cfg(feature = "compositing")]
-impl<'a> ImageBuf<'a> {
-    fn do_zero(&mut self, roi: Option<Roi>, thread_count: Option<u16>) -> bool {
-        let mut is_ok = MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBufAlgo_zero(
-                self.ptr,
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    roi.unwrap_or(self.roi()),
-                ),
-                thread_count.unwrap_or_default() as _,
-                &mut is_ok as *mut _ as *mut _,
-            );
-
-            is_ok.assume_init()
-        }
-    }
-
-    pub fn zero(&mut self, roi: Option<Roi>, thread_count: Option<u16>) {
-        if !self.do_zero(roi, thread_count) || self.is_error() {
-            error!("{}", self.error(Some(true)).unwrap_or(UNKNOWN_ERROR.into()))
-        }
-    }
-
-    pub fn try_zero(
-        &mut self,
-        roi: Option<Roi>,
-        thread_count: Option<u16>,
-    ) -> Result<()> {
-        if !self.do_zero(roi, thread_count) || self.is_error() {
-            Err(anyhow!(self
-                .error(Some(true))
-                .unwrap_or(UNKNOWN_ERROR.into())))
-        } else {
-            Ok(())
-        }
-    }
-
-    fn do_noise(
-        &mut self,
-        noise_type: &str,
-        a: f32,
-        b: f32,
-        monochromatic: Option<bool>,
-        seed: Option<i32>,
-        roi: Option<Roi>,
-        thread_count: Option<u16>,
-    ) -> bool {
-        let mut is_ok = MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBufAlgo_noise(
-                self.ptr,
-                StringView::from(noise_type).as_raw_ptr_mut(),
-                a,
-                b,
-                monochromatic.unwrap_or_default(),
-                seed.unwrap_or_default(),
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    roi.unwrap_or(self.roi()),
-                ),
-                thread_count.unwrap_or_default() as _,
-                &mut is_ok as *mut _ as *mut _,
-            );
-
-            is_ok.assume_init()
-        }
-    }
-
-    fn do_over(
-        &mut self,
-        other: &ImageBuf,
-        roi: Option<Roi>,
-        thread_count: Option<u16>,
-    ) -> bool {
-        let mut is_ok = MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBufAlgo_over(
-                self.ptr,
-                self.ptr,
-                other.ptr,
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    roi.unwrap_or(self.roi()),
-                ),
-                thread_count.unwrap_or_default() as _,
-                &mut is_ok as *mut _ as *mut _,
-            );
-
-            is_ok.assume_init()
-        }
-    }
-
-    pub fn over(
-        &mut self,
-        other: &ImageBuf,
-        roi: Option<Roi>,
-        thread_count: Option<u16>,
-    ) {
-        if !self.do_over(other, roi, thread_count) || self.is_error() {
-            error!("{}", self.error(Some(true)).unwrap_or(UNKNOWN_ERROR.into()))
-        }
-    }
-
-    pub fn try_over(
-        &mut self,
-        other: &ImageBuf,
-        roi: Option<Roi>,
-        thread_count: Option<u16>,
-    ) -> Result<()> {
-        if !self.do_over(other, roi, thread_count) || self.is_error() {
-            Err(anyhow!(self
-                .error(Some(true))
-                .unwrap_or(UNKNOWN_ERROR.into())))
-        } else {
-            Ok(())
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
+    fn load() {
         use camino::Utf8Path;
 
         //let image_cache = ImageCache::shared(false);
 
-        let image_buf = ImageBuf::from_file(
+        let image_buf = ImageBuffer::from_file(
             &Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
             None,
             None,
             None, //Some(image_cache),
             None::<ImageSpec>,
+            None,
         );
 
         println!("Storage:       {:?}", image_buf.storage());

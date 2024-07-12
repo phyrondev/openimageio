@@ -108,7 +108,7 @@ The rest of the dependencies:
 sudo apt install cmake libimath-dev libopenimageio-dev
 ```
 
-### Prerequites
+### Prerequisites
 
 Make sure `BBL_PLUGIN_PATH` is set to where the Rust plugin for `babble` can be
 found.
@@ -123,6 +123,6 @@ I.e. you'd have:
 export BBL_PLUGIN_PATH=/usr/local/plugins/
 ```
 
-> After you set this you must run `cargo clean` and re-build (as the binding's
+> :warn: After you set this you must run `cargo clean` and re-build (as the binding's
 > `build.rs` only looks for changes in the input to trigger re-runs, not in the
 > output)!

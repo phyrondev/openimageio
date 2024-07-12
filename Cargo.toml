@@ -1,9 +1,10 @@
 [package]
-name = "oiio"
+name = "openimageio"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0 OR BSD-3-Clause"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Anders Langlands"]
+homepage = "https://openimageio.org/"
 
 [build-dependencies]
 bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
@@ -11,11 +12,13 @@ bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
 [dependencies]
 anyhow = "1"
 camino = "1.1"
-log = "0.4.22"
+log = "0.4"
 num_enum = "0.7"
 once_cell = { version = "1", features = ["parking_lot"] }
 
 [features]
-default = ["compositing"]
-# Enable a bunch of compposting and generator methods on `ImageBuf`.
-compositing = []
+default = ["algorithms"]
+# Enable a bunch of compposting and generator methods on `ImageBuffer`.
+algorithms = []
+# Make the OpenImageIO FFI this crate uses public.
+ffi = []
