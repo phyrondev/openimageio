@@ -133,6 +133,8 @@ impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
     type Error = ();
 
     fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
+        debug_assert!(!t.is_null());
+
         match unsafe { t.as_ref() } {
             None => Err(()),
             Some(t) => Ok(Self {

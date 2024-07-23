@@ -7,6 +7,8 @@ use std::{
 
 #[cfg(feature = "algorithms")]
 mod algorithms;
+#[cfg(feature = "algorithms")]
+pub use algorithms::*;
 
 mod internal;
 
@@ -294,7 +296,7 @@ mod tests {
         //let image_cache = ImageCache::shared(false);
 
         let image_buf = ImageBuffer::from_file(
-            &Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
+            Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
             None,
             None,
             None, //Some(image_cache),

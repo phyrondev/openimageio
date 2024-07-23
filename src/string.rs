@@ -1,6 +1,7 @@
 use crate::*;
 use std::{
     ffi::{c_char, c_ulong},
+    fmt::{Display, Formatter},
     mem::MaybeUninit,
     slice,
 };
@@ -20,6 +21,30 @@ impl From<*mut oiio_String_t> for String {
     }
 }
 
+impl Display for String {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        unsafe {
+            let mut ptr = MaybeUninit::<*const c_char>::uninit();
+            oiio_String_data(self.0, &mut ptr as *mut _ as *mut _);
+
+            let mut size = MaybeUninit::<c_ulong>::uninit();
+            oiio_String_size(self.0, &mut size as *mut _ as *mut _);
+
+            write!(
+                f,
+                "{}",
+                std::string::String::from_utf8_unchecked(
+                    slice::from_raw_parts(
+                        ptr.assume_init() as _,
+                        size.assume_init() as _,
+                    )
+                    .to_vec(),
+                )
+            )
+        }
+    }
+}
+
 impl String {
     pub fn new(s: &str) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_String_t>::uninit();
@@ -31,24 +56,6 @@ impl String {
                 &mut ptr as *mut _ as *mut _,
             );
             Self(ptr.assume_init())
-        }
-    }
-
-    pub fn to_string(&self) -> std::string::String {
-        unsafe {
-            let mut ptr = MaybeUninit::<*const c_char>::uninit();
-            oiio_String_data(self.0, &mut ptr as *mut _ as *mut _);
-
-            let mut size = MaybeUninit::<c_ulong>::uninit();
-            oiio_String_size(self.0, &mut size as *mut _ as *mut _);
-
-            std::string::String::from_utf8_unchecked(
-                slice::from_raw_parts(
-                    ptr.assume_init() as _,
-                    size.assume_init() as _,
-                )
-                .to_vec(),
-            )
         }
     }
 

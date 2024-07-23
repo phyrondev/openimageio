@@ -2,45 +2,47 @@ use crate::*;
 use anyhow::Result;
 use std::mem::MaybeUninit;
 
+#[derive(Clone, Copy, Default)]
 #[non_exhaustive]
 pub enum PixelFilter {
-    Gaussian(f32),
-    SharpGaussian(f32),
-    Box(f32),
-    Triangle(f32),
-    Mitchell(f32),
-    BlackmanHarris(f32),
-    Bspline(f32),
+    Gaussian,
+    SharpGaussian,
+    Box,
+    Triangle,
+    Mitchell,
+    BlackmanHarris,
+    Bspline,
     CatmullRom,
+    #[default]
     Lanczos3,
-    Cubic(f32),
-    Keys(f32),
-    Simon(f32),
-    Rifman(f32),
-    Disk(f32),
-    Binomial(f32),
-    Laplacian(f32),
+    Cubic,
+    Keys,
+    Simon,
+    Rifman,
+    Disk,
+    Binomial,
+    Laplacian,
 }
 
 impl From<PixelFilter> for &str {
     fn from(pf: PixelFilter) -> Self {
         match pf {
-            PixelFilter::Gaussian(_) => "gaussian",
-            PixelFilter::SharpGaussian(_) => "sharp-gaussian",
-            PixelFilter::Box(_) => "box",
-            PixelFilter::Triangle(_) => "triangle",
-            PixelFilter::Mitchell(_) => "mitchell",
-            PixelFilter::BlackmanHarris(_) => "blackman-harris",
-            PixelFilter::Bspline(_) => "b-spline",
+            PixelFilter::Gaussian => "gaussian",
+            PixelFilter::SharpGaussian => "sharp-gaussian",
+            PixelFilter::Box => "box",
+            PixelFilter::Triangle => "triangle",
+            PixelFilter::Mitchell => "mitchell",
+            PixelFilter::BlackmanHarris => "blackman-harris",
+            PixelFilter::Bspline => "b-spline",
             PixelFilter::CatmullRom => "catmull-rom",
             PixelFilter::Lanczos3 => "lanczos3",
-            PixelFilter::Cubic(_) => "cubic",
-            PixelFilter::Keys(_) => "keys",
-            PixelFilter::Simon(_) => "simon",
-            PixelFilter::Rifman(_) => "rifman",
-            PixelFilter::Disk(_) => "disk",
-            PixelFilter::Binomial(_) => "binomial",
-            PixelFilter::Laplacian(_) => "laplacian",
+            PixelFilter::Cubic => "cubic",
+            PixelFilter::Keys => "keys",
+            PixelFilter::Simon => "simon",
+            PixelFilter::Rifman => "rifman",
+            PixelFilter::Disk => "disk",
+            PixelFilter::Binomial => "binomial",
+            PixelFilter::Laplacian => "laplacian",
             //_ => "unknown",
         }
     }
@@ -56,10 +58,10 @@ impl<'a> ImageBuffer<'a> {
                 self.ptr,
                 self.ptr,
                 other.ptr,
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    roi.unwrap_or(self.roi()),
+                std::mem::transmute::<RegionOfInterest, oiio_ROI_t>(
+                    options.region_of_interest,
                 ),
-                options.thread_count.unwrap_or_default() as _,
+                options.thread_count as _,
                 &mut is_ok as *mut _ as *mut _,
             );
 
@@ -67,12 +69,11 @@ impl<'a> ImageBuffer<'a> {
         }
     }
 
-    /*fn rotate_ffi(
+    fn rotate_ffi(
         &mut self,
         other: &ImageBuffer,
-        pixel_filter: Option<PixelFilter>,
-        roi: Option<Roi>,
-        thread_count: Option<u16>,
+        angle: f32,
+        options: &RotateOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -80,21 +81,148 @@ impl<'a> ImageBuffer<'a> {
             oiio_ImageBufAlgo_rotate(
                 self.ptr,
                 other.ptr,
+                angle,
+                StringView::from(Into::<&str>::into(options.pixel_filter))
+                    .as_raw_ptr_mut(),
+                0.0,
+                options.recompute_region_of_interest,
                 std::mem::transmute::<Roi, oiio_ROI_t>(
-                    roi.unwrap_or(self.roi()),
+                    options.region_of_interest.clone(),
                 ),
-                thread_count.unwrap_or_default() as _,
+                options.thread_count as _,
                 &mut is_ok as *mut _ as *mut _,
             );
 
             is_ok.assume_init()
         }
-    }*/
+    }
+
+    fn rotate_around_ffi(
+        &mut self,
+        other: &ImageBuffer,
+        angle: f32,
+        center_x: f32,
+        center_y: f32,
+        options: &RotateOptions,
+    ) -> bool {
+        let mut is_ok = MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBufAlgo_rotate_around(
+                self.ptr,
+                other.ptr,
+                angle,
+                center_x,
+                center_y,
+                StringView::from(Into::<&str>::into(options.pixel_filter))
+                    .as_raw_ptr_mut(),
+                0.0,
+                options.recompute_region_of_interest,
+                std::mem::transmute::<Roi, oiio_ROI_t>(
+                    options.region_of_interest.clone(),
+                ),
+                options.thread_count as _,
+                &mut is_ok as *mut _ as *mut _,
+            );
+
+            is_ok.assume_init()
+        }
+    }
 }
 
-struct Options {
-    region_of_interest: Option<Roi>,
-    thread_count: Option<u16>,
+/// Generic options accepted by most compositing operators.
+#[derive(Clone, Default)]
+pub struct Options {
+    pub region_of_interest: RegionOfInterest,
+    pub thread_count: u16,
+}
+
+#[derive(Clone, Default)]
+pub struct RotateOptions {
+    pixel_filter: PixelFilter,
+    recompute_region_of_interest: bool,
+    region_of_interest: RegionOfInterest,
+    thread_count: u16,
+}
+
+/// # Rotate
+///
+/// Rotate the src image by the angle (in radians, with positive angles
+/// clockwise). When `center_x` and `center_y` are supplied, they denote the
+/// center of rotation; in their absence, the rotation will be about the center
+/// of the image's *display window*.
+///
+/// Only the pixels (and channels) of dst that are specified by roi will be
+/// copied from the rotated src; the default roi is to alter all the pixels in
+/// dst. If dst is uninitialized, it will be resized to be an ImageBuf large
+/// enough to hold the rotated image if recompute_roi is true, or will have the
+/// same ROI as src if recompute_roi is false. It is an error to pass both an
+/// uninitialized dst and an undefined roi. The filter is used to weight the src
+/// pixels falling underneath it for each dst pixel. The caller may specify a
+/// reconstruction filter by name and width (expressed in pixels units of the
+/// dst image), or rotate() will choose a reasonable default high-quality
+/// default filter (`lanczos3`) if the empty string is passed, and a reasonable
+/// filter width if filterwidth is 0. (Note that some filter choices
+/// only make sense with particular width, in which case this filterwidth
+/// parameter may be ignored.)
+impl<'a> ImageBuffer<'a> {
+    pub fn rotate(&mut self, angle: f32) -> &mut Self {
+        let mut rotated = ImageBuffer::new();
+        let is_ok = rotated.rotate_ffi(self, angle, &RotateOptions::default());
+        *self = rotated;
+
+        self.ok_or_log_error(is_ok);
+        self
+    }
+
+    pub fn rotate_with(
+        &mut self,
+        angle: f32,
+        options: &RotateOptions,
+    ) -> &mut Self {
+        let mut rotated = ImageBuffer::new();
+        let is_ok = rotated.rotate_ffi(self, angle, options);
+        *self = rotated;
+
+        self.ok_or_log_error(is_ok);
+        self
+    }
+
+    pub fn rotate_around(
+        &mut self,
+        angle: f32,
+        center_x: f32,
+        center_y: f32,
+    ) -> &mut Self {
+        let mut rotated = ImageBuffer::new();
+        let is_ok = rotated.rotate_around_ffi(
+            self,
+            angle,
+            center_x,
+            center_y,
+            &RotateOptions::default(),
+        );
+        *self = rotated;
+
+        self.ok_or_log_error(is_ok);
+        self
+    }
+
+    pub fn rotate_around_with(
+        &mut self,
+        angle: f32,
+        center_x: f32,
+        center_y: f32,
+        options: &RotateOptions,
+    ) -> &mut Self {
+        let mut rotated = ImageBuffer::new();
+        let is_ok =
+            rotated.rotate_around_ffi(self, angle, center_x, center_y, options);
+        *self = rotated;
+
+        self.ok_or_log_error(is_ok);
+        self
+    }
 }
 
 /// # Compositing Operators
@@ -102,7 +230,7 @@ struct Options {
 /// These implement [Porter-Duff compositing](https://en.wikipedia.org/wiki/Alpha_compositing).
 impl<'a> ImageBuffer<'a> {
     pub fn over(&mut self, other: &ImageBuffer) -> &mut Self {
-        let is_ok = self.over_ffi(other, None, None);
+        let is_ok = self.over_ffi(other, Options::default());
         self.ok_or_log_error(is_ok);
         self
     }
@@ -112,12 +240,12 @@ impl<'a> ImageBuffer<'a> {
         other: &ImageBuffer,
         options: Option<Options>,
     ) -> &mut Self {
-        let is_ok = self.over_ffi(other, region_of_interest, thread_count);
+        let is_ok = self.over_ffi(other, options.unwrap_or_default());
         self.ok_or_log_error(is_ok)
     }
 
     pub fn try_over(&mut self, other: &ImageBuffer) -> Result<&mut Self> {
-        let is_ok = self.over_ffi(other, None, None);
+        let is_ok = self.over_ffi(other, Options::default());
         self.ok_or_error(is_ok)
     }
 
@@ -126,7 +254,7 @@ impl<'a> ImageBuffer<'a> {
         other: &ImageBuffer,
         options: Option<Options>,
     ) -> Result<&mut Self> {
-        let is_ok = self.over_ffi(other, region_of_interest, thread_count);
+        let is_ok = self.over_ffi(other, options.unwrap_or_default());
         self.ok_or_error(is_ok)
     }
 }

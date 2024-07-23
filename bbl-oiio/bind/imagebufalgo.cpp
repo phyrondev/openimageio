@@ -27,4 +27,12 @@ BBL_MODULE(oiio) {
     // zover()
     bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, const OIIO::ImageBuf&, bool, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::zover, "ImageBufAlgo_zover");
+
+    // rotate()
+    bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, float, OIIO::string_view, float, bool, OIIO::ROI, int))
+        &OIIO::ImageBufAlgo::rotate, "ImageBufAlgo_rotate");
+
+    // rotate_()
+    bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, float, float, float,  OIIO::string_view, float, bool, OIIO::ROI, int))
+        &OIIO::ImageBufAlgo::rotate, "ImageBufAlgo_rotate_around");
 }
