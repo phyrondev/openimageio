@@ -11,6 +11,7 @@ set(bindfiles
   bind/bbl-misc.cpp
   bind/attrdelegate.cpp
   bind/deepdata.cpp
+  #bind/filesystem.cpp
   #bind/filter.cpp
   bind/imagebuf.cpp
   bind/imagebufalgo.cpp

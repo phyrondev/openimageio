@@ -1,18 +1,23 @@
-//use crate::*;
-use std::{
-    ffi::{c_int, c_uint},
-    //mem::MaybeUninit,
-    ops::Range,
-    //ptr::copy_nonoverlapping,
-};
+use std::ops::Range;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct RegionOfInterest {
-    pub x: Range<c_int>,
-    pub y: Range<c_int>,
-    pub z: Range<c_int>,
-    pub channel: Range<c_uint>,
+    pub x: Range<i32>,
+    pub y: Range<i32>,
+    pub z: Range<i32>,
+    pub channel: Range<u32>,
+}
+
+impl Default for RegionOfInterest {
+    fn default() -> Self {
+        Self {
+            x: i32::MIN..0,
+            y: 0..0,
+            z: 0..0,
+            channel: 0..0,
+        }
+    }
 }
 
 pub type Roi = RegionOfInterest;

@@ -1,3 +1,20 @@
+//! # Operators
+//!
+//! ## Image Editing
+//!
+//! * [Channel Shuffling](ImageBuffer#channel-shuffling)
+//! *
+//!
+//! ## Transformations
+//! * [rotate90/180/270](ImageBuffer#rotate90-180-270)
+//! * [Flip-Flop-Transpose](ImageBuffer#flip-flop-transpose)
+//! * [Rotation](ImageBuffer#rotate)
+//! * [Resize](ImageBuffer#resize)
+//! * [Warping (2D Transformation)](ImageBuffer#warp)
+//!
+//! ## Compositing
+//!
+//! * [Over](ImageBuffer#over)
 use crate::*;
 use anyhow::Result;
 use std::mem::MaybeUninit;
@@ -139,10 +156,10 @@ pub struct Options {
 
 #[derive(Clone, Default)]
 pub struct RotateOptions {
-    pixel_filter: PixelFilter,
-    recompute_region_of_interest: bool,
-    region_of_interest: RegionOfInterest,
-    thread_count: u16,
+    pub pixel_filter: PixelFilter,
+    pub recompute_region_of_interest: bool,
+    pub region_of_interest: RegionOfInterest,
+    pub thread_count: u16,
 }
 
 /// # Rotate
@@ -161,10 +178,10 @@ pub struct RotateOptions {
 /// pixels falling underneath it for each dst pixel. The caller may specify a
 /// reconstruction filter by name and width (expressed in pixels units of the
 /// dst image), or rotate() will choose a reasonable default high-quality
-/// default filter (`lanczos3`) if the empty string is passed, and a reasonable
-/// filter width if filterwidth is 0. (Note that some filter choices
-/// only make sense with particular width, in which case this filterwidth
-/// parameter may be ignored.)
+/// default filter ([`Lanczos3`](PixelFilter::Lanczos3)) if the empty string is
+/// passed, and a reasonable filter width if filterwidth is 0. (Note that some
+/// filter choices only make sense with particular width, in which case this
+/// filterwidth parameter may be ignored.)
 impl<'a> ImageBuffer<'a> {
     pub fn rotate(&mut self, angle: f32) -> &mut Self {
         let mut rotated = ImageBuffer::new();
@@ -225,7 +242,7 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
-/// # Compositing Operators
+/// # Over
 ///
 /// These implement [Porter-Duff compositing](https://en.wikipedia.org/wiki/Alpha_compositing).
 impl<'a> ImageBuffer<'a> {
@@ -270,5 +287,30 @@ mod tests {
         let image_buf_c = ImageBuffer::new();
 
         image_buf_a.over(image_buf_b.over(&image_buf_c));
+    }
+
+    #[test]
+    fn rotate() -> Result<()> {
+        use crate::operators::PixelFilter::BlackmanHarris;
+        use camino::Utf8Path as Path;
+
+        let mut image_buf = ImageBuffer::from_file(Path::new(
+            "assets/wooden_lounge_2k__F32_RGBA.exr",
+        ));
+
+        image_buf.rotate_with(
+            42.0 * std::f32::consts::TAU / 360.0,
+            &RotateOptions {
+                // Use a Blackmann-Harris filter to avoid halos easily
+                // introduced when operating on HDRs with the default one,
+                // Lanczos3.
+                pixel_filter: BlackmanHarris,
+                ..Default::default()
+            },
+        );
+
+        image_buf.write(Path::new("rotated.exr"), None, None)?;
+
+        Ok(())
     }
 }

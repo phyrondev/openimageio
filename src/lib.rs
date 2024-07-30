@@ -146,8 +146,9 @@
 //!   * Acronyms were spelled out to make code easier to read for developers
 //!     coming from a non-VFX background. For example `ROI` (C++) became
 //!     `RegionOfInterest` (Rust). However, there is a type alias, `Roi` for
-//!     those familiar with the acronym (note the capitalization change to adhere
-//!     to [aforementioned guidelines](https://rust-lang.github.io/api-guidelines/naming.html)).
+//!     those familiar with the acronym (note the capitalization change to
+//!     adhere to
+//!     [aforementioned guidelines](https://rust-lang.github.io/api-guidelines/naming.html)).
 //!
 //!   * The ubiquitous `n`/`num`-prefixes (C++) meaning 'number (of)' were
 //!     replaced by a `_count` suffix (Rust). For example `nthreads` (C++)
@@ -159,37 +160,66 @@
 //! * Rust does not have named parameters and quite a few OIIO C++ methods have
 //!   variants that take a lot of those (with defaults, if omitted).
 //!
-//!   Wrapping each of these in an `Option` doesn't make for very readable code
-//!   because of  the absence of parameter names. The [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)
+//!   Wrapping each of these in an `Option` doesn't make for very readable code.
+//!   This is because of the absence of parameter names at call sites and as
+//!   they still have to specified, even if omitted (one `None` per each).
+//!
+//!   The [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)
 //!   is mostly used for opaque/side-effects-free `struct` initalization in the
 //!   wild and quite verbose. But it is seldom used for optional function
 //!   parameters. It also requires a lot of boilerplate code.
 //!
-//!   Instead the [Init-Struct Pattern](https://xaeroxe.github.io/init-struct-pattern/) was chosen.
+//!   Instead the
+//!   [init-struct pattern](https://xaeroxe.github.io/init-struct-pattern/)
+//!   was chosen.
 //!
-//!   For example the [`ImageBuffer::rotate()`] method has a useful C++ variant
-//!   taking five extra parameters. On the Rust side the equivalent has a single
-//!   `Option<RotateOptions>` parameter that can be omitted completely (`None`)
-//!   or partially by using `Default::default()` `struct`-initialization
-//!   shorthand:
+//!   It requires almost no boilerplate, parameter names are clearly spelled
+//!   out on initialization/assignment and the compiler will optimize most/all
+//!   of it away (zero cost abstractions).
+//!
+//!   For example, the [`ImageBuffer::rotate()`] method has a useful C++ variant
+//!   taking *five* extra parameters.
+//!
+//!   On the Rust side we expose a simple version,
+//!   [`rotate()`](ImageBuffer::rotate) but also an equivalent,
+//!   [`rotate_with()`](ImageBuffer::rotate_with), that takes a single
+//!   [`RotateOptions`](operators::RotateOptions) parameter with the
+//!   aforementioned five parameters.
+//!
+//!   Specifying each of these can be (partially) omitted by using
+//!   `Default::default()` `struct`-initialization shorthand:
 //!
 //!   ```
-//!   image_buffer.rotate(
-//!       42.0,
-//!       Some(RotateOptions {
-//!          filter_width: 4.0,
-//!          thread_count: 8,
-//!          ..Default::default()
-//!       })
-//!     );
+//!   # use openimageio::{ImageBuffer, operators::{
+//!   #     PixelFilter::BlackmanHarris, RotateOptions
+//!   # }, Utf8Path};
+//!   # use std::f32::consts::TAU;
+//!   let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
+//!       "assets/wooden_lounge_2k__F32_RGBA.exr",
+//!   ));
+//!
+//!   image_buf.rotate_with(
+//!       42.0 * TAU / 360.0,
+//!       &RotateOptions {
+//!           // Use a Blackmann-Harris filter to avoid halos easily introduced
+//!           // when operating on HDRs using the default filter, Lanczos3.
+//!           pixel_filter: BlackmanHarris,
+//!           ..Default::default()
+//!       },
+//!   );
 //!   ```
 //!
 //! ## Opaque Types
+pub use camino::{Utf8Path, Utf8PathBuf};
+
 mod ffi;
 #[cfg(feature = "ffi")]
 pub use ffi::*;
 #[cfg(not(feature = "ffi"))]
 pub(crate) use ffi::*;
+
+mod file_system;
+pub use file_system::*;
 
 mod image_buffer;
 pub use image_buffer::*;
