@@ -126,7 +126,7 @@ pub struct FromFileOptions<'a> {
     /// Optionally, a pointer to an `ImageSpec` whose metadata contains
     /// configuration hints that set options related to the opening and reading
     /// of the file.
-    pub image_spec: Option<&ImageSpec>,
+    pub image_spec: Option<ImageSpec>,
     // Optional pointer to an `IoProxy` to use when reading from the file.
     // The lifetime of the proxy will be tied to the given `ImageBuffer`.
     // TODO io_proxy:
@@ -148,7 +148,7 @@ impl<'a> ImageBuffer<'a> {
 
     #[inline(always)]
     pub fn from_file(name: &Utf8Path) -> Self {
-        Self::from_file_with(file, &FromFileOptions::default())
+        Self::from_file_with(name, &FromFileOptions::default())
     }
 
     pub fn from_file_with(
@@ -473,7 +473,10 @@ mod tests {
             "assets/j0.3toD__F16_RGBA.exr",
         ));
 
-        println!("Name:          {}", image_buf.name()?);
+        println!(
+            "Name:          {}",
+            image_buf.name().ok_or(anyhow!("No name"))?
+        );
         println!("Storage:       {:?}", image_buf.storage());
         println!("Channel Count: {:?}", image_buf.channel_count());
 
