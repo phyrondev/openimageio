@@ -76,6 +76,10 @@ pub struct ImageBuffer<'a> {
 }
 
 impl<'a> Default for ImageBuffer<'a> {
+    /// Default constructor makes an empty/uninitialized `ImageBuffer`. There
+    /// isn't much you can do with an uninitialized buffer until you call
+    /// [`reset()`]. The storage type of a default-constructed `ImageBuffer` is
+    /// [`ImageBufferStorage::Uninitialized`].
     fn default() -> Self {
         Self::new()
     }
@@ -107,13 +111,26 @@ impl<'a> Drop for ImageBuffer<'a> {
     }
 }
 
+/// Optional parameters for the `from_file_with()`/`try_from_file_with()`
+/// methods.
 #[derive(Default)]
 pub struct FromFileOptions<'a> {
+    /// The subimage to read (defaults to the first subimage of the file).
     pub sub_image: u32,
+    /// The miplevel to read (defaults to the highest-res miplevel of the
+    /// file).
     pub mip_level: u32,
+    /// Optionally, an `ImageCache` to use, if possible, rather than reading
+    /// the entire image file into memory.
     pub image_cache: Option<&'a ImageCache>,
-    pub image_spec: Option<ImageSpec>,
-    // TODO io_proxy: IoProxy,
+    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
+    /// configuration hints that set options related to the opening and reading
+    /// of the file.
+    pub image_spec: Option<&ImageSpec>,
+    // Optional pointer to an `IoProxy` to use when reading from the file.
+    // The lifetime of the proxy will be tied to the given `ImageBuffer`.
+    // TODO io_proxy:
+    // Option<&'a IoProxy>,
 }
 
 impl<'a> ImageBuffer<'a> {
@@ -130,12 +147,12 @@ impl<'a> ImageBuffer<'a> {
     }
 
     #[inline(always)]
-    pub fn from_file(file: &Utf8Path) -> Self {
+    pub fn from_file(name: &Utf8Path) -> Self {
         Self::from_file_with(file, &FromFileOptions::default())
     }
 
     pub fn from_file_with(
-        file: &Utf8Path,
+        name: &Utf8Path,
         options: &FromFileOptions<'a>,
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
@@ -143,7 +160,7 @@ impl<'a> ImageBuffer<'a> {
         Self {
             ptr: unsafe {
                 oiio_ImageBuf_ctor_01(
-                    StringView::from(file).as_raw_ptr_mut(),
+                    StringView::from(name).as_raw_ptr_mut(),
                     options.sub_image as _,
                     options.mip_level as _,
                     options
