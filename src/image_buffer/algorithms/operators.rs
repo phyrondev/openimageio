@@ -17,7 +17,7 @@
 //! * [Over](ImageBuffer#over)
 use crate::*;
 use anyhow::Result;
-use std::mem::MaybeUninit;
+use std::{marker::PhantomData, mem::MaybeUninit};
 
 #[derive(Clone, Copy, Default)]
 #[non_exhaustive]
@@ -83,6 +83,31 @@ impl<'a> ImageBuffer<'a> {
             );
 
             is_ok.assume_init()
+        }
+    }
+
+    fn from_over_ffi(
+        a: &ImageBuffer,
+        b: &ImageBuffer,
+        options: Options,
+    ) -> ImageBuffer<'a> {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        unsafe {
+            oiio_ImageBufAlgo_from_over(
+                a.ptr,
+                b.ptr,
+                std::mem::transmute::<RegionOfInterest, oiio_ROI_t>(
+                    options.region_of_interest,
+                ),
+                options.thread_count as _,
+                &mut ptr as *mut _ as *mut _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
         }
     }
 
@@ -246,6 +271,38 @@ impl<'a> ImageBuffer<'a> {
 ///
 /// These implement [Porter-Duff compositing](https://en.wikipedia.org/wiki/Alpha_compositing).
 impl<'a> ImageBuffer<'a> {
+    pub fn from_over(a: &ImageBuffer, b: &ImageBuffer) -> Self {
+        let mut image_buffer =
+            ImageBuffer::from_over_ffi(a, b, Options::default());
+        image_buffer.ok_or_log_error(image_buffer.is_ok());
+        image_buffer
+    }
+
+    pub fn from_over_with(
+        a: &ImageBuffer,
+        b: &ImageBuffer,
+        options: Options,
+    ) -> Self {
+        let mut image_buffer = ImageBuffer::from_over_ffi(a, b, options);
+        image_buffer.ok_or_log_error(image_buffer.is_ok());
+        image_buffer
+    }
+
+    pub fn try_from_over(a: &ImageBuffer, b: &ImageBuffer) -> Result<Self> {
+        let mut image_buffer =
+            ImageBuffer::from_over_ffi(a, b, Options::default());
+        image_buffer.self_or_error()
+    }
+
+    pub fn try_from_over_with(
+        a: &ImageBuffer,
+        b: &ImageBuffer,
+        options: Options,
+    ) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::from_over_ffi(a, b, options);
+        image_buffer.self_or_error()
+    }
+
     pub fn over(&mut self, other: &ImageBuffer) -> &mut Self {
         let is_ok = self.over_ffi(other, Options::default());
         self.ok_or_log_error(is_ok);
@@ -255,9 +312,9 @@ impl<'a> ImageBuffer<'a> {
     pub fn over_with(
         &mut self,
         other: &ImageBuffer,
-        options: Option<Options>,
+        options: Options,
     ) -> &mut Self {
-        let is_ok = self.over_ffi(other, options.unwrap_or_default());
+        let is_ok = self.over_ffi(other, options);
         self.ok_or_log_error(is_ok)
     }
 
@@ -269,9 +326,9 @@ impl<'a> ImageBuffer<'a> {
     pub fn try_over_with(
         &mut self,
         other: &ImageBuffer,
-        options: Option<Options>,
+        options: Options,
     ) -> Result<&mut Self> {
-        let is_ok = self.over_ffi(other, options.unwrap_or_default());
+        let is_ok = self.over_ffi(other, options);
         self.ok_or_error(is_ok)
     }
 }

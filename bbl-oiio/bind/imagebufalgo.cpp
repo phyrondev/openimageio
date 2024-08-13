@@ -20,7 +20,7 @@ BBL_MODULE(oiio) {
     bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, const OIIO::ImageBuf&, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::over, "ImageBufAlgo_over");
 
-    // over()
+    // from_over()
     bbl::fn((OIIO::ImageBuf (*)(const OIIO::ImageBuf&, const OIIO::ImageBuf&, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::over, "ImageBufAlgo_from_over");
 

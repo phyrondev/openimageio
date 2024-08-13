@@ -145,7 +145,9 @@ impl<'a> ImageBuffer<'a> {
             _marker: PhantomData,
         }
     }
+}
 
+impl<'a> ImageBuffer<'a> {
     #[inline(always)]
     pub fn from_file(name: &Utf8Path) -> Self {
         Self::from_file_with(name, &FromFileOptions::default())
@@ -210,7 +212,7 @@ impl<'a> ImageBuffer<'a> {
                 &mut is_ok as *mut _ as *mut _,
             );
 
-            if !is_ok.assume_init() || self.is_error() {
+            if !is_ok.assume_init() || !self.is_ok() {
                 Err(anyhow!(self
                     .error(true)
                     .unwrap_or("ImageBuffer::write(): unknown error".into())))
@@ -415,10 +417,10 @@ impl<'a> ImageBuffer<'a> {
 
     /// Returns `true` if the `ImageBuffer` has had an error and has an error
     /// message ready to retrieve via [`error()`](self::error()).
-    pub fn is_error(&self) -> bool {
+    pub fn is_ok(&self) -> bool {
         let mut is_error = MaybeUninit::<bool>::uninit();
 
-        unsafe {
+        !unsafe {
             oiio_ImageBuf_has_error(
                 self.ptr,
                 &mut is_error as *mut _ as *mut _,
