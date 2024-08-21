@@ -47,31 +47,45 @@ OpenImageIO consists of:
 
 ```rust
 use anyhow::Result;
-use camino::Utf8Path;
-use oiio::{ImageBuf, ImageSpec};
+use oiio::{ImageBuffer, ImageSpecification, Utf8Path};
 
 fn main() -> Result<()> {
-    // Create a shared cache that will persist after this
+    // Create an app-global, shared cache that will persist after this
     // instance gets dropped.
-    let image_cache = ImageCache::shared(false);
+    let image_cache = ImageCache::shared(true);
 
-    // Load fg image. This is 1024×1024
-    let mut image_buf_a = ImageBuf::from_file(
+    // Load fg image. This is 1024×1024.
+    // The `_with` variants of OIIO methods take additional parameters.
+    let mut image_a = ImageBuffer::from_file_with(
         &Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
+        &FromFileOptions {
+            image_cache,
+            Default::default()
+        },
     );
 
     // Load bg image. This is 2048×1024.
-    let image_buf_b = ImageBuf::from_file(
+    let image_b = ImageBuffer::from_file(
         &Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"),
     );
 
     // Compose fg over bg, replacing the data window of fg
     // with the result. I.e. the result will be cropped at
     // fg's original dimensions of 1024×1024.
-    image_buf_a.over(&image_buf_b);
+    image_a.over(&image_b);
 
-    // Write the result
-    image_buf_a.write(&Utf8Path::new("over.exr"))?;
+    // Write the result.
+    image_a.write(&Utf8Path::new("a_over_b.exr"))?;
+
+    // Alternatively we could combine both images and get a buffer
+    // with the combined data windows.
+    let combined_image = ImageBuffer::from_over(image_a, image_b)?;
+
+    combined_image.write(&Utf8Path::new("from_a_over_b.exr"))?;
+
+    // `image_cache` gets dropped here but the shared cache still exists
+    // and can be accessed by creating a new `ImageCache::shared()` will
+    // access this instance.
 
     Ok(())
 }
