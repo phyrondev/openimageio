@@ -1,17 +1,13 @@
 #include <babble>
 
-#include <OpenImageIO/imagebuf.h>
-
-struct ustr {
-    char const* chars;
-};
+#include <OpenImageIO/ustring.h>
 
 BBL_MODULE(oiio) {
 
     bbl::Class<OIIO::ustring>()
         // .replace_with<ustr>()
-        // .ctor(bbl::Class<OIIO::ustring>::Ctor<>(), "default")
-        // .ctor(bbl::Class<OIIO::ustring>::Ctor<const char *>("str"), "ctor_01")
+        .ctor(bbl::Class<OIIO::ustring>::Ctor<>(), "default")
+        .ctor(bbl::Class<OIIO::ustring>::Ctor<const char *>("str"), "ctor_01")
         // .m(&OIIO::ustring::c_str)
         // .m(&OIIO::ustring::data)
         // .m(&OIIO::ustring::hash)

@@ -21,7 +21,7 @@ impl<'a> Default for StringView<'a> {
     fn default() -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
-            oiio_StringView_ctor_default(&mut ptr as *mut _ as *mut _);
+            oiio_StringView_ctor_default(&mut ptr as *mut _ as _);
 
             Self {
                 ptr: ptr.assume_init(),

@@ -1,6 +1,11 @@
 use bbl_build::Config;
+use log::error;
 
 pub fn main() {
+    if !std::env::var("BBL_PLUGIN_PATH").is_ok() {
+        error!("BBL_PLUGIN_PATH is no set");
+    }
+
     #[cfg(target_os = "linux")]
     println!("cargo::rustc-link-arg=-lstdc++");
 

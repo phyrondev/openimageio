@@ -2,6 +2,8 @@
 
 #include <OpenImageIO/imagebuf.h>
 
+#include <OpenImageIO/texture.h>
+
 namespace bblext {
 
 /*auto ImageBuf_name(OIIO::ImageBuf const& buf) -> char const* {

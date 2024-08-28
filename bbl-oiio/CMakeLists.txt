@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(oiio VERSION 0.1 LANGUAGES C CXX)
 
 find_package(OpenImageIO 2.4 REQUIRED)
-find_package(babble 0.7 CONFIG REQUIRED)
+find_package(babble 0.8 CONFIG REQUIRED)
 
 include(GNUInstallDirs)
 
@@ -11,13 +11,14 @@ set(bindfiles
   bind/bbl-misc.cpp
   bind/attrdelegate.cpp
   bind/deepdata.cpp
-  #bind/filesystem.cpp
+  bind/filesystem.cpp
   #bind/filter.cpp
   bind/imagebuf.cpp
   bind/imagebufalgo.cpp
   bind/imagecache.cpp
   bind/imageio.cpp
   bind/paramlist.cpp
+  bind/texture.cpp
   bind/typedesc.cpp
   bind/ustring.cpp
 )

@@ -5,6 +5,7 @@ enum ChannelFormat {
     Uniform(BaseType),
     PerChannel(Vec<BaseType>),
 }
+
 /// Describes the data format of an image -- dimensions, layout,
 /// number and meanings of image channels.
 ///

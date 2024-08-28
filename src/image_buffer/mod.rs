@@ -1,7 +1,8 @@
 use crate::*;
 use anyhow::{anyhow, Result};
 use std::{
-    ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr, string::String,
+    error::Error, ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr,
+    string::String,
 };
 
 #[cfg(feature = "algorithms")]
@@ -15,7 +16,7 @@ mod internal;
 pub type ImageBuf<'a> = ImageBuffer<'a>;
 
 /// This is a placeholder for now.
-pub struct IoProxy;
+//pub struct IoProxy;
 
 #[derive(Default, Debug)]
 pub enum WrapMode {
@@ -27,8 +28,8 @@ pub enum WrapMode {
     Mirror,
 }
 
-#[repr(C)]
 #[derive(Debug)]
+#[repr(C)]
 pub enum ImageBufferStorage {
     /// An [`ImageBuffer`] that doesn't represent any image at all (either
     /// because it is newly constructed with the default constructor,
@@ -78,7 +79,8 @@ pub struct ImageBuffer<'a> {
 impl<'a> Default for ImageBuffer<'a> {
     /// Default constructor makes an empty/uninitialized `ImageBuffer`. There
     /// isn't much you can do with an uninitialized buffer until you call
-    /// [`reset()`]. The storage type of a default-constructed `ImageBuffer` is
+    /// [`reset()`](ImageBuffer::reset). The storage type of a
+    /// default-constructed `ImageBuffer` is
     /// [`ImageBufferStorage::Uninitialized`].
     fn default() -> Self {
         Self::new()
@@ -147,6 +149,8 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
+pub trait FnProgress<'a>: Fn(f32) + 'a {}
+
 impl<'a> ImageBuffer<'a> {
     #[inline(always)]
     pub fn from_file(name: &Utf8Path) -> Self {
@@ -183,6 +187,9 @@ impl<'a> ImageBuffer<'a> {
         }
     }
 
+    /// Destroy any previous contents of the `ImageBuffer` and re-initialize it
+    /// to resemble a freshly constructed one using the default constructor
+    /// (holding no image, with storage [`ImageBufferStorage::Uninitialized`]).
     pub fn reset(&mut self) {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
@@ -192,11 +199,43 @@ impl<'a> ImageBuffer<'a> {
         };
     }
 
-    pub fn write(
+    /// Write the image to the named file, converted to the specified pixel data
+    /// type dtype (TypeUnknown signifies to use the data type of the buffer),
+    /// and file format (an empty fileformat means to infer the type from the
+    /// filename extension). By default, it will always try to write a
+    /// scanline-oriented file, unless the set_write_tiles() method has been
+    /// used to override this.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_name` -– The filename to write to.
+    ///
+    /// * dtype – Optional override of the pixel data format to use in the file
+    ///   being written. The default (UNKNOWN) means to try writing the same
+    ///   data format that as pixels are stored within the ImageBuf memory (or
+    ///   whatever type was specified by a prior call to set_write_format()). In
+    ///   either case, if the file format does not support that data type,
+    ///   another will be automatically chosen that is supported by the file
+    ///   type and loses as little precision as possible.
+    ///
+    /// fileformat – Optional override of the file format to write. The default
+    /// (empty string) means to infer the file format from the extension of the
+    /// filename (for example, “foo.tif” will write a TIFF file).
+    ///
+    /// progress_callback – If progress_callback is
+    /// non-NULL, the underlying write, if expensive, may make several calls to
+    /// progress_callback(progress_callback_data, portion_done) which allows you
+    /// to implement some sort of progress meter.
+    ///
+    /// Returns [`Ok`] upon success, or an erro false if the write failed (in
+    /// which case, you should be able to retrieve an error message via
+    /// geterror()).
+    pub fn write<'b>(
         &self,
         file: &Utf8Path,
         type_desc: Option<TypeDesc>,
         file_format: Option<&str>,
+        progress_callback: impl FnProgress<'b>,
     ) -> Result<()> {
         let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 

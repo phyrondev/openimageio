@@ -38,6 +38,50 @@ pub enum BaseType {
     Ptr = oiio_BASETYPE::oiio_BASETYPE_PTR.0 as _,
 }
 
+impl From<BaseType> for oiio_BASETYPE {
+    fn from(base_type: BaseType) -> oiio_BASETYPE {
+        match base_type {
+            BaseType::U8 => oiio_BASETYPE::oiio_BASETYPE_UINT8,
+            BaseType::I8 => oiio_BASETYPE::oiio_BASETYPE_INT8,
+            BaseType::U16 => oiio_BASETYPE::oiio_BASETYPE_UINT16,
+            BaseType::I16 => oiio_BASETYPE::oiio_BASETYPE_INT16,
+            BaseType::U32 => oiio_BASETYPE::oiio_BASETYPE_UINT32,
+            BaseType::I32 => oiio_BASETYPE::oiio_BASETYPE_INT32,
+            BaseType::I64 => oiio_BASETYPE::oiio_BASETYPE_INT64,
+            BaseType::U64 => oiio_BASETYPE::oiio_BASETYPE_UINT64,
+            BaseType::F16 => oiio_BASETYPE::oiio_BASETYPE_HALF,
+            BaseType::F32 => oiio_BASETYPE::oiio_BASETYPE_FLOAT,
+            BaseType::F64 => oiio_BASETYPE::oiio_BASETYPE_DOUBLE,
+            BaseType::String => oiio_BASETYPE::oiio_BASETYPE_STRING,
+            BaseType::Ptr => oiio_BASETYPE::oiio_BASETYPE_PTR,
+        }
+    }
+}
+
+impl From<oiio_BASETYPE> for Option<BaseType> {
+    fn from(base_type: oiio_BASETYPE) -> Option<BaseType> {
+        match base_type {
+            oiio_BASETYPE::oiio_BASETYPE_NONE => None,
+            _ => Some(match base_type {
+                oiio_BASETYPE::oiio_BASETYPE_UINT8 => BaseType::U8,
+                oiio_BASETYPE::oiio_BASETYPE_INT8 => BaseType::I8,
+                oiio_BASETYPE::oiio_BASETYPE_UINT16 => BaseType::U16,
+                oiio_BASETYPE::oiio_BASETYPE_INT16 => BaseType::I16,
+                oiio_BASETYPE::oiio_BASETYPE_UINT32 => BaseType::U32,
+                oiio_BASETYPE::oiio_BASETYPE_INT32 => BaseType::I32,
+                oiio_BASETYPE::oiio_BASETYPE_INT64 => BaseType::I64,
+                oiio_BASETYPE::oiio_BASETYPE_UINT64 => BaseType::U64,
+                oiio_BASETYPE::oiio_BASETYPE_HALF => BaseType::F16,
+                oiio_BASETYPE::oiio_BASETYPE_FLOAT => BaseType::F32,
+                oiio_BASETYPE::oiio_BASETYPE_DOUBLE => BaseType::F64,
+                oiio_BASETYPE::oiio_BASETYPE_STRING => BaseType::String,
+                oiio_BASETYPE::oiio_BASETYPE_PTR => BaseType::Ptr,
+                _ => unreachable!(),
+            }),
+        }
+    }
+}
+
 /// Describes whether a [`TypeDesc`] is a simple scalar of one of the
 /// [`BaseType`]s, or one of several simple aggregates.
 ///
@@ -127,6 +171,68 @@ pub struct TypeDesc {
     aggregate: Aggregate,
     vec_semantics: Option<VecSemantics>,
     array_len: Option<ArrayLen>,
+}
+
+impl TypeDesc {
+    pub fn is_array(&self) -> bool {
+        if let Some(ArrayLen::Specific(_)) = self.array_len {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn size(&self) -> usize {
+        let mut result = std::mem::MaybeUninit::<usize>::uninit();
+
+        unsafe {
+            oiio_TypeDesc_size(
+                &self.into() as *const _ as _,
+                &mut result as *mut _ as _,
+            );
+            result.assume_init()
+        }
+    }
+
+    pub fn element_size(&self) -> usize {
+        let mut result = std::mem::MaybeUninit::<usize>::uninit();
+
+        unsafe {
+            oiio_TypeDesc_elementsize(
+                &self.into() as *const _ as _,
+                &mut result as *mut _ as _,
+            );
+            result.assume_init()
+        }
+    }
+
+    //pub fn scalar_type(&self) ->
+
+    pub fn is_vec2(&self, base_type: Option<BaseType>) -> bool {
+        let mut result = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_TypeDesc_is_vec2(
+                &self.into() as *const _ as _,
+                base_type.unwrap_or(BaseType::F32).into(),
+                &mut result as *mut _ as _,
+            );
+            result.assume_init()
+        }
+    }
+
+    pub fn is_vec3(&self, base_type: Option<BaseType>) -> bool {
+        let mut result = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_TypeDesc_is_vec3(
+                &self.into() as *const _ as _,
+                base_type.unwrap_or(BaseType::F32).into(),
+                &mut result as *mut _ as _,
+            );
+            result.assume_init()
+        }
+    }
 }
 
 impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {

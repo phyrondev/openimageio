@@ -239,5 +239,8 @@ pub(crate) use string::*;
 mod string_view;
 pub(crate) use string_view::*;
 
+mod texture;
+pub use texture::*;
+
 mod type_description;
 pub use type_description::*;
