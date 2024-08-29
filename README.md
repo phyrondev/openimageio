@@ -1,4 +1,5 @@
-# `oiio` -- High Level Rust Wrapper for [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
+# `openimageio` -- High Level Rust Wrapper for
+  [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
 
 OpenImageIO (OIIO) is a toolset for reading, writing, and manipulating image
 files of any image file format relevant to VFX/animation via a format-agnostic
@@ -9,7 +10,7 @@ The primary target audience for OIIO is VFX studios and developers of tools
 such as renderers, compositors, viewers, and other image-related software you'd
 find in a production pipeline.
 
-OpenImageIO consists of:
+OIIO consists of:
 
 * Simple but powerful `ImageInput` and `ImageOutput` APIs that provide an
   abstraction for reading and writing image files of nearly any format, without
@@ -90,6 +91,12 @@ fn main() -> Result<()> {
     Ok(())
 }
 ```
+
+## Features
+
+* `algorithms` -- enables useful `ImageBuffer` algorithms. Enabled by default.
+
+* `ffi` -- exposes the low-level FFI bindings to OIIO. Disabled by default.
 
 ## Building
 

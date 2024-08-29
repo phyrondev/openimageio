@@ -106,7 +106,7 @@ impl<'a> ImageBuffer<'a> {
         unsafe {
             oiio_ImageBufAlgo_noise(
                 self.ptr,
-                StringView::from(noise_type).as_raw_ptr_mut(),
+                StringView::from(noise_type).ptr,
                 a,
                 b,
                 options.monochromatic,

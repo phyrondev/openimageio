@@ -164,19 +164,19 @@ impl<'a> ImageBuffer<'a> {
         Self {
             ptr: unsafe {
                 oiio_ImageBuf_ctor_01(
-                    StringView::from(name).as_raw_ptr_mut(),
+                    StringView::from(name).ptr,
                     options.sub_image as _,
                     options.mip_level as _,
                     options
                         .image_cache
-                        .map(|c| c.as_raw_ptr_mut())
+                        .map(|c| c.ptr)
                         .unwrap_or(ptr::null_mut()),
                     options
                         .image_spec
-                        .map(|s| ImageSpec::from(s).as_raw_ptr())
-                        .unwrap_or(ptr::null()) as _,
+                        .map(|s| ImageSpec::from(s).ptr)
+                        .unwrap_or(ptr::null_mut()),
                     ptr::null_mut() as _,
-                    &mut ptr as *mut _ as *mut _,
+                    &mut ptr as *mut _ as _,
                 );
                 ptr.assume_init()
             },
@@ -191,7 +191,7 @@ impl<'a> ImageBuffer<'a> {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
-            oiio_ImageBuf_reset_00(&mut ptr as *mut _ as *mut _);
+            oiio_ImageBuf_reset_00(&mut ptr as *mut _ as _);
             self.ptr = ptr.assume_init();
         };
     }
@@ -239,12 +239,12 @@ impl<'a> ImageBuffer<'a> {
         unsafe {
             oiio_ImageBuf_write(
                 self.ptr,
-                StringView::from(file).as_raw_ptr(),
+                StringView::from(file).ptr,
                 match file_format {
                     Some(file_format) => StringView::from(file_format),
                     None => StringView::default(),
                 }
-                .as_raw_ptr(),
+                .ptr,
                 &mut is_ok as *mut _ as *mut _,
             );
 

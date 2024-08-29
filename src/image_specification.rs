@@ -142,7 +142,7 @@ pub struct ImageSpecification {
 }
 
 pub(crate) struct ImageSpec {
-    ptr: *mut oiio_ImageSpec_t,
+    pub(crate) ptr: *mut oiio_ImageSpec_t,
 }
 
 impl From<&ImageSpecification> for ImageSpec {
@@ -270,6 +270,7 @@ impl ImageSpec {
     }
 }
 
+#[cfg(feature = "ffi")]
 impl ImageSpec {
     pub fn as_raw_ptr(&self) -> *const oiio_ImageSpec_t {
         self.ptr
@@ -288,6 +289,6 @@ impl Default for ImageSpec {
 
 impl Drop for ImageSpec {
     fn drop(&mut self) {
-        unsafe { oiio_ImageSpec_dtor(self.as_raw_ptr_mut()) };
+        unsafe { oiio_ImageSpec_dtor(self.ptr) };
     }
 }

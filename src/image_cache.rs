@@ -14,6 +14,7 @@ fn set_or_get_persist(persist: bool) -> bool {
     // conclude what to feed `oiio_ImageCache_destroy()`'s `teardown` flag
     // (see `ImageCache::drop()`).
     static PERSIST: OnceCell<()> = OnceCell::new();
+
     if persist {
         PERSIST.get_or_init(|| ());
         true
@@ -64,7 +65,7 @@ fn set_or_get_persist(persist: bool) -> bool {
 /// haven't been accessed recently.
 
 pub struct ImageCache {
-    ptr: *mut oiio_ImageCache_t,
+    pub(crate) ptr: *mut oiio_ImageCache_t,
 }
 
 impl Default for ImageCache {
@@ -95,9 +96,10 @@ impl ImageCache {
     ///   application. I.e. dropping this instance will not free the resources
     ///   used by the shared cache.
     pub fn shared(persist: bool) -> Self {
+        set_or_get_persist(persist);
+
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
 
-        set_or_get_persist(persist);
         Self {
             ptr: unsafe {
                 oiio_ImageCache_create(true, &mut ptr as *mut _ as *mut _);
@@ -105,9 +107,12 @@ impl ImageCache {
             },
         }
     }
+}
 
+#[cfg(feature = "ffi")]
+impl ImageCache {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_ImageCache_t {
-        self.ptr as _
+        self.ptr
     }
 
     pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageCache_t {

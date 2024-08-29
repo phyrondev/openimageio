@@ -5,9 +5,10 @@ use std::{
     fmt::{Display, Formatter},
     path::Path,
 };
+use ustr::Ustr;
 
 pub struct StringView<'a> {
-    ptr: *mut oiio_StringView_t,
+    pub(crate) ptr: *mut oiio_StringView_t,
     // _marker needs to be invariant in 'a.
     // See "Making a struct outlive a parameter given to a method of
     // that struct": https://stackoverflow.com/questions/62374326/
@@ -34,6 +35,24 @@ impl<'a> From<&'a str> for StringView<'a> {
         unsafe {
             oiio_StringView_ctor(
                 string.as_ptr() as *const _,
+                string.len().try_into().unwrap(),
+                &mut ptr as *mut _ as *mut _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl<'a> From<Ustr> for StringView<'a> {
+    fn from(string: Ustr) -> Self {
+        let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
+        unsafe {
+            oiio_StringView_ctor(
+                string.as_char_ptr(),
                 string.len().try_into().unwrap(),
                 &mut ptr as *mut _ as *mut _,
             );
@@ -119,6 +138,7 @@ impl<'a> Drop for StringView<'a> {
     }
 }
 
+#[cfg(feature = "ffi")]
 impl<'a> StringView<'a> {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_StringView_t {
         self.ptr as _

@@ -294,8 +294,7 @@ impl<'a> TextureSystem<'a> {
             ptr: unsafe {
                 oiio_TextureSystem_create(
                     shared,
-                    image_cache.map(|c| c.as_raw_ptr()).unwrap_or(ptr::null())
-                        as _,
+                    image_cache.map(|c| c.ptr).unwrap_or(ptr::null_mut()) as _,
                     &mut ptr as *mut _ as *mut _,
                 );
                 ptr.assume_init()
@@ -331,7 +330,7 @@ impl<'a> TextureSystem<'a> {
         unsafe {
             oiio_TextureSystem_texture_handle(
                 self.ptr,
-                StringView::from(file_name).as_raw_ptr() as _,
+                StringView::from(file_name).ptr as _,
                 // Prethread
                 ptr::null_mut(),
                 &mut ptr as *mut _ as _,

@@ -17,7 +17,8 @@
 //! * [Over](ImageBuffer#over)
 use crate::*;
 use anyhow::Result;
-use std::{marker::PhantomData, mem::MaybeUninit};
+use core::{marker::PhantomData, mem::MaybeUninit};
+use ustr::{ustr, Ustr};
 
 #[derive(Clone, Copy, Default)]
 #[non_exhaustive]
@@ -62,6 +63,12 @@ impl From<PixelFilter> for &str {
             PixelFilter::Laplacian => "laplacian",
             //_ => "unknown",
         }
+    }
+}
+
+impl From<PixelFilter> for Ustr {
+    fn from(pf: PixelFilter) -> Self {
+        ustr(Into::<&str>::into(pf))
     }
 }
 
@@ -124,8 +131,7 @@ impl<'a> ImageBuffer<'a> {
                 self.ptr,
                 other.ptr,
                 angle,
-                StringView::from(Into::<&str>::into(options.pixel_filter))
-                    .as_raw_ptr_mut(),
+                StringView::from(Into::<Ustr>::into(options.pixel_filter)).ptr,
                 0.0,
                 options.recompute_region_of_interest,
                 std::mem::transmute::<Roi, oiio_ROI_t>(
@@ -156,8 +162,7 @@ impl<'a> ImageBuffer<'a> {
                 angle,
                 center_x,
                 center_y,
-                StringView::from(Into::<&str>::into(options.pixel_filter))
-                    .as_raw_ptr_mut(),
+                StringView::from(Into::<&str>::into(options.pixel_filter)).ptr,
                 0.0,
                 options.recompute_region_of_interest,
                 std::mem::transmute::<Roi, oiio_ROI_t>(
