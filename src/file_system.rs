@@ -1,5 +1,5 @@
 use crate::*;
-use std::mem::MaybeUninit;
+use core::mem::MaybeUninit;
 
 pub enum IoProxyMode {
     Closed,

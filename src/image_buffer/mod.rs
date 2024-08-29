@@ -1,9 +1,7 @@
 use crate::*;
 use anyhow::{anyhow, Result};
-use std::{
-    error::Error, ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr,
-    string::String,
-};
+use core::{ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr};
+use std::string::String;
 
 #[cfg(feature = "algorithms")]
 mod algorithms;

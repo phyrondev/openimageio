@@ -1,11 +1,8 @@
 use crate::*;
 use camino::Utf8Path;
-use core::slice;
+use core::{ffi::c_char, marker::PhantomData, mem::MaybeUninit, slice};
 use std::{
-    ffi::c_char,
     fmt::{Display, Formatter},
-    marker::PhantomData,
-    mem::MaybeUninit,
     path::Path,
 };
 

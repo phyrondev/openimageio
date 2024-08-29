@@ -315,7 +315,7 @@ impl<'a> TextureSystem<'a> {
     /// Creates a shared `TextureSystem` so that multiple parts of an
     /// application all end up with the same one as well as the same underlying
     /// [`ImageCache`].
-    pub fn new_shared() -> Self {
+    pub fn shared() -> Self {
         Self::do_new(true, None)
     }
 }

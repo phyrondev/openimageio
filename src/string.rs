@@ -1,10 +1,10 @@
 use crate::*;
-use std::{
+use core::{
     ffi::{c_char, c_ulong},
-    fmt::{Display, Formatter},
     mem::MaybeUninit,
     slice,
 };
+use std::fmt::{Display, Formatter};
 
 // Wraps a C++ String.
 pub(crate) struct String(*mut oiio_String_t);

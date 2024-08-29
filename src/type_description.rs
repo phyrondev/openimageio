@@ -1,6 +1,6 @@
 use crate::*;
+use core::num::NonZeroUsize;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::num::NonZeroUsize;
 
 /// Descrives the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.

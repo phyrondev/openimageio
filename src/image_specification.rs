@@ -23,7 +23,7 @@
 use crate::{String as OiioString, *};
 use std::{mem::MaybeUninit, string::String};
 
-enum ChannelFormat {
+pub enum ChannelFormat {
     Uniform(BaseType),
     PerChannel(Vec<BaseType>),
 }
