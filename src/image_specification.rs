@@ -1,3 +1,25 @@
+//! An [`ImageSpecification`]  describes the complete format specification of a
+//! single image. It contains:
+//!
+//! * The image resolution (number of pixels) and origin. This specifies what is
+//!   often called the “pixel data window.”
+//!
+//! * The full size and offset of an abstract “full” or “display” window.
+//!   Differing full and data windows can indicate that the pixels are a crop
+//!   region or a larger image, or contain overscan pixels.
+//!
+//! * Whether the image is organized into tiles, and if so, the tile size.
+//!
+//! * The native data format of the pixel values (e.g., float, 8-bit integer,
+//!   etc.).
+//!
+//! * The number of color channels in the image (e.g., 3 for RGB images), names
+//!   of the channels, and whether any particular channels represent alpha and
+//!   depth.
+//!
+//! * A user-extensible (and format-extensible) list of any other
+//!   arbitrarily-named and -typed data that may help describe the image or its
+//!   disk representation.
 use crate::{String as OiioString, *};
 use std::{mem::MaybeUninit, string::String};
 
@@ -6,12 +28,12 @@ enum ChannelFormat {
     PerChannel(Vec<BaseType>),
 }
 
-/// Describes the data format of an image -- dimensions, layout,
-/// number and meanings of image channels.
+/// Describes the data format of an image -- dimensions, layout, number and
+/// meanings of image channels.
 ///
-/// Can be used to describe nearly any image, and an extensible
-/// list of arbitrary attributes that can hold metadata that may be user-defined
-/// or specific to individual file formats.
+/// Can be used to describe nearly any image, and an extensible list of
+/// arbitrary attributes that can hold metadata that may be user-defined or
+/// specific to individual file formats.
 ///
 /// The `width`, height` & `depth` are the size of the data of this image, i.e.,
 /// the number of pixels in each dimension.  A `depth` greater than `1`
@@ -43,7 +65,7 @@ enum ChannelFormat {
 /// that the image is stored in a file organized into rectangular *tiles*
 /// of these dimensions. The default value of `0` for these fields indicates
 /// that the image is stored in scanline order, rather than as tiles.
-pub struct ImageSpecConfig {
+pub struct ImageSpecification {
     /// Origin (upper left corner) of pixel data.
     x: i32,
     /// Origin (upper left corner) of pixel data.
@@ -119,12 +141,12 @@ pub struct ImageSpecConfig {
     extra_attribs: ParamValueList,*/
 }
 
-pub struct ImageSpec {
+pub(crate) struct ImageSpec {
     ptr: *mut oiio_ImageSpec_t,
 }
 
-impl From<ImageSpecConfig> for ImageSpec {
-    fn from(i: ImageSpecConfig) -> Self {
+impl From<&ImageSpecification> for ImageSpec {
+    fn from(i: &ImageSpecification) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {

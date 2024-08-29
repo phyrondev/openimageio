@@ -1,3 +1,5 @@
+#![feature(str_from_raw_parts)]
+#![feature(c_size_t)]
 //! Abbreviated as *OIIO* -- a library for reading, writing, and processing
 //! images in a wide variety of file formats, using a format-agnostic API. OIIO
 //! emphasizes formats and functionality used in professional, large-scale
@@ -244,3 +246,6 @@ pub use texture::*;
 
 mod type_description;
 pub use type_description::*;
+
+mod ustring;
+pub use ustring::*;

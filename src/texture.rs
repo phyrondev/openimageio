@@ -187,6 +187,9 @@ impl Default for TextureOptions<'_> {
     }
 }
 
+/// Used to for interop until we have binary compatibility between
+/// `TextureOptions` and `oiio_TextureOpt_t`.
+/// This hinges on Ustring.
 struct TextureOpt {
     ptr: *mut oiio_TextureOpt_t,
 }
@@ -249,8 +252,9 @@ impl<'a, 'b> TextureHandle<'a, 'b> {
             oiio_TextureSystem_texture(
                 self.system.ptr,
                 self.ptr,
+                // Perthread
                 std::ptr::null_mut() as _,
-                options as *mut _ as _,
+                options as *mut oiio_TextureOpt_t as _,
                 s,
                 t,
                 ds_dx,
@@ -263,8 +267,9 @@ impl<'a, 'b> TextureHandle<'a, 'b> {
                 std::ptr::null_mut(),
             );
 
-            result.set_len(channel_count);
+            result.set_len(channel_count as _);
         }
+        result
     }
 }
 
@@ -310,8 +315,8 @@ impl<'a> TextureSystem<'a> {
     /// Creates a shared `TextureSystem` so that multiple parts of an
     /// application all end up with the same one as well as the same underlying
     /// [`ImageCache`].
-    pub fn new_shared(image_cache: Option<&'a ImageCache>) -> Self {
-        Self::do_new(true, image_cache)
+    pub fn new_shared() -> Self {
+        Self::do_new(true, None)
     }
 }
 

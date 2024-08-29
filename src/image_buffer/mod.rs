@@ -128,7 +128,7 @@ pub struct FromFileOptions<'a> {
     /// Optionally, a pointer to an `ImageSpec` whose metadata contains
     /// configuration hints that set options related to the opening and reading
     /// of the file.
-    pub image_spec: Option<ImageSpec>,
+    pub image_spec: Option<&'a ImageSpecification>,
     // Optional pointer to an `IoProxy` to use when reading from the file.
     // The lifetime of the proxy will be tied to the given `ImageBuffer`.
     // TODO io_proxy:
@@ -175,9 +175,8 @@ impl<'a> ImageBuffer<'a> {
                         .unwrap_or(ptr::null_mut()),
                     options
                         .image_spec
-                        .as_ref()
-                        .map(|s| s.as_raw_ptr())
-                        .unwrap_or(ptr::null_mut()),
+                        .map(|s| ImageSpec::from(s).as_raw_ptr())
+                        .unwrap_or(ptr::null()) as _,
                     ptr::null_mut() as _,
                     &mut ptr as *mut _ as *mut _,
                 );
