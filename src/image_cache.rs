@@ -81,7 +81,7 @@ impl ImageCache {
 
         Self {
             ptr: unsafe {
-                oiio_ImageCache_create(false, &mut ptr as *mut _ as *mut _);
+                oiio_ImageCache_create(false, &mut ptr as *mut _ as _);
                 ptr.assume_init()
             },
         }
@@ -102,7 +102,7 @@ impl ImageCache {
 
         Self {
             ptr: unsafe {
-                oiio_ImageCache_create(true, &mut ptr as *mut _ as *mut _);
+                oiio_ImageCache_create(true, &mut ptr as *mut _ as _);
                 ptr.assume_init()
             },
         }

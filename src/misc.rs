@@ -14,7 +14,7 @@ impl<'a> CspanF32<'a> {
             oiio_CspanF32_ctor(
                 data.as_ptr() as _,
                 data.len() as _,
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {

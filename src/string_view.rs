@@ -36,7 +36,7 @@ impl<'a> From<&'a str> for StringView<'a> {
             oiio_StringView_ctor(
                 string.as_ptr() as *const _,
                 string.len().try_into().unwrap(),
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {
@@ -54,7 +54,7 @@ impl<'a> From<Ustr> for StringView<'a> {
             oiio_StringView_ctor(
                 string.as_char_ptr(),
                 string.len().try_into().unwrap(),
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {
@@ -73,7 +73,7 @@ impl<'a> From<&'a Path> for StringView<'a> {
             oiio_StringView_ctor(
                 os_str_path.as_encoded_bytes().as_ptr() as *const _,
                 os_str_path.len().try_into().unwrap(),
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {
@@ -92,7 +92,7 @@ impl<'a> From<&'a Utf8Path> for StringView<'a> {
             oiio_StringView_ctor(
                 str_path.as_ptr() as *const _,
                 str_path.len().try_into().unwrap(),
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {
@@ -111,8 +111,8 @@ impl Display for StringView<'_> {
         let mut size = MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_StringView_data(self.ptr, &mut data as *mut _ as *mut _);
-            oiio_StringView_size(self.ptr, &mut size as *mut _ as *mut _);
+            oiio_StringView_data(self.ptr, &mut data as *mut _ as _);
+            oiio_StringView_size(self.ptr, &mut size as *mut _ as _);
 
             // TODO: check with lg that a OIIO::String is guranteed to always be
             // valid UTF8.
