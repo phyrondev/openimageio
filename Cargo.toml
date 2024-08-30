@@ -1,7 +1,9 @@
+cargo-features = ["edition2024"]
+
 [package]
 name = "openimageio"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "Apache-2.0 OR BSD-3-Clause"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Anders Langlands"]
 homepage = "https://openimageio.org/"
@@ -18,9 +20,13 @@ num_enum = "0.7"
 once_cell = { version = "1", features = ["parking_lot"] }
 ustr = "1.0.0"
 
+[dev-dependencies]
+image-compare = "0.4"
+image = { version = "0.25.2", default-features = false, features = ["png"] }
+
 [features]
 default = ["algorithms"]
-# Enable a bunch of compposting and generator methods on `ImageBuffer`.
+# Enable a bunch of composting- & generator methods on `ImageBuffer`.
 algorithms = []
 # Make the OpenImageIO FFI this crate uses public.
 ffi = []

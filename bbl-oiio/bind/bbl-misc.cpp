@@ -6,6 +6,7 @@
 #include <string>
 
 BBL_MODULE(oiio) {
+
     bbl::fn(&OIIO::openimageio_version);
 
     bbl::fn(&OIIO::has_error);

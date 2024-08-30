@@ -52,9 +52,17 @@
 //! calling the function just wants to continue doing the computation without
 //! spawning additional threads, which might tend to crowd out the other
 //! application threads.
+use crate::*;
 
 pub mod generators;
 pub mod operators;
+
+/// Generic options accepted by most compositing operators.
+#[derive(Clone, Default)]
+pub struct Options {
+    pub region_of_interest: RegionOfInterest,
+    pub thread_count: u16,
+}
 
 pub struct Filter2D {
     filter_name: String,

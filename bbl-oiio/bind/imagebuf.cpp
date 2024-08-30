@@ -14,8 +14,9 @@ auto ImageBuf_file_format_name(OIIO::ImageBuf const& buf) -> char const* {
     return buf.file_format_name().c_str();
 }*/
 
-bool ImageBuf_write(OIIO::ImageBuf const& buf, OIIO::string_view const file_name, OIIO::string_view const file_format) {
-    return buf.write(file_name, OIIO::TypeUnknown, file_format);
+
+bool ImageBuf_write(OIIO::ImageBuf const& buf, OIIO::string_view const file_name) {
+    return buf.write(file_name);
 }
 
 bool ImageBuf_write_with_spec(OIIO::ImageBuf const& buf, OIIO::string_view const file_name, OIIO::TypeDesc type_desc, OIIO::string_view const file_format) {

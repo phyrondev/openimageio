@@ -3,10 +3,9 @@
 //! ## Image Editing
 //!
 //! * [Channel Shuffling](ImageBuffer#channel-shuffling)
-//! *
 //!
 //! ## Transformations
-//! * [rotate90/180/270](ImageBuffer#rotate90-180-270)
+//! * [Rotate 90/180/270](ImageBuffer#rotate90-180-270)
 //! * [Flip-Flop-Transpose](ImageBuffer#flip-flop-transpose)
 //! * [Rotation](ImageBuffer#rotate)
 //! * [Resize](ImageBuffer#resize)
@@ -17,7 +16,10 @@
 //! * [Over](ImageBuffer#over)
 use crate::*;
 use anyhow::Result;
-use core::{marker::PhantomData, mem::MaybeUninit};
+use core::{
+    marker::PhantomData,
+    mem::{transmute, MaybeUninit},
+};
 use ustr::{ustr, Ustr};
 
 #[derive(Clone, Copy, Default)]
@@ -72,6 +74,30 @@ impl From<PixelFilter> for Ustr {
     }
 }
 
+#[repr(C)]
+pub struct CompareResult {
+    mean_error: f64,
+    rms_error: f64,
+    peak_signal_to_noise_ratio: f64,
+    max_error: f64,
+    max_x: i32,
+    max_y: i32,
+    max_z: i32,
+    max_c: u32,
+    nwarn: u64,
+    nfail: u64,
+    is_error: bool,
+}
+
+impl From<oiio_CompareResults_t> for CompareResult {
+    fn from(compare_result: oiio_CompareResults_t) -> Self {
+        unsafe { transmute(compare_result) }
+    }
+}
+
+// Actual implementations.
+impl<'a> ImageBuffer<'a> {}
+
 // Actual implementations.
 impl<'a> ImageBuffer<'a> {
     fn over_ffi(&mut self, other: &ImageBuffer, options: Options) -> bool {
@@ -82,11 +108,9 @@ impl<'a> ImageBuffer<'a> {
                 self.ptr,
                 self.ptr,
                 other.ptr,
-                std::mem::transmute::<RegionOfInterest, oiio_ROI_t>(
-                    options.region_of_interest,
-                ),
+                options.region_of_interest.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as *mut _,
+                &mut is_ok as *mut _ as _,
             );
 
             is_ok.assume_init()
@@ -104,11 +128,9 @@ impl<'a> ImageBuffer<'a> {
             oiio_ImageBufAlgo_from_over(
                 a.ptr,
                 b.ptr,
-                std::mem::transmute::<RegionOfInterest, oiio_ROI_t>(
-                    options.region_of_interest,
-                ),
+                options.region_of_interest.clone().into(),
                 options.thread_count as _,
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {
@@ -134,11 +156,9 @@ impl<'a> ImageBuffer<'a> {
                 StringView::from(Into::<Ustr>::into(options.pixel_filter)).ptr,
                 0.0,
                 options.recompute_region_of_interest,
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    options.region_of_interest.clone(),
-                ),
+                options.region_of_interest.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as *mut _,
+                &mut is_ok as *mut _ as _,
             );
 
             is_ok.assume_init()
@@ -165,23 +185,14 @@ impl<'a> ImageBuffer<'a> {
                 StringView::from(Into::<&str>::into(options.pixel_filter)).ptr,
                 0.0,
                 options.recompute_region_of_interest,
-                std::mem::transmute::<Roi, oiio_ROI_t>(
-                    options.region_of_interest.clone(),
-                ),
+                options.region_of_interest.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as *mut _,
+                &mut is_ok as *mut _ as _,
             );
 
             is_ok.assume_init()
         }
     }
-}
-
-/// Generic options accepted by most compositing operators.
-#[derive(Clone, Default)]
-pub struct Options {
-    pub region_of_interest: RegionOfInterest,
-    pub thread_count: u16,
 }
 
 #[derive(Clone, Default)]
@@ -294,8 +305,7 @@ impl<'a> ImageBuffer<'a> {
     }
 
     pub fn try_from_over(a: &ImageBuffer, b: &ImageBuffer) -> Result<Self> {
-        let mut image_buffer =
-            ImageBuffer::from_over_ffi(a, b, Options::default());
+        let image_buffer = ImageBuffer::from_over_ffi(a, b, Options::default());
         image_buffer.self_or_error()
     }
 
@@ -304,7 +314,7 @@ impl<'a> ImageBuffer<'a> {
         b: &ImageBuffer,
         options: Options,
     ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::from_over_ffi(a, b, options);
+        let image_buffer = ImageBuffer::from_over_ffi(a, b, options);
         image_buffer.self_or_error()
     }
 
@@ -371,7 +381,7 @@ mod tests {
             },
         );
 
-        image_buf.write(Path::new("rotated.exr"), None, None)?;
+        image_buf.write(Path::new("rotated.exr"))?;
 
         Ok(())
     }

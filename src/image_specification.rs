@@ -208,7 +208,7 @@ impl From<&ImageSpecification> for ImageSpec {
             for name in i.channel_name.iter() {
                 oiio_ImageSpec_push_channelname(
                     ptr,
-                    OiioString::new(name).as_ptr(),
+                    OiioString::new(name).as_raw_ptr(),
                 );
             }
 
@@ -238,7 +238,7 @@ impl ImageSpec {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
-            oiio_ImageSpec_new(type_desc.into(), &mut ptr as *mut _ as *mut _);
+            oiio_ImageSpec_new(type_desc.into(), &mut ptr as *mut _ as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -260,7 +260,7 @@ impl ImageSpec {
                 y_res as _,
                 channel_count as _,
                 type_desc.into(),
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
 
             Self {

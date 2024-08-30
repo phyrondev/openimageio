@@ -2,6 +2,7 @@ use crate::*;
 use anyhow::{anyhow, Result};
 use core::{ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr};
 use std::string::String;
+use ustr::Ustr;
 
 #[cfg(feature = "algorithms")]
 mod algorithms;
@@ -24,6 +25,36 @@ pub enum WrapMode {
     Clamp,
     Periodic,
     Mirror,
+}
+
+/// Optional parameters for the `from_file_with()`/`try_from_file_with()`
+/// methods.
+#[derive(Default)]
+pub struct FromFileOptions<'a> {
+    /// The subimage to read (defaults to the first subimage of the file).
+    pub sub_image: u32,
+    /// The miplevel to read (defaults to the highest-res miplevel of the
+    /// file).
+    pub mip_level: u32,
+    /// Optionally, an `ImageCache` to use, if possible, rather than reading
+    /// the entire image file into memory.
+    pub image_cache: Option<&'a ImageCache>,
+    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
+    /// configuration hints that set options related to the opening and reading
+    /// of the file.
+    pub image_spec: Option<&'a ImageSpecification>,
+    // Optional pointer to an `IoProxy` to use when reading from the file.
+    // The lifetime of the proxy will be tied to the given `ImageBuffer`.
+    // TODO io_proxy:
+    // Option<&'a IoProxy>,
+}
+
+pub trait FnProgress<'a>: Fn(f32) + 'a {}
+
+#[derive(Default)]
+pub struct WriteOptions<'a> {
+    pub type_desc: Option<&'a TypeDesc>,
+    pub file_format: Option<Ustr>,
 }
 
 #[derive(Debug)]
@@ -111,28 +142,6 @@ impl<'a> Drop for ImageBuffer<'a> {
     }
 }
 
-/// Optional parameters for the `from_file_with()`/`try_from_file_with()`
-/// methods.
-#[derive(Default)]
-pub struct FromFileOptions<'a> {
-    /// The subimage to read (defaults to the first subimage of the file).
-    pub sub_image: u32,
-    /// The miplevel to read (defaults to the highest-res miplevel of the
-    /// file).
-    pub mip_level: u32,
-    /// Optionally, an `ImageCache` to use, if possible, rather than reading
-    /// the entire image file into memory.
-    pub image_cache: Option<&'a ImageCache>,
-    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
-    /// configuration hints that set options related to the opening and reading
-    /// of the file.
-    pub image_spec: Option<&'a ImageSpecification>,
-    // Optional pointer to an `IoProxy` to use when reading from the file.
-    // The lifetime of the proxy will be tied to the given `ImageBuffer`.
-    // TODO io_proxy:
-    // Option<&'a IoProxy>,
-}
-
 impl<'a> ImageBuffer<'a> {
     pub fn new() -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
@@ -146,8 +155,6 @@ impl<'a> ImageBuffer<'a> {
         }
     }
 }
-
-pub trait FnProgress<'a>: Fn(f32) + 'a {}
 
 impl<'a> ImageBuffer<'a> {
     #[inline(always)]
@@ -227,24 +234,46 @@ impl<'a> ImageBuffer<'a> {
     /// Returns [`Ok`] upon success, or an erro false if the write failed (in
     /// which case, you should be able to retrieve an error message via
     /// geterror()).
-    pub fn write<'b>(
+    pub fn write_with(
         &self,
         file: &Utf8Path,
-        type_desc: Option<TypeDesc>,
-        file_format: Option<&str>,
-        progress_callback: impl FnProgress<'b>,
+        options: &WriteOptions,
     ) -> Result<()> {
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBuf_write_with_spec(
+                self.ptr,
+                StringView::from(file).ptr,
+                options
+                    .type_desc
+                    .map(|t| t.into())
+                    .unwrap_or((&TypeDesc::default()).into()),
+                match options.file_format {
+                    Some(file_format) => StringView::from(file_format),
+                    None => StringView::default(),
+                }
+                .ptr,
+                &mut is_ok as *mut _ as *mut _,
+            );
+
+            if !is_ok.assume_init() || !self.is_ok() {
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    pub fn write(&self, file: &Utf8Path) -> Result<()> {
         let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
         unsafe {
             oiio_ImageBuf_write(
                 self.ptr,
                 StringView::from(file).ptr,
-                match file_format {
-                    Some(file_format) => StringView::from(file_format),
-                    None => StringView::default(),
-                }
-                .ptr,
                 &mut is_ok as *mut _ as *mut _,
             );
 

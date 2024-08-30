@@ -7,17 +7,19 @@ use core::{
 use std::fmt::{Display, Formatter};
 
 // Wraps a C++ String.
-pub(crate) struct String(*mut oiio_String_t);
+pub(crate) struct String {
+    ptr: *mut oiio_String_t,
+}
 
 impl Drop for String {
     fn drop(&mut self) {
-        unsafe { oiio_String_dtor(self.0) };
+        unsafe { oiio_String_dtor(self.ptr) };
     }
 }
 
 impl From<*mut oiio_String_t> for String {
-    fn from(s: *mut oiio_String_t) -> String {
-        Self(s)
+    fn from(ptr: *mut oiio_String_t) -> String {
+        Self { ptr }
     }
 }
 
@@ -29,8 +31,8 @@ impl Display for String {
         let mut size = MaybeUninit::<c_ulong>::uninit();
 
         unsafe {
-            oiio_String_data(self.0, &mut ptr as *mut _ as *mut _);
-            oiio_String_size(self.0, &mut size as *mut _ as *mut _);
+            oiio_String_data(self.ptr, &mut ptr as *mut _ as _);
+            oiio_String_size(self.ptr, &mut size as *mut _ as _);
 
             // TODO: check with lg that a OIIO::String is guranteed to always be
             // valid UTF8.
@@ -58,17 +60,19 @@ impl String {
             oiio_String_ctor(
                 s.as_ptr() as _,
                 s.len().try_into().unwrap(),
-                &mut ptr as *mut _ as *mut _,
+                &mut ptr as *mut _ as _,
             );
-            Self(ptr.assume_init())
+            Self {
+                ptr: ptr.assume_init(),
+            }
         }
     }
 
-    pub fn as_ptr(&self) -> *const oiio_String_t {
-        self.0
+    pub fn as_raw_ptr(&self) -> *const oiio_String_t {
+        self.ptr
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut oiio_String_t {
-        self.0
+    pub fn as_raw_ptr_mut(&mut self) -> *mut oiio_String_t {
+        self.ptr
     }
 }

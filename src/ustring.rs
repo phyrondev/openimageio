@@ -3,16 +3,18 @@ use core::ffi::{c_char, c_size_t};
 use std::mem::MaybeUninit;
 use ustr::Ustr;
 
-/// An alternative to [`&str`](std::str) or [`String`](std::string::String)
-/// in which the character sequence is unique (allowing many speed advantages
-/// for assignment, equality testing, and inequality testing).
+/// A fast alternative to [`&str`](std::str) or [`String`](std::string::String)
+/// for string constants.
+///
+/// This enables many speed advantages for assignment and equality/inequality
+/// testing.
 ///
 /// > *There is a Rust version of this in the [`ustr`](https://crates.io/crates/ustr)
-/// crate, but it is [not yet binary-compatible](https://github.com/anderslanglands/ustr/issues/48)
-/// with the C++ version wrapped by this struct.*
+/// > crate, but it is [not yet binary-compatible](https://github.com/anderslanglands/ustr/issues/48)
+/// > with the C++ version wrapped by this struct.*
 /// >
 /// > *A [`From<Ustr>`](#impl-From<Ustr>-for-Ustring) trait is provided for
-/// conversion.*
+/// > conversion.*
 ///
 /// Behind the scene the implementation keeps a hash set of allocated strings,
 /// so the characters of each string are unique.  A `Ustring` itself is a
@@ -131,6 +133,11 @@ impl Ustring {
             oiio_ustring_size(self.ptr, &mut result as *mut _ as _);
             result.assume_init() as _
         }
+    }
+
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        false
     }
 
     /// Returns a static string slice. It is `'static` as all `Ustring`s

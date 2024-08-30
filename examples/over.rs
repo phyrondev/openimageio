@@ -22,7 +22,7 @@ fn main() -> Result<()> {
     image_buf_a.over(&image_buf_b);
 
     // Write the result
-    image_buf_a.write(Path::new("over.exr"), None, None)?;
+    image_buf_a.write(Path::new("over.exr"))?;
 
     Ok(())
 }

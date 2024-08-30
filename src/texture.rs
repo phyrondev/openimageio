@@ -1,9 +1,13 @@
 use crate::*;
-use std::{marker::PhantomData, mem::MaybeUninit, ptr};
+use core::{
+    marker::PhantomData,
+    mem::{transmute, MaybeUninit},
+    ptr,
+};
 use ustr::Ustr;
 
 /// Describes what happens when texture coordinates hit a value outside the
-/// usual [0,1] range where a texture is defined.
+/// usual *\[0, 1\]* range where a texture is defined.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
 #[repr(C)]
 pub enum Wrap {
@@ -26,7 +30,7 @@ pub enum Wrap {
 
 impl From<Wrap> for oiio_Wrap {
     fn from(m: Wrap) -> Self {
-        unsafe { std::mem::transmute(m) }
+        unsafe { transmute(m) }
     }
 }
 
@@ -49,7 +53,7 @@ pub enum MipMode {
 
 impl From<MipMode> for oiio_MipMode {
     fn from(m: MipMode) -> Self {
-        unsafe { std::mem::transmute(m) }
+        unsafe { transmute(m) }
     }
 }
 
@@ -70,7 +74,7 @@ pub enum InterpolationMode {
 
 impl From<InterpolationMode> for oiio_InterpMode {
     fn from(m: InterpolationMode) -> Self {
-        unsafe { std::mem::transmute(m) }
+        unsafe { transmute(m) }
     }
 }
 
@@ -338,7 +342,7 @@ impl<'a> TextureSystem<'a> {
 
             TextureHandle {
                 ptr: ptr.assume_init(),
-                system: &self,
+                system: self,
             }
         }
     }

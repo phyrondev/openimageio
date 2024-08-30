@@ -175,11 +175,7 @@ pub struct TypeDesc {
 
 impl TypeDesc {
     pub fn is_array(&self) -> bool {
-        if let Some(ArrayLen::Specific(_)) = self.array_len {
-            true
-        } else {
-            false
-        }
+        matches!(self.array_len, Some(ArrayLen::Specific(_)))
     }
 
     pub fn size(&self) -> usize {
@@ -238,6 +234,7 @@ impl TypeDesc {
 impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
     type Error = ();
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
     fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
         debug_assert!(!t.is_null());
 

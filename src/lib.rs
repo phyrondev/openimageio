@@ -1,5 +1,8 @@
 #![feature(str_from_raw_parts)]
 #![feature(c_size_t)]
+#![doc(
+    html_logo_url = "https://artwork.aswf.io/projects/openimageio/icon/color/openimageio-icon-color.svg"
+)]
 //! Abbreviated as *OIIO* -- a library for reading, writing, and processing
 //! images in a wide variety of file formats, using a format-agnostic API. OIIO
 //! emphasizes formats and functionality used in professional, large-scale
@@ -231,6 +234,9 @@ pub use image_cache::*;
 
 mod image_specification;
 pub use image_specification::*;
+
+mod misc;
+pub(crate) use misc::*;
 
 mod region_of_interest;
 pub use region_of_interest::*;
