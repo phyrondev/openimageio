@@ -2,7 +2,7 @@ use crate::*;
 use core::num::NonZeroUsize;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-/// Descrives the base data types that correspond (mostly) to the Rust
+/// Describes the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.
 #[derive(
     Clone,
@@ -166,14 +166,14 @@ pub enum ArrayLen {
 }
 
 #[derive(Default, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct TypeDesc {
-    base_type: Option<BaseType>,
-    aggregate: Aggregate,
-    vec_semantics: Option<VecSemantics>,
-    array_len: Option<ArrayLen>,
+pub struct TypeDescription {
+    pub base_type: Option<BaseType>,
+    pub aggregate: Aggregate,
+    pub vec_semantics: Option<VecSemantics>,
+    pub array_len: Option<ArrayLen>,
 }
 
-impl TypeDesc {
+impl TypeDescription {
     pub fn is_array(&self) -> bool {
         matches!(self.array_len, Some(ArrayLen::Specific(_)))
     }
@@ -204,6 +204,8 @@ impl TypeDesc {
 
     //pub fn scalar_type(&self) ->
 
+    /// Is this a 2-vector aggregate (of the given type, [`BaseType::F32`] by
+    /// default)?
     pub fn is_vec2(&self, base_type: Option<BaseType>) -> bool {
         let mut result = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -217,6 +219,8 @@ impl TypeDesc {
         }
     }
 
+    /// Is this a 3-vector aggregate (of the given type, [`BaseType::F32`] by
+    /// default)?
     pub fn is_vec3(&self, base_type: Option<BaseType>) -> bool {
         let mut result = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -229,49 +233,67 @@ impl TypeDesc {
             result.assume_init()
         }
     }
-}
 
-impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
-    type Error = ();
+    /// Is this a 4-vector aggregate (of the given type, [`BaseType::F32`] by
+    /// default)?
+    pub fn is_vec4(&self, base_type: Option<BaseType>) -> bool {
+        let mut result = std::mem::MaybeUninit::<bool>::uninit();
 
-    #[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
-        debug_assert!(!t.is_null());
-
-        match unsafe { t.as_ref() } {
-            None => Err(()),
-            Some(t) => Ok(Self {
-                base_type: match t.basetype {
-                    b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 as u8 == b => None,
-                    b => b.try_into().ok(),
-                },
-                aggregate: t.aggregate.try_into().unwrap(),
-                vec_semantics: match t.vecsemantics {
-                    b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0
-                        as u8
-                        == b
-                        || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0
-                            as u8
-                            == b =>
-                    {
-                        None
-                    }
-                    v => v.try_into().ok(),
-                },
-                array_len: match t.arraylen {
-                    l if 0 == l || l < -1 => None,
-                    -1 => Some(ArrayLen::Unspecific),
-                    l => Some(ArrayLen::Specific(
-                        NonZeroUsize::new(l as _).unwrap(),
-                    )),
-                },
-            }),
+        unsafe {
+            oiio_TypeDesc_is_vec4(
+                &self.into() as *const _ as _,
+                base_type.unwrap_or(BaseType::F32).into(),
+                &mut result as *mut _ as _,
+            );
+            result.assume_init()
         }
     }
 }
 
-impl From<&TypeDesc> for oiio_TypeDesc_t {
-    fn from(t: &TypeDesc) -> oiio_TypeDesc_t {
+impl TryFrom<*const oiio_TypeDesc_t> for TypeDescription {
+    type Error = ();
+
+    //#[allow(clippy::not_unsafe_ptr_arg_deref)]
+    fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
+        match unsafe { t.as_ref() } {
+            None => Err(()),
+            Some(t) => Ok(t.into()),
+        }
+    }
+}
+
+impl From<&oiio_TypeDesc_t> for TypeDescription {
+    fn from(t: &oiio_TypeDesc_t) -> Self {
+        Self {
+            base_type: match t.basetype {
+                b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 as u8 == b => None,
+                b => b.try_into().ok(),
+            },
+            aggregate: t.aggregate.try_into().unwrap(),
+            vec_semantics: match t.vecsemantics {
+                b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 as u8
+                    == b
+                    || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0
+                        as u8
+                        == b =>
+                {
+                    None
+                }
+                v => v.try_into().ok(),
+            },
+            array_len: match t.arraylen {
+                l if 0 == l || l < -1 => None,
+                -1 => Some(ArrayLen::Unspecific),
+                l => {
+                    Some(ArrayLen::Specific(NonZeroUsize::new(l as _).unwrap()))
+                }
+            },
+        }
+    }
+}
+
+impl From<&TypeDescription> for oiio_TypeDesc_t {
+    fn from(t: &TypeDescription) -> oiio_TypeDesc_t {
         oiio_TypeDesc_t {
             basetype: match t.base_type {
                 None => oiio_BASETYPE::oiio_BASETYPE_NONE.0 as _,

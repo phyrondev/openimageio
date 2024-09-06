@@ -11,6 +11,28 @@ pub(crate) struct String {
     ptr: *mut oiio_String_t,
 }
 
+impl String {
+    pub(crate) fn is_empty(&self) -> bool {
+        let mut is_empty = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_String_empty(self.ptr, &mut is_empty as *mut _ as _);
+
+            is_empty.assume_init()
+        }
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        let mut len = std::mem::MaybeUninit::<usize>::uninit();
+
+        unsafe {
+            oiio_String_length(self.ptr, &mut len as *mut _ as _);
+
+            len.assume_init()
+        }
+    }
+}
+
 impl Drop for String {
     fn drop(&mut self) {
         unsafe { oiio_String_dtor(self.ptr) };

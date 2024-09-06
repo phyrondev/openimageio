@@ -10,11 +10,12 @@ fn main() -> Result<()> {
 
     // Load fg image. This is 1024×1024
     let mut image_buf_a =
-        ImageBuf::from_file(Path::new("assets/j0.3toD__F16_RGBA.exr"));
+        ImageBuf::from_file(Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
     // Load bg image. This is 2048×1024.
-    let image_buf_b =
-        ImageBuf::from_file(Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"));
+    let image_buf_b = ImageBuf::from_file(Path::new(
+        "assets/wooden_lounge_2k__F32_RGBA.exr",
+    ))?;
 
     // Compose fg over bg, replacing the data window of fg
     // with the result. I.e. the result will be cropped at

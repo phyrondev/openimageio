@@ -1,6 +1,6 @@
 use crate::*;
+use anyhow::Result;
 use core::{
-    i32,
     mem::{transmute, MaybeUninit},
     ops::Range,
 };
@@ -78,10 +78,6 @@ impl Region {
         Self::new(x, y, Some(z), None)
     }
 
-    pub fn all() -> Self {
-        Self::default()
-    }
-
     pub fn from_union(a: &Self, b: &Self) -> Self {
         let mut result = a.clone();
         result.union(b);
@@ -123,8 +119,12 @@ impl Region {
     /// Beware -- this defaults to a huge number. To be meaningful you must
     /// consider:
     ///
-    /// ```
-    /// let actual_channels = imagebuf.channels_count().min(roi.channels_count());
+    /// ```no_run
+    /// # use openimageio::ImageBuffer;
+    /// # use openimageio::Region;
+    /// # let image_buf = ImageBuffer::new();
+    /// # let roi = Region::default();
+    /// let actual_channels = image_buf.channel_count().min(roi.channel_count());
     /// ```
     ///
     /// # C++
@@ -285,10 +285,12 @@ impl Region {
 
 /// # Operations
 impl Region {
-    /// Union of two regions, the smallest region containing both.
-    pub fn union(&mut self, b: &Self) {
-        if b.is_empty() {
-            if self.is_empty() {
+    /// Union of two regions.
+    ///
+    /// The smallest region containing both.
+    pub fn union(&mut self, b: &Self) -> &mut Self {
+        if !b.is_empty() {
+            if !self.is_empty() {
                 self.x = self.x.start.min(b.x.start)..self.x.end.max(b.x.end);
                 self.y = self.y.start.min(b.y.start)..self.y.end.max(b.y.end);
                 self.z = self.z.start.min(b.z.start)..self.z.end.max(b.z.end);
@@ -298,12 +300,14 @@ impl Region {
         } else {
             *self = b.clone();
         }
+
+        self
     }
 
     /// Intersection of two regions.
-    pub fn intersection(&mut self, b: &Self) {
-        if b.is_empty() {
-            if self.is_empty() {
+    pub fn intersection(&mut self, b: &Self) -> &mut Self {
+        if !b.is_empty() {
+            if !self.is_empty() {
                 self.x = self.x.start.max(b.x.start)..self.x.end.min(b.x.end);
                 self.y = self.y.start.max(b.y.start)..self.y.end.min(b.y.end);
                 self.z = self.z.start.max(b.z.start)..self.z.end.min(b.z.end);
@@ -313,6 +317,8 @@ impl Region {
         } else {
             *self = b.clone();
         }
+
+        self
     }
 }
 
@@ -325,24 +331,39 @@ impl From<oiio_ROI_t> for Region {
 mod internal {
     use super::*;
 
-    impl From<*const oiio_ROI_t> for RegionOfInterest {
-        fn from(src: *const oiio_ROI_t) -> RegionOfInterest {
-            if i32::MIN == unsafe { src.as_ref().unwrap().xbegin } {
+    impl TryFrom<*const oiio_ROI_t> for RegionOfInterest {
+        type Error = ();
+
+        fn try_from(src: *const oiio_ROI_t) -> Result<Self, ()> {
+            match unsafe { src.as_ref() } {
+                None => Err(()),
+                Some(roi) => Ok(if i32::MIN == roi.xbegin {
+                    RegionOfInterest::All
+                } else {
+                    RegionOfInterest::Region({
+                        let mut dst = MaybeUninit::<Region>::uninit();
+
+                        unsafe {
+                            std::ptr::copy_nonoverlapping(
+                                src as *const Region,
+                                dst.as_mut_ptr(),
+                                1,
+                            );
+
+                            dst.assume_init()
+                        }
+                    })
+                }),
+            }
+        }
+    }
+
+    impl From<oiio_ROI_t> for RegionOfInterest {
+        fn from(src: oiio_ROI_t) -> RegionOfInterest {
+            if i32::MIN == src.xbegin {
                 RegionOfInterest::All
             } else {
-                RegionOfInterest::Region({
-                    let mut dst = MaybeUninit::<Region>::uninit();
-
-                    unsafe {
-                        std::ptr::copy_nonoverlapping(
-                            src as *const Region,
-                            dst.as_mut_ptr(),
-                            1,
-                        );
-
-                        dst.assume_init()
-                    }
-                })
+                RegionOfInterest::Region(src.into())
             }
         }
     }

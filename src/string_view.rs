@@ -15,11 +15,33 @@ pub struct StringView<'a> {
     _marker: PhantomData<*mut &'a ()>,
 }
 
+impl<'a> StringView<'a> {
+    pub fn is_empty(&self) -> bool {
+        let mut is_empty = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_StringView_empty(self.ptr, &mut is_empty as *mut _ as _);
+
+            is_empty.assume_init()
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        let mut len = std::mem::MaybeUninit::<usize>::uninit();
+
+        unsafe {
+            oiio_StringView_length(self.ptr, &mut len as *mut _ as _);
+
+            len.assume_init()
+        }
+    }
+}
+
 impl<'a> Default for StringView<'a> {
     fn default() -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
-            oiio_StringView_ctor_default(&mut ptr as *mut _ as _);
+            oiio_StringView_default(&mut ptr as *mut _ as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -49,6 +71,24 @@ impl<'a> From<&'a str> for StringView<'a> {
 
 impl<'a> From<Ustr> for StringView<'a> {
     fn from(string: Ustr) -> Self {
+        let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
+        unsafe {
+            oiio_StringView_ctor(
+                string.as_char_ptr(),
+                string.len().try_into().unwrap(),
+                &mut ptr as *mut _ as _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl<'a> From<&Ustr> for StringView<'a> {
+    fn from(string: &Ustr) -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
             oiio_StringView_ctor(

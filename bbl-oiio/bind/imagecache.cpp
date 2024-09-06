@@ -1,6 +1,8 @@
 #include <babble>
 
 #include <OpenImageIO/imagecache.h>
+#include <OpenImageIO/texture.h>
+
 
 BBL_MODULE(oiio) {
 
@@ -19,11 +21,11 @@ BBL_MODULE(oiio) {
                 return _this.getattribute(name, type, data);
             }
         ), "getattribute")
-        
+
         .m(&OIIO::ImageCache::get_perthread_info)
         .m(&OIIO::ImageCache::create_thread_info)
         .m(&OIIO::ImageCache::destroy_thread_info)
-        .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *))
+        .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *, const OIIO::TextureOpt * ))
             &OIIO::ImageCache::get_image_handle, "get_image_handle")
         // .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(const std::wstring &, OIIO::ImageCache::Perthread *))
         //     &OIIO::ImageCache::get_image_handle, "get_image_handle_w")
@@ -69,7 +71,7 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageCache::tile_format)
         .m(&OIIO::ImageCache::tile_roi)
         .m(&OIIO::ImageCache::tile_pixels)
-        // Callback 
+        // Callback
         // .m(&OIIO::ImageCache::add_file)
         .m(&OIIO::ImageCache::add_tile)
         .m(&OIIO::ImageCache::has_error)
@@ -79,9 +81,7 @@ BBL_MODULE(oiio) {
         // .m(&OIIO::ImageCache::operator=, "op_assign")
     ;
 
-    
     bbl::ClassIncomplete<OIIO::ImageCache::Perthread>();
     bbl::ClassIncomplete<OIIO::ImageCache::ImageHandle>();
     bbl::ClassIncomplete<OIIO::ImageCache::Tile>();
-
 }

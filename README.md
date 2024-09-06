@@ -1,5 +1,4 @@
-# `openimageio` -- High Level Rust Wrapper for
-  [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
+# `openimageio` -- High Level Rust Wrapper for [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
 
 OpenImageIO (OIIO) is a toolset for reading, writing, and manipulating image
 files of any image file format relevant to VFX/animation via a format-agnostic
@@ -102,10 +101,11 @@ fn main() -> Result<()> {
 
 ### Dependencies
 
-Install [`babble`](https://github.com/anderslanglands/babble).
+* [`babble`](https://github.com/anderslanglands/babble).
 
-As of this writing `openimageio` depends on `babble` ≥ `v0.7` and the latest binary release
-is `v0.6`. As such you need to [build `babble` from source](https://github.com/anderslanglands/babble?tab=readme-ov-file#building-babble-from-source).
+  As of this writing `openimageio` depends on `babble` ≥ `v0.8` and the
+  latest binary release is `v0.6`. As such you need to
+  [build `babble` from source](https://github.com/anderslanglands/babble?tab=readme-ov-file#building-babble-from-source).
 
 #### Debian/Ubuntu
 
@@ -139,3 +139,6 @@ export BBL_PLUGIN_PATH=/usr/local/plugins/
 > :warn: After you set this you must run `cargo clean` and re-build (as the binding's
 > `build.rs` only looks for changes in the input to trigger re-runs, not in the
 > output)!
+
+If you use a local build of OpenImageIO you can point CMake to it by setting
+the `CMAKE_PREFIX_PATH` to the `dist` directory of your build.

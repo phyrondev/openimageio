@@ -43,21 +43,11 @@ pub(crate) fn compare_images(
 ) -> Result<()> {
     use camino::Utf8Path;
 
-    let target_path = Utf8Path::new("target").join(name);
+    let other =
+        ImageBuffer::from_file(&Utf8Path::new("test_results").join(name))?;
 
-    image_buf.write(&target_path)?;
-
-    let image_one = image::open(&target_path)?.into_rgb8();
-    let image_two = image::open(format!("test_results/{name}"))?.into_rgb8();
-
-    let score =
-        image_compare::rgb_hybrid_compare(&image_one, &image_two)?.score;
-
-    if score < 1.0 {
-        Err(anyhow::anyhow!(
-            "Image comparison for {name} failed with score {}% equality",
-            (score * 100.0) as u8
-        ))
+    if image_buf.compare(&other, 1.0 / 255.0, 0.0).is_error {
+        Err(anyhow::anyhow!("Image comparison for {name} failed."))
     } else {
         Ok(())
     }

@@ -30,26 +30,26 @@ use ustr::Ustr;
 ///
 /// Usage guidelines:
 ///
-/// Compared to standard strings, ustrings have several advantages:
+/// Compared to standard strings, `Ustring`s have several advantages:
 ///
-///   - Each individual ustring is very small -- in fact, we guarantee that a
+///   - Each individual `Ustring` is very small -- in fact, we guarantee that a
 ///     `Ustring` is the same size and memory layout as an ordinary
 ///     [`CStr`](std::ffi::CStr).
 ///
 ///   - Storage is frugal, since there is only one allocated copy of each unique
 ///     character sequence, throughout the lifetime of the program.
 ///
-///   - Assignment from one ustring to another is just copy of the pointer; no
+///   - Assignment from one `Ustring` to another is just copy of the pointer; no
 ///     allocation, no character copying, no reference counting.
 ///
 ///   - Equality testing (do the strings contain the same characters) is a
 ///     single operation, the comparison of the pointer.
 ///
-///   - Memory allocation only occurs when a new ustring is constructed from raw
-///     characters the *first* time -- subsequent constructions of the same
+///   - Memory allocation only occurs when a new `Ustring` is constructed from
+///     raw characters the *first* time -- subsequent constructions of the same
 ///     string just finds it in the canonical string set, but doesn't need to
-///     allocate new storage.  Destruction of a ustring is trivial, there is no
-///     de-allocation because the canonical version stays in the set.  Also,
+///     allocate new storage.  Destruction of a `Ustring` is trivial, there is
+///     no de-allocation because the canonical version stays in the set.  Also,
 ///     therefore, no user code mistake can lead to memory leaks.
 ///
 /// But there are some problems, too.  Canonical strings are never freed

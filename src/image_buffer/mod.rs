@@ -5,9 +5,9 @@ use std::string::String;
 use ustr::Ustr;
 
 #[cfg(feature = "algorithms")]
-mod algorithms;
-#[cfg(feature = "algorithms")]
-pub use algorithms::*;
+pub mod algorithms;
+//#[cfg(feature = "algorithms")]
+//pub use algorithms::*;
 
 mod internal;
 
@@ -18,13 +18,30 @@ pub type ImageBuf<'a> = ImageBuffer<'a>;
 //pub struct IoProxy;
 
 #[derive(Default, Debug)]
+#[repr(C)]
 pub enum WrapMode {
     #[default]
-    Default,
-    Black,
-    Clamp,
-    Periodic,
-    Mirror,
+    Default = oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _,
+    Black = oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
+    Clamp = oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
+    Periodic = oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _,
+    Mirror = oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
+}
+
+impl From<WrapMode> for oiio_WrapMode {
+    fn from(wrap_mode: WrapMode) -> Self {
+        Self(match wrap_mode {
+            WrapMode::Default => {
+                oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _
+            }
+            WrapMode::Black => oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
+            WrapMode::Clamp => oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
+            WrapMode::Periodic => {
+                oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _
+            }
+            WrapMode::Mirror => oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
+        })
+    }
 }
 
 /// Optional parameters for the `from_file_with()`/`try_from_file_with()`
@@ -53,7 +70,7 @@ pub trait FnProgress<'a>: Fn(f32) + 'a {}
 
 #[derive(Default)]
 pub struct WriteOptions<'a> {
-    pub type_desc: Option<&'a TypeDesc>,
+    pub type_desc: Option<&'a TypeDescription>,
     pub file_format: Option<Ustr>,
 }
 
@@ -142,6 +159,14 @@ impl<'a> Drop for ImageBuffer<'a> {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[repr(C)]
+enum InitializePixels {
+    No = 0,
+    #[default]
+    Yes = 1,
+}
+
 impl<'a> ImageBuffer<'a> {
     pub fn new() -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
@@ -154,18 +179,37 @@ impl<'a> ImageBuffer<'a> {
             _marker: PhantomData,
         }
     }
+
+    /*pub fn new_with(
+        image_specificaiton: &ImageSpecification,
+        initialize_pixels: Option<InitializePixels>,
+    ) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        Self {
+            ptr: unsafe {
+                oiio_ImageBuf_ctor_03(
+                    image_specificaiton.into(),
+                    initialize_pixels.unwrap_or_default() as _,
+                    &mut ptr as *mut _ as _,
+                );
+                ptr.assume_init()
+            },
+            _marker: PhantomData,
+        }
+    }*/
 }
 
 impl<'a> ImageBuffer<'a> {
     #[inline(always)]
-    pub fn from_file(name: &Utf8Path) -> Self {
+    pub fn from_file(name: &Utf8Path) -> Result<Self> {
         Self::from_file_with(name, &FromFileOptions::default())
     }
 
     pub fn from_file_with(
         name: &Utf8Path,
         options: &FromFileOptions<'a>,
-    ) -> Self {
+    ) -> Result<Self> {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         Self {
@@ -189,6 +233,7 @@ impl<'a> ImageBuffer<'a> {
             },
             _marker: PhantomData,
         }
+        .ok_or_error_owned()
     }
 
     /// Destroy any previous contents of the `ImageBuffer` and re-initialize it
@@ -248,7 +293,7 @@ impl<'a> ImageBuffer<'a> {
                 options
                     .type_desc
                     .map(|t| t.into())
-                    .unwrap_or((&TypeDesc::default()).into()),
+                    .unwrap_or((&TypeDescription::default()).into()),
                 match options.file_format {
                     Some(file_format) => StringView::from(file_format),
                     None => StringView::default(),
@@ -309,52 +354,57 @@ impl<'a> ImageBuffer<'a> {
     /// Returns the name of the buffer (name of the file, for an `ImageBuffer`
     /// read from disk).
     ///
-    /// Returns an `None` for an `ImageBuffer` that was not constructed as a
-    /// direct reference to a file.
+    /// Returns `None` for an `ImageBuffer` that was not constructed as a direct
+    /// reference to a file.
     pub fn name(&self) -> Option<String> {
         let mut name = MaybeUninit::<StringView>::uninit();
+
         let name = unsafe {
             oiio_ImageBuf_name(self.ptr, &mut name as *mut _ as _);
+
             name.assume_init()
-        }
-        .to_string();
+        };
 
         if name.is_empty() {
             None
         } else {
-            Some(name)
+            Some(name.to_string())
         }
     }
 
-    /// Return the name of the image file format of the file this ImageBuf
-    /// refers to (for example "openexr").
+    /// Return the name of the image file format of the file this `ImageBuffer`
+    /// refers to (for example `"openexr"`).
     ///
-    /// Returns an `None` for an `ImageBuffer` that was not constructed
-    /// as a direct reference to a file.
+    /// Returns `None` for an `ImageBuffer` that was not constructed as a direct
+    /// reference to a file.
     pub fn file_format_name(&self) -> Option<String> {
         let mut file_format_name = MaybeUninit::<StringView>::uninit();
+
         let file_format_name = unsafe {
             oiio_ImageBuf_file_format_name(
                 self.ptr,
                 &mut file_format_name as *mut _ as _,
             );
+
             file_format_name.assume_init()
-        }
-        .to_string();
+        };
 
         if file_format_name.is_empty() {
             None
         } else {
-            Some(file_format_name)
+            Some(file_format_name.to_string())
         }
     }
 
     /// Return the index of the subimage within the file that the `ImageBuffer`
-    /// refers to. This will always be `0` for an `ImageBuffer` that was not
-    /// constructed as a direct reference to a file, or if the file contained
+    /// refers to.
+    ///
+    /// This will always be `0` for an `ImageBuffer` that was not constructed as
+    /// a direct reference to a file, or if the file contained
     /// only one image.
     pub fn sub_image(&self) -> u32 {
         let mut sub_image = MaybeUninit::<u32>::uninit();
+
         unsafe {
             oiio_ImageBuf_subimage(self.ptr, &mut sub_image as *mut _ as _);
             sub_image.assume_init()
@@ -425,7 +475,7 @@ impl<'a> ImageBuffer<'a> {
 
     /// Returns the number of channels.
     #[inline]
-    pub fn channel_count(&self) -> usize {
+    pub fn channel_count(&self) -> u32 {
         let mut count = std::mem::MaybeUninit::<c_int>::uninit();
         unsafe {
             oiio_ImageBuf_nchannels(self.ptr, &mut count as *mut _ as _);
@@ -437,12 +487,14 @@ impl<'a> ImageBuffer<'a> {
     /// [`RegionOfInterest`].
     #[inline]
     pub fn region_of_interest(&self) -> RegionOfInterest {
-        let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
+        let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
             oiio_ImageBuf_roi(self.ptr, &mut dst as *mut _ as _);
+
             dst.assume_init()
         }
+        .into()
     }
 
     /// Alias for [`region_of_interest()`](Self::region_of_interest).
@@ -455,18 +507,31 @@ impl<'a> ImageBuffer<'a> {
     /// [`RegionOfInterest`].
     #[inline]
     pub fn region_of_interest_full(&self) -> RegionOfInterest {
-        let mut dst = MaybeUninit::<RegionOfInterest>::uninit();
+        let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
             oiio_ImageBuf_roi_full(self.ptr, &mut dst as *mut _ as _);
+
             dst.assume_init()
         }
+        .into()
     }
 
     /// Alias for [`region_of_interest_full()`](Self::region_of_interest_full).
     #[inline(always)]
     pub fn roi_full(&self) -> RegionOfInterest {
         self.region_of_interest_full()
+    }
+
+    pub fn type_description(&self) -> TypeDescription {
+        let mut pixel_type = MaybeUninit::<oiio_TypeDesc_t>::uninit();
+
+        (&unsafe {
+            oiio_ImageBuf_pixeltype(self.ptr, &mut pixel_type as *mut _ as _);
+
+            pixel_type.assume_init()
+        })
+            .into()
     }
 
     /*
@@ -479,9 +544,10 @@ impl<'a> ImageBuffer<'a> {
     pub fn is_ok(&self) -> bool {
         let mut is_error = MaybeUninit::<bool>::uninit();
 
-        !unsafe {
+        unsafe {
             oiio_ImageBuf_has_error(self.ptr, &mut is_error as *mut _ as _);
-            is_error.assume_init()
+
+            !is_error.assume_init()
         }
     }
 
@@ -494,23 +560,187 @@ impl<'a> ImageBuffer<'a> {
         let mut error = MaybeUninit::<*mut oiio_String_t>::uninit();
 
         if unsafe {
-            oiio_ImageBuf_geterror(self.ptr, clear, &mut error as *mut _ as _)
-        } != 0
-        {
+            0 != oiio_ImageBuf_geterror(
+                self.ptr,
+                clear,
+                &mut error as *mut _ as _,
+            )
+        } {
             // Something went wrong.
             None
         } else {
-            let error =
-                crate::String::from(unsafe { error.assume_init() }).to_string();
+            let error = crate::String::from(unsafe { error.assume_init() });
 
             if error.is_empty() {
                 None
             } else {
-                Some(error)
+                Some(error.to_string())
             }
         }
     }
 }
+
+/// # Copying
+/// Try to copy the pixels and metadata from src to *this (optionally with an
+/// explicit data format conversion).
+///
+/// If the previous state of *this was uninitialized, owning its own local pixel
+/// memory, or referring to a read-only image backed by ImageCache, then local
+/// pixel memory will be allocated to hold the new pixels and the call always
+/// succeeds unless the memory cannot be allocated. In this case, the format
+/// parameter may request a pixel data type that is different from that of the
+/// source buffer.
+///
+/// If *this previously referred to an app-owned memory buffer, the memory
+/// cannot be re-allocated, so the call will only succeed if the app-owned
+/// buffer is already the correct resolution and number of channels. The data
+/// type of the pixels will be converted automatically to the data type of the
+/// app buffer.
+///
+/// Optionally request the pixel data type to be used. The default of
+/// TypeUnknown means to use whatever data type is used by the src. If *this is
+/// already initialized and has APPBUFFER storage (“wrapping” an application
+/// buffer), this parameter is ignored.
+impl ImageBuffer<'_> {
+    pub fn copy(&self, type_description: &TypeDescription) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        unsafe {
+            oiio_ImageBuf_copy_01(
+                self.ptr,
+                type_description.into(),
+                &mut ptr as *mut _ as _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+                _marker: PhantomData,
+            }
+        }
+    }
+
+    pub fn from_copy(type_description: &TypeDescription) -> Self {
+        let image_buffer = Self::new();
+
+        image_buffer.copy(type_description)
+    }
+}
+
+#[cfg(feature = "image")]
+impl<'a> From<ImageBuffer<'a>> for image::RgbImage {
+    fn from(image_buffer: ImageBuffer<'a>) -> Self {
+        let type_description = image_buffer.type_description();
+        if BaseType::U8 == type_description.base_type
+            && Aggregate::Vec3 == type_description.aggregate
+            && VecSemantics::Color == image_buffer.vec_semantics()
+        {
+            image::ImageBuffer::from_raw(
+                image_buffer.width(),
+                image_buffer.height(),
+                image_buffer.data(),
+            )
+            .unwrap()
+        } else {
+            // Make a copy of the image buffer with a matching
+            // `TypdeDescription` for our target pixel type.
+            image_buffer
+                .copy(&TypeDescription {
+                    base_type: BaseType::U8,
+                    aggregate: Aggregate::Vec3,
+                    vec_semantics: Some(VecSemantics::Color),
+                    ..Default::default()
+                })
+                .into()
+        }
+    }
+}
+/*
+impl<'a> IntoIterator for ImageBuffer<'a> {
+    pub fn iter(&self) -> ImageBufferIterator {}
+}
+
+struct ImageBufferIterator<'a, T> {
+    image_buffer: ImageBuffer<'a>,
+    ptr: *mut T,
+}
+
+impl<'a> IntoIterator for ImageBuffer<'a> {
+    type IntoIter = ImageBufferIterator<'a, oiio_Iterator_t>;
+    type Item<'a> = &'a [f32];
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut ptr = MaybeUninit::<*mut oiio_Iterator_t>::uninit();
+
+        unsafe {
+            oiio_Iterator_ctor_00(
+                self.ptr,
+                WrapMode::Default.into(),
+                &mut ptr as *mut _ as _,
+            );
+
+            ImageBufferIterator {
+                image_buffer: self,
+                ptr: ptr.assume_init(),
+            }
+        }
+    }
+}
+
+impl<'a, T: 'a> Iterator for ImageBufferIterator<'a, oiio_Iterator_t> {
+    type Item<'a> = &'a [T];
+
+    fn next(&mut self) -> Option<T> {
+        Some(1.0)
+    }
+}
+
+pub struct ImageBufferIntoIterator<'a> {
+    ptr: *mut oiio_Iterator_t,
+    _marker: PhantomData<&'a ImageBuffer<'a>>,
+}
+
+impl Drop for ImageBufferIntoIterator<'_> {
+    fn drop(&mut self) {
+        unsafe { oiio_Iterator_free(self.ptr) };
+    }
+}
+
+
+impl<'a> Iterator for ImageBufferIntoIterator<'a> {
+    type Item = &'a [f32];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let inner = unsafe { gpiod_chip_iter_next_noclose(self.inner) };
+
+        if inner.is_null() {
+            None
+        } else {
+            Some(GpiodChip { inner })
+        }
+    }
+}
+
+impl<'a> Iterator<T> for ImageBuffer<'a> {
+    // We can refer to this type using Self::Item
+    type Item = Pixel<T>;
+
+    // Here, we define the sequence using `.curr` and `.next`.
+    // The return type is `Option<T>`:
+    //     * When the `Iterator` is finished, `None` is returned.
+    //     * Otherwise, the next value is wrapped in `Some` and returned.
+    // We use Self::Item in the return type, so we can change
+    // the type without having to update the function signatures.
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.curr;
+
+        self.curr = self.next;
+        self.next = current + self.next;
+
+        // Since there's no endpoint to a Fibonacci sequence, the `Iterator`
+        // will never return `None`, and `Some` is always returned.
+        Some(current)
+    }
+}*/
 
 #[cfg(test)]
 mod tests {
@@ -525,7 +755,7 @@ mod tests {
 
         let image_buf = ImageBuffer::from_file(Utf8Path::new(
             "assets/j0.3toD__F16_RGBA.exr",
-        ));
+        ))?;
 
         println!(
             "Name:          {}",

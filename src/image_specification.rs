@@ -1,27 +1,6 @@
-//! An [`ImageSpecification`]  describes the complete format specification of a
-//! single image. It contains:
-//!
-//! * The image resolution (number of pixels) and origin. This specifies what is
-//!   often called the “pixel data window.”
-//!
-//! * The full size and offset of an abstract “full” or “display” window.
-//!   Differing full and data windows can indicate that the pixels are a crop
-//!   region or a larger image, or contain overscan pixels.
-//!
-//! * Whether the image is organized into tiles, and if so, the tile size.
-//!
-//! * The native data format of the pixel values (e.g., float, 8-bit integer,
-//!   etc.).
-//!
-//! * The number of color channels in the image (e.g., 3 for RGB images), names
-//!   of the channels, and whether any particular channels represent alpha and
-//!   depth.
-//!
-//! * A user-extensible (and format-extensible) list of any other
-//!   arbitrarily-named and -typed data that may help describe the image or its
-//!   disk representation.
 use crate::{String as OiioString, *};
-use std::{mem::MaybeUninit, string::String};
+use core::mem::MaybeUninit;
+use ustr::Ustr;
 
 pub enum ChannelFormat {
     Uniform(BaseType),
@@ -31,12 +10,34 @@ pub enum ChannelFormat {
 /// Describes the data format of an image -- dimensions, layout, number and
 /// meanings of image channels.
 ///
-/// Can be used to describe nearly any image, and an extensible list of
-/// arbitrary attributes that can hold metadata that may be user-defined or
-/// specific to individual file formats.
+/// It contains:
 ///
-/// The `width`, height` & `depth` are the size of the data of this image, i.e.,
-/// the number of pixels in each dimension.  A `depth` greater than `1`
+/// * The image resolution (number of pixels) and origin. This specifies what is
+///   often called the “pixel data window.”
+///
+/// * The full size and offset of an abstract 'full' or 'display' window.
+///   Differing full and data windows can indicate that the pixels are a crop
+///   region or a larger image, or contain overscan pixels.
+///
+/// * Whether the image is organized into tiles, and if so, the tile size.
+///
+/// * The native data format of the pixel values (e.g., float, 8-bit integer,
+///   etc.).
+///
+/// * The number of color channels in the image (e.g., 3 for RGB images), names
+///   of the channels, and whether any particular channels represent alpha and
+///   depth.
+///
+/// * A user-extensible (and format-extensible) list of any other
+///   arbitrarily-named and -typed data that may help describe the image or its
+///   disk representation.
+///
+/// An `ImageSpecification` can be used to describe nearly any image, and an
+/// extensible list of arbitrary attributes that can hold metadata that may be
+/// user-defined or specific to individual file formats.
+///
+/// The `width`, `height` & `depth` are the size of the data of this image,
+/// i.e., the number of pixels in each dimension.  A `depth` greater than `1`
 /// indicates a 3D 'volumetric' image.
 ///
 /// The `x`, `y` & `z` fields indicate the *origin* of the pixel data of the
@@ -50,9 +51,9 @@ pub enum ChannelFormat {
 ///
 /// The analogous `full_width`, `full_height`, `full_depth` and `full_x`,
 /// `full_y` & `full_z` fields define a *full* or *display* image window over
-/// the region `[full_x .. full_x + full_width - 1]`` horizontally, `[full_y ..
-/// full_y + full_height - 1]` vertically, and `[full_z .. full_z + full_depth
-/// -1]` in depth.
+/// the region `[full_x .. full_x + full_width - 1]` horizontally, `[full_y ..
+/// full_y + full_height - 1]` vertically, and `[full_z .. full_z + full_depth -
+/// 1]` in depth.
 ///
 /// Having the full display window different from the pixel data window can
 /// be helpful in cases where you want to indicate that your image is a
@@ -113,7 +114,7 @@ pub struct ImageSpecification {
     channel_format: ChannelFormat,
     /// The names of each channel, in order. Typically this will be `"R"`,
     /// `"G"`, `"B"`, `"A"` (alpha), `"Z"` (depth), or other arbitrary names.
-    channel_name: Vec<String>,
+    channel_name: Vec<Ustr>,
     /// The index of the channel that represents *alpha* (pixel coverage and/or
     /// transparency).
     ///
@@ -145,13 +146,25 @@ pub(crate) struct ImageSpec {
     pub(crate) ptr: *mut oiio_ImageSpec_t,
 }
 
+/*impl From<ImageSpec> for oiio_ImageSpec_t {
+    /// This is mainly to pass an `oiio_ImageSpec_t` on the stack to the FFI.
+    ///
+    /// The C++ side of the FFI will be responsible for freeing the memory.
+    fn from(image_spec: ImageSpec) -> Self {
+        let ptr = image_spec.ptr;
+        std::mem::forget(image_spec);
+
+        *ptr
+    }
+}*/
+
 impl From<&ImageSpecification> for ImageSpec {
     fn from(i: &ImageSpecification) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
             oiio_ImageSpec_new(
-                (&TypeDesc::default()).into(),
+                (&TypeDescription::default()).into(),
                 &mut ptr as *mut _ as *mut _,
             );
 
@@ -231,10 +244,10 @@ impl From<&ImageSpecification> for ImageSpec {
 
 impl ImageSpec {
     pub fn new() -> Self {
-        Self::with_type_desc(&TypeDesc::default())
+        Self::new_with(&TypeDescription::default())
     }
 
-    pub fn with_type_desc(type_desc: &TypeDesc) -> Self {
+    pub fn new_with(type_desc: &TypeDescription) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
@@ -246,11 +259,11 @@ impl ImageSpec {
         }
     }
 
-    pub fn with_dimensions_and_type_desc(
+    pub fn new_with_dimensions(
         x_res: u32,
         y_res: u32,
         channel_count: u32,
-        type_desc: &TypeDesc,
+        type_desc: &TypeDescription,
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 

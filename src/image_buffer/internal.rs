@@ -6,6 +6,15 @@ static UNKNOWN_ERROR: &str = "unknown error";
 
 impl<'a> ImageBuffer<'a> {
     #[inline(always)]
+    pub(crate) fn ok_or_error_owned(self) -> Result<Self> {
+        if self.is_ok() {
+            Ok(self)
+        } else {
+            Err(anyhow!(self.error(true).unwrap_or(UNKNOWN_ERROR.into())))
+        }
+    }
+
+    #[inline(always)]
     pub(crate) fn ok_or_error(&mut self, is_ok: bool) -> Result<&mut Self> {
         if is_ok && self.is_ok() {
             Ok(self)
@@ -14,6 +23,7 @@ impl<'a> ImageBuffer<'a> {
         }
     }
 
+    #[inline(always)]
     pub(crate) fn self_or_error(self) -> Result<Self> {
         if self.is_ok() {
             Ok(self)

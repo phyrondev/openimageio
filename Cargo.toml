@@ -15,18 +15,16 @@ log = "0.4"
 [dependencies]
 anyhow = "1"
 camino = "1.1"
+#image = { version = "0.25.2", default-features = false, optional = true }
 log = "0.4"
 num_enum = "0.7"
 once_cell = { version = "1", features = ["parking_lot"] }
 ustr = "1.0.0"
 
-[dev-dependencies]
-image-compare = "0.4"
-image = { version = "0.25.2", default-features = false, features = ["png"] }
-
 [features]
 default = ["algorithms"]
 # Enable a bunch of composting- & generator methods on `ImageBuffer`.
 algorithms = []
+#image = ["dep:image"]
 # Make the OpenImageIO FFI this crate uses public.
 ffi = []

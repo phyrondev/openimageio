@@ -1,6 +1,7 @@
-use crate::*;
+use crate::{image_buffer::algorithms::Options, *};
 use anyhow::Result;
-use std::mem::MaybeUninit;
+use core::{mem::MaybeUninit, ptr};
+use ustr::Ustr;
 
 impl<'a> ImageBuffer<'a> {
     fn fill_ffi(&mut self, values: &[f32], options: &Options) -> bool {
@@ -68,6 +69,8 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
+/// # Fill
+///
 /// Fill an image region with given channel values,
 ///
 ///  Note that the value slices start with channel 0, even if the
@@ -76,21 +79,47 @@ impl<'a> ImageBuffer<'a> {
 ///
 /// Three varieties of `fill...()` exist:
 ///
-/// * [A single set](#uniform-fill) of channel values that will apply to the
-///   whole `RegionOfInterest`.
+/// * [Uniform fill](#uniform-fill)
 ///
-/// * Two sets of values that will create a linearly interpolated gradient from
-///   top to bottom of the `RegionOfInterest`.
+/// * [Vertical gradient fill](#vertical-gradient-fill)
 ///
-/// * Four sets of values that will be bilinearly interpolated across all four
-///   corners of the `RegionOfInterest`.
+/// * [Four corner gradient fill](#four-corner-gradient-fill)
 ///
-/// # Uniform Fill
+/// ## Uniform Fill
+///
+/// A single set of channel values that will apply to the whole
+/// `RegionOfInterest`.
 impl<'a> ImageBuffer<'a> {
     #[inline]
-    pub fn from_fill(values: &[f32], options: &Options) -> Self {
+    pub fn from_fill(
+        values: &[f32],
+        region_of_interest: &RegionOfInterest,
+    ) -> Self {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.fill_with(values, options);
+        image_buffer.fill_with(
+            values,
+            &Options {
+                region_of_interest: region_of_interest.clone(),
+                ..Default::default()
+            },
+        );
+        image_buffer
+    }
+
+    #[inline]
+    pub fn from_fill_with(
+        values: &[f32],
+        region_of_interest: &RegionOfInterest,
+        thread_count: Option<u16>,
+    ) -> Self {
+        let mut image_buffer = ImageBuffer::new();
+        image_buffer.fill_with(
+            values,
+            &Options {
+                region_of_interest: region_of_interest.clone(),
+                thread_count: thread_count.unwrap_or(0),
+            },
+        );
         image_buffer
     }
 
@@ -113,7 +142,10 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
-/// # Vertical Gradient Fill
+/// ## Vertical Gradient Fill
+///
+/// Two sets of valuesthat will create a linearly interpolated gradient from top
+/// to bottom of the `RegionOfInterest`.
 impl<'a> ImageBuffer<'a> {
     #[inline]
     pub fn from_fill_vertical(
@@ -146,7 +178,10 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
-/// # Four Corner Gradient Fill
+/// ## Four Corner Gradient Fill
+///
+/// Four sets of values that will be bilinearly interpolated across all four
+/// corners of the `RegionOfInterest`.
 impl<'a> ImageBuffer<'a> {
     #[inline]
     pub fn from_fill_corners(
@@ -288,8 +323,11 @@ pub struct NoiseOptions {
     /// `(x, y, z)` in channel `c` will be completely deterministic and
     /// repeatable.
     seed: i32,
-    region_of_interest: RegionOfInterest,
-    thread_count: u16,
+    /// See the [Region of Interest](#region-of-interest) section on
+    /// [`ImageBuffer`].
+    pub region_of_interest: RegionOfInterest,
+    /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
+    pub thread_count: u16,
 }
 
 impl<'a> ImageBuffer<'a> {
@@ -339,29 +377,31 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
-/// # Noise
-///
-/// Return an image of 'noise' in every pixel and channel.
-///
-/// There are several `noise_type`s to choose from, and each behaves differently
-/// and has a different interpretation of the A and B parameters:
-///
-/// * `gaussian` -- adds Gaussian (normal distribution) noise values with mean
-///   value `a` and standard deviation `b`.
-///
-/// * `white` -- adds independent uniformly distributed values on range `[a,b)`.
-///
-/// * `uniform` -- synonym for `white`
-///
-/// * `blue` adds "blue noise" uniformly distributed on range `[a,b)` but not
-///   independent; rather, they are chosen for good spectral properties for
-///   sampling and dither.
-///
-/// * `salt` changes to value `a` the portion of pixels given by `b`.
+enum NoiseType {
+    Gaussian,
+    White,
+    Uniform,
+    Blue,
+    Salt,
+}
+
+impl From<NoiseType> for StringView<'static> {
+    fn from(noise_type: NoiseType) -> Self {
+        match noise_type {
+            NoiseType::Gaussian => StringView::from("gaussian"),
+            NoiseType::White => StringView::from("white"),
+            NoiseType::Uniform => StringView::from("uniform"),
+            NoiseType::Blue => StringView::from("blue"),
+            NoiseType::Salt => StringView::from("salt"),
+        }
+    }
+}
+
+// Internal noise FFI call.
 impl<'a> ImageBuffer<'a> {
     fn noise_ffi(
         &mut self,
-        noise_type: &str,
+        noise_type: NoiseType,
         a: f32,
         b: f32,
         options: &NoiseOptions,
@@ -384,11 +424,37 @@ impl<'a> ImageBuffer<'a> {
             is_ok.assume_init()
         }
     }
+}
 
+/// # Noise
+///
+/// Return an image of 'noise' in every pixel and channel.
+///
+/// There are several `noise_type`s to choose from, and each behaves differently
+/// and has a different interpretation of the A and B parameters:
+///
+/// * `gaussian` -- adds Gaussian (normal distribution) noise values with mean
+///   value `a` and standard deviation `b`.
+///
+/// * `white` -- adds independent uniformly distributed values on range `[a,b)`.
+///
+/// * `uniform` -- synonym for `white`
+///
+/// * `blue` adds "blue noise" uniformly distributed on range `[a,b)` but not
+///   independent; rather, they are chosen for good spectral properties for
+///   sampling and dither.
+///
+/// * `salt` changes to value `a` the portion of pixels given by `b`.
+impl<'a> ImageBuffer<'a> {
     /// Add noise.
     ///
     /// Errors will be logged.
-    pub fn noise(&mut self, noise_type: &str, a: f32, b: f32) -> &mut Self {
+    pub fn noise(
+        &mut self,
+        noise_type: NoiseType,
+        a: f32,
+        b: f32,
+    ) -> &mut Self {
         let is_ok = self.noise_ffi(noise_type, a, b, &NoiseOptions::default());
         self.ok_or_log_error(is_ok)
     }
@@ -398,7 +464,7 @@ impl<'a> ImageBuffer<'a> {
     /// Errors will be logged.
     pub fn noise_with(
         &mut self,
-        noise_type: &str,
+        noise_type: NoiseType,
         a: f32,
         b: f32,
         options: &NoiseOptions,
@@ -410,7 +476,7 @@ impl<'a> ImageBuffer<'a> {
     /// Try adding noise.
     pub fn try_noise(
         &mut self,
-        noise_type: &str,
+        noise_type: NoiseType,
         a: f32,
         b: f32,
     ) -> Result<&mut Self> {
@@ -421,12 +487,227 @@ impl<'a> ImageBuffer<'a> {
     /// Try adding noise with [`NoiseOptions`].
     pub fn try_noise_with(
         &mut self,
-        noise_type: &str,
+        noise_type: NoiseType,
         a: f32,
         b: f32,
         options: &NoiseOptions,
     ) -> Result<&mut Self> {
         let is_ok = self.noise_ffi(noise_type, a, b, options);
         self.ok_or_error(is_ok)
+    }
+}
+
+#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
+enum TextAlignX {
+    #[default]
+    Left = oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
+    Center = oiio_TextAlignX::oiio_TextAlignX_Center.0 as _,
+    Right = oiio_TextAlignX::oiio_TextAlignX_Right.0 as _,
+}
+
+impl From<TextAlignX> for oiio_TextAlignX {
+    fn from(text_align_x: TextAlignX) -> Self {
+        Self(match text_align_x {
+            TextAlignX::Left => oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
+            TextAlignX::Center => {
+                oiio_TextAlignX::oiio_TextAlignX_Center.0 as _
+            }
+            TextAlignX::Right => oiio_TextAlignX::oiio_TextAlignX_Right.0 as _,
+        })
+    }
+}
+
+#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
+enum TextAlignY {
+    #[default]
+    Baseline = oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _,
+    Top = oiio_TextAlignY::oiio_TextAlignY_Top.0 as _,
+    Bottom = oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _,
+    Center = oiio_TextAlignY::oiio_TextAlignY_Center.0 as _,
+}
+
+impl From<TextAlignY> for oiio_TextAlignY {
+    fn from(text_align_y: TextAlignY) -> Self {
+        Self(match text_align_y {
+            TextAlignY::Baseline => {
+                oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _
+            }
+            TextAlignY::Top => oiio_TextAlignY::oiio_TextAlignY_Top.0 as _,
+            TextAlignY::Bottom => {
+                oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _
+            }
+            TextAlignY::Center => {
+                oiio_TextAlignY::oiio_TextAlignY_Center.0 as _
+            }
+        })
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct RenderTextOptions<'a> {
+    /// The nominal height of the font (in pixels).
+    pub font_size: u16,
+    /// The name of the font. If the name is not a full pathname to a font
+    /// file, it will search for a matching font, defaulting to some reasonable
+    /// system font if not supplied at all).
+    ///
+    /// Note that any named fonts (if not a full pathname) will search for the
+    /// fonts in the following places:
+    ///
+    /// 1. Any directories named in the global `font_searchpath` attribute or
+    ///    the `$OPENIMAGEIO_FONTS` environment variable.
+    ///
+    /// 2. Any font-related subdirectories (`fonts`, `Fonts`, `share/fonts`, or
+    ///    `Library/Fonts`) underneath the directories in environment variables
+    ///    `$HOME`, `$SystemRoot`, `$OpenImageIO_ROOT`.
+    ///
+    /// 3. A number of common system font areas, including `/usr/share/fonts`,
+    ///    `/Library/fonts`, and `C:/Windows/fonts`.
+    ///
+    /// 4. In fonts directories one level up from the place where the currently
+    ///    running binary lives.
+    pub font_name: Option<Ustr>,
+    /// Color for drawing the text, defaulting to opaque white `[1.0, 1.0, …]`
+    /// in all channels if `None`. If provided, it is expected to point to an
+    /// `[f32]` slice of length at least equal to
+    /// `R.specification().channel_count`, or defaults will be chosen for you.
+    pub color: Option<&'a [f32]>,
+    /// Text alignment in the horizontal direction.
+    pub text_align_x: TextAlignX,
+    /// Text alignment in the vertical direction.
+    pub text_align_y: TextAlignY,
+    /// If nonzero, a 'drop shadow' of this radius will be used to make the
+    /// text look more clear by dilating the alpha channel of the composite
+    /// (makes a black halo around the characters).
+    pub shadow_size: u16,
+    /// See the [Region of Interest](#region-of-interest) section on
+    /// [`ImageBuffer`].
+    pub region_of_interest: RegionOfInterest,
+    /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
+    pub thread_count: u16,
+}
+
+impl Default for RenderTextOptions<'_> {
+    fn default() -> Self {
+        Self {
+            font_size: 16,
+            font_name: None,
+            color: None,
+            text_align_x: TextAlignX::default(),
+            text_align_y: TextAlignY::default(),
+            shadow_size: 0,
+            region_of_interest: RegionOfInterest::default(),
+            thread_count: 0,
+        }
+    }
+}
+
+impl<'a> ImageBuffer<'a> {
+    fn render_text_ffi(
+        &mut self,
+        x: i32,
+        y: i32,
+        text: &str,
+        options: &RenderTextOptions,
+    ) -> bool {
+        let mut is_ok = MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBufAlgo_render_text(
+                self.ptr,
+                x,
+                y,
+                StringView::from(text).ptr,
+                options.font_size as _,
+                options
+                    .font_name
+                    .as_ref()
+                    .map(|s| StringView::from(s).ptr)
+                    .unwrap_or(ptr::null_mut()),
+                options
+                    .color
+                    .as_ref()
+                    .map(|c| CspanF32::new(c).ptr)
+                    .unwrap_or(CspanF32::new(&[1.0]).ptr) as _,
+                options.text_align_x.into(),
+                options.text_align_y.into(),
+                options.shadow_size as _,
+                options.region_of_interest.clone().into(),
+                options.thread_count as _,
+                &mut is_ok as *mut _ as _,
+            );
+
+            is_ok.assume_init()
+        }
+    }
+}
+
+/// # Render Text
+///
+/// Render a text string (encoded as UTF-8).
+///
+/// # Parameters
+///
+/// * `x`, `y` -– The position to place the text.
+///
+/// * `text` –- The text to draw. Linefeed (`\n`) characters are respected as
+///   indications that the text spans multiple rows.
+///
+/// * `options` -- See [`RenderTextOptions`].
+impl<'a> ImageBuffer<'a> {
+    /// Render text into an image.
+    ///
+    /// Text will be rendered into the existing image by essentially doing an
+    /// 'over' of the character into the existing pixel data.
+    pub fn render_text(&mut self, x: i32, y: i32, text: &str) -> &mut Self {
+        let is_ok =
+            self.render_text_ffi(x, y, text, &RenderTextOptions::default());
+        self.ok_or_log_error(is_ok)
+    }
+
+    /// Render text into an image buffer with given [`RenderTextOptions`].
+    ///
+    /// Text will be rendered into the existing image by essentially doing an
+    /// 'over' of the character into the existing pixel data.
+    pub fn render_text_with(
+        &mut self,
+        x: i32,
+        y: i32,
+        text: &str,
+        options: &RenderTextOptions,
+    ) -> &mut Self {
+        let is_ok = self.render_text_ffi(x, y, text, options);
+        self.ok_or_log_error(is_ok)
+    }
+
+    /// Create an image buffer from rendering text.
+    ///
+    /// The resulting image will be initialized to be a black background exactly
+    /// large enough to contain the rasterized text.
+    pub fn from_render_text(
+        x: i32,
+        y: i32,
+        text: &str,
+        options: &RenderTextOptions,
+    ) -> Self {
+        let mut image_buffer = ImageBuffer::new();
+        image_buffer.render_text_with(x, y, text, options);
+        image_buffer
+    }
+
+    /// Create an image buffer from rendering text with given
+    /// [`RenderTextOptions`].
+    ///
+    /// The resulting image will be initialized to be a black background exactly
+    /// large enough to contain the rasterized text.
+    pub fn from_render_text_with(
+        x: i32,
+        y: i32,
+        text: &str,
+        options: &RenderTextOptions,
+    ) -> Self {
+        let mut image_buffer = ImageBuffer::new();
+        image_buffer.render_text_with(x, y, text, options);
+        image_buffer
     }
 }

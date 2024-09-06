@@ -169,50 +169,62 @@
 //!   This is because of the absence of parameter names at call sites and as
 //!   they still have to specified, even if omitted (one `None` per each).
 //!
-//!   The [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)
-//!   is mostly used for opaque/side-effects-free `struct` initalization in the
-//!   wild and quite verbose. But it is seldom used for optional function
-//!   parameters. It also requires a lot of boilerplate code.
+//! ### Passing Optional Parameters
 //!
-//!   Instead the
-//!   [init-struct pattern](https://xaeroxe.github.io/init-struct-pattern/)
-//!   was chosen.
+//! The [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)
+//! is mostly used for opaque/side-effects-free `struct` initalization in the
+//! wild and quite verbose. But it is seldom used for optional function
+//! parameters. It also requires a lot of boilerplate code.
 //!
-//!   It requires almost no boilerplate, parameter names are clearly spelled
-//!   out on initialization/assignment and the compiler will optimize most/all
-//!   of it away (zero cost abstractions).
+//! Instead the
+//! [init-struct pattern](https://xaeroxe.github.io/init-struct-pattern/)
+//! was chosen.
 //!
-//!   For example, the [`ImageBuffer::rotate()`] method has a useful C++ variant
-//!   taking *five* extra parameters.
+//! It requires almost no boilerplate, parameter names are clearly spelled out
+//! on initialization/assignment and the compiler will optimize most/all of it
+//! away (zero cost abstractions).
 //!
-//!   On the Rust side we expose a simple version,
-//!   [`rotate()`](ImageBuffer::rotate) but also an equivalent,
-//!   [`rotate_with()`](ImageBuffer::rotate_with), that takes a single
-//!   [`RotateOptions`](operators::RotateOptions) parameter with the
-//!   aforementioned five parameters.
+//! For each function that takes optional parameters on the C++ side, the Rust
+//! side exposes two variants.
 //!
-//!   Specifying each of these can be (partially) omitted by using
-//!   `Default::default()` `struct`-initialization shorthand:
+//! * One without the optional parameters (using defaults).
 //!
-//!   ```
-//!   # use openimageio::{ImageBuffer, operators::{
-//!   #     PixelFilter::BlackmanHarris, RotateOptions
-//!   # }, Utf8Path};
-//!   # use std::f32::consts::TAU;
-//!   let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
-//!       "assets/wooden_lounge_2k__F32_RGBA.exr",
-//!   ));
+//! * One with a `_with` suffix that takes a resp. parameter `struct` for which
+//!   [`Default`] is alwayws implemented.
 //!
-//!   image_buf.rotate_with(
-//!       42.0 * TAU / 360.0,
-//!       &RotateOptions {
-//!           // Use a Blackmann-Harris filter to avoid halos easily introduced
-//!           // when operating on HDRs using the default filter, Lanczos3.
-//!           pixel_filter: BlackmanHarris,
-//!           ..Default::default()
-//!       },
-//!   );
-//!   ```
+//! For example, the [`ImageBuffer::rotate()`] method has a useful C++ variant
+//! taking *five* extra parameters.
+//!
+//! On the Rust side we expose a simple version,
+//! [`rotate()`](ImageBuffer::rotate) but also an equivalent,
+//! [`rotate_with()`](ImageBuffer::rotate_with), that takes a single
+//! [`RotateOptions`](operators::RotateOptions) parameter with the
+//! aforementioned five parameters.
+//!
+//! Specifying each of these can be (partially) omitted by using
+//! `Default::default()` `struct`-initialization shorthand:
+//!
+//! ```
+//! # use openimageio::{ImageBuffer, operators::{
+//! #     PixelFilter, RotateOptions
+//! # }, Utf8Path};
+//! # use std::f32::consts::TAU;
+//! let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
+//!     "assets/wooden_lounge_2k__F32_RGBA.exr",
+//! ))?;
+//!
+//! image_buf.rotate_with(
+//!     42.0 * TAU / 360.0,
+//!     &RotateOptions {
+//!         // Use a Blackmann-Harris filter to avoid halos easily introduced
+//!         // when operating on HDRs using the default filter (Lanczos3).
+//!         pixel_filter: PixelFilter::BlackmanHarris,
+//!         ..Default::default()
+//!     },
+//! );
+//!
+//! # Ok::<(), anyhow::Error>(())
+//! ```
 //!
 //! ## Opaque Types
 pub use camino::{Utf8Path, Utf8PathBuf};

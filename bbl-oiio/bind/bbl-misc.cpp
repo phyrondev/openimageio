@@ -23,15 +23,18 @@ BBL_MODULE(oiio) {
         .m(&std::string::c_str)
         .m((const char* (std::string::*)() const)
            &std::string::data, "data")
+        .m(&std::string::empty)
         .m(&std::string::size)
+        .m(&std::string::length)
     ;
 
     bbl::Class<OIIO::string_view>("StringView")
-        .ctor(bbl::Class<OIIO::string_view>::Ctor(), "ctor_default" )
+        .ctor(bbl::Class<OIIO::string_view>::Ctor(), "default" )
         .ctor(bbl::Class<OIIO::string_view>::Ctor<const char*, size_t>("s", "count"), "ctor" )
         .m(&OIIO::string_view::data)
         .m(&OIIO::string_view::size)
-
+        .m(&OIIO::string_view::empty)
+        .m(&OIIO::string_view::length)
     ;
 
     // bbl::Class<std::wstring>("WString")

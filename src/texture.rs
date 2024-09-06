@@ -193,7 +193,7 @@ impl Default for TextureOptions<'_> {
 
 /// Used to for interop until we have binary compatibility between
 /// `TextureOptions` and `oiio_TextureOpt_t`.
-/// This hinges on Ustring.
+/// This hinges on `Ustring`.
 struct TextureOpt {
     ptr: *mut oiio_TextureOpt_t,
 }

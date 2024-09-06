@@ -191,8 +191,9 @@ BBL_MODULE(oiio) {
     bbl::Enum<OIIO::ImageBuf::IBStorage>();
     bbl::Enum<OIIO::ImageBuf::WrapMode>();
 
+
     bbl::Class<OIIO::ImageBuf::IteratorBase>()
-        // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, OIIO::ImageBuf::WrapMode>("ib", "wrap"), "ctor_00")
+        // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, OIIO::ImageBuf::WrapMode, bool>("ib", "wrap", "write"), "ctor_00")
         // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, const OIIO::ROI &, OIIO::ImageBuf::WrapMode>("ib", "roi", "wrap"), "ctor_01")
         // .ctor(bbl::Class<OIIO::ImageBuf::IteratorBase>::Ctor<const OIIO::ImageBuf &, int, int, int, int, int, int, OIIO::ImageBuf::WrapMode>("ib", "xbegin", "xend", "ybegin", "yend", "zbegin", "zend", "wrap"), "ctor_02")
         // .m(&OIIO::ImageBuf::IteratorBase::assign_base)
@@ -217,31 +218,31 @@ BBL_MODULE(oiio) {
             &OIIO::ImageBuf::IteratorBase::operator++, "op_inc_01")
         .m(&OIIO::ImageBuf::IteratorBase::range)
         .m(&OIIO::ImageBuf::IteratorBase::rerange)
-    ;
+        ;
 
-#if 0
+//#if 0
     /// TODO: instantiate this template
-    bbl::Class<OIIO::ImageBuf::Iterator>()
-        .ctor(bbl::Class<OIIO::ImageBuf::Iterator>::Ctor<ImageBuf &, WrapMode>("ib", "wrap"), "ctor_00")
-        .ctor(bbl::Class<OIIO::ImageBuf::Iterator>::Ctor<ImageBuf &, int, int, int, WrapMode>("ib", "x", "y", "z", "wrap"), "ctor_01")
-        .ctor(bbl::Class<OIIO::ImageBuf::Iterator>::Ctor<ImageBuf &, const ROI &, WrapMode>("ib", "roi", "wrap"), "ctor_02")
-        .ctor(bbl::Class<OIIO::ImageBuf::Iterator>::Ctor<ImageBuf &, int, int, int, int, int, int, WrapMode>("ib", "xbegin", "xend", "ybegin", "yend", "zbegin", "zend", "wrap"), "ctor_03")
-        .m(&OIIO::ImageBuf::Iterator::operator=, "op_assign")
-        .m(&OIIO::ImageBuf::Iterator::operator*, "op_mul")
-        .m((USERT (OIIO::ImageBuf::Iterator::*)(int) const)
-            &OIIO::ImageBuf::Iterator::operator[], "op_index_00")
-        .m((DataProxy<BUFT, USERT> (OIIO::ImageBuf::Iterator::*)(int))
-            &OIIO::ImageBuf::Iterator::operator[], "op_index_01")
-        .m(&OIIO::ImageBuf::Iterator::rawptr)
-        .m(&OIIO::ImageBuf::Iterator::set_deep_samples)
-        .m(&OIIO::ImageBuf::Iterator::deep_value)
-        .m(&OIIO::ImageBuf::Iterator::deep_value_uint)
-        .m((void (OIIO::ImageBuf::Iterator::*)(int, int, float))
-            &OIIO::ImageBuf::Iterator::set_deep_value, "set_deep_value_00")
-        .m((void (OIIO::ImageBuf::Iterator::*)(int, int, uint32_t))
-            &OIIO::ImageBuf::Iterator::set_deep_value, "set_deep_value_01")
+    bbl::Class<OIIO::ImageBuf::Iterator<float, float>>()
+        .ctor(bbl::Class<OIIO::ImageBuf::Iterator<float, float>>::Ctor<OIIO::ImageBuf &, OIIO::ImageBuf::WrapMode>("ib", "wrap"), "ctor_00")
+        .ctor(bbl::Class<OIIO::ImageBuf::Iterator<float, float>>::Ctor<OIIO::ImageBuf &, int, int, int, OIIO::ImageBuf::WrapMode>("ib", "x", "y", "z", "wrap"), "ctor_01")
+        .ctor(bbl::Class<OIIO::ImageBuf::Iterator<float, float>>::Ctor<OIIO::ImageBuf &, const OIIO::ROI &, OIIO::ImageBuf::WrapMode>("ib", "roi", "wrap"), "ctor_02")
+        .ctor(bbl::Class<OIIO::ImageBuf::Iterator<float, float>>::Ctor<OIIO::ImageBuf &, int, int, int, int, int, int, OIIO::ImageBuf::WrapMode>("ib", "xbegin", "xend", "ybegin", "yend", "zbegin", "zend", "wrap"), "ctor_03")
+        .m(&OIIO::ImageBuf::Iterator<float, float>::operator=, "op_assign")
+        .m(&OIIO::ImageBuf::Iterator<float, float>::operator*, "op_mul")
+        .m((float (OIIO::ImageBuf::Iterator<float, float>::*)(int) const)
+            &OIIO::ImageBuf::Iterator<float, float>::operator[], "op_index_00")
+        .m((OIIO::DataProxy<float, float> (OIIO::ImageBuf::Iterator<float, float>::*)(int))
+            &OIIO::ImageBuf::Iterator<float, float>::operator[], "op_index_01")
+        .m(&OIIO::ImageBuf::Iterator<float, float>::rawptr)
+        .m(&OIIO::ImageBuf::Iterator<float, float>::set_deep_samples)
+        .m(&OIIO::ImageBuf::Iterator<float, float>::deep_value)
+        .m(&OIIO::ImageBuf::Iterator<float, float>::deep_value_uint)
+        .m((void (OIIO::ImageBuf::Iterator<float, float>::*)(int, int, float))
+            &OIIO::ImageBuf::Iterator<float, float>::set_deep_value, "set_deep_value_00")
+        .m((void (OIIO::ImageBuf::Iterator<float, float>::*)(int, int, uint32_t))
+    &OIIO::ImageBuf::Iterator<float, float>::set_deep_value, "set_deep_value_01")
     ;
-#endif
+//#endif
 
 #if 0
     /// TODO: instantiate this template

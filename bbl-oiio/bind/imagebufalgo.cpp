@@ -18,6 +18,9 @@ BBL_MODULE(oiio) {
         .f(&OIIO::ImageBufAlgo::CompareResults::nfail)
         .f(&OIIO::ImageBufAlgo::CompareResults::error);
 
+    bbl::Enum<OIIO::ImageBufAlgo::TextAlignX>();
+    bbl::Enum<OIIO::ImageBufAlgo::TextAlignY>();
+
     // zero()
     bbl::fn((bool (*)(OIIO::ImageBuf&, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::zero, "ImageBufAlgo_zero");
@@ -70,7 +73,11 @@ BBL_MODULE(oiio) {
     bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::rotate270, "ImageBufAlgo_rotate270");
 
+    // compare()
     bbl::fn((OIIO::ImageBufAlgo::CompareResults (*)(const OIIO::ImageBuf&, const OIIO::ImageBuf&, float, float, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::compare, "ImageBufAlgo_compare");
 
+    // render_text()
+    bbl::fn((bool (*)(OIIO::ImageBuf&, int, int, OIIO::string_view, int, OIIO::string_view, OIIO::cspan<float>, OIIO::ImageBufAlgo::TextAlignX, OIIO::ImageBufAlgo::TextAlignY, int, OIIO::ROI, int))
+        &OIIO::ImageBufAlgo::render_text, "ImageBufAlgo_render_text");
 }
