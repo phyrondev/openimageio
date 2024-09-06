@@ -47,12 +47,15 @@ OIIO consists of:
 
 ```rust
 use anyhow::Result;
-use oiio::{ImageBuffer, ImageSpecification, Utf8Path};
+use openimageio::{FromFileOptions, ImageCache, ImageBuffer, Utf8Path};
 
 fn main() -> Result<()> {
     // Create an app-global, shared cache that will persist after this
     // instance gets dropped.
-    let image_cache = ImageCache::shared(true);
+    let image_cache = ImageCache::shared(
+        // Persist cache across this process.
+        true
+    );
 
     // Load fg image. This is 1024×1024.
     // The `_with` variants of OIIO methods take additional parameters.
@@ -139,7 +142,7 @@ I.e. you'd have:
 export BBL_PLUGIN_PATH=/usr/local/plugins/
 ```
 
-> :warn: After you set this you must run `cargo clean` and re-build (as the binding's
+> ⚠️ After you set this you must run `cargo clean` and re-build (as the binding's
 > `build.rs` only looks for changes in the input to trigger re-runs, not in the
 > output)!
 
