@@ -1,4 +1,4 @@
-# `openimageio` -- High Level Rust Wrapper for [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
+# `openimageio` – High Level Rust Wrapper for [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO)
 
 OpenImageIO (OIIO) is a toolset for reading, writing, and manipulating image
 files of any image file format relevant to VFX/animation via a format-agnostic
@@ -39,7 +39,7 @@ OIIO consists of:
   the nice caching behavior of ImageCache. This is used in commercial renderers
   and has been used on many large VFX and animated films.
 
-* `ImageBuf` -- a simple class for storing and manipulating whole images in
+* `ImageBuffer` -- a simple class for storing and manipulating whole images in
   memory, including a collection of the most useful computations you might want
   to do involving those images, including many image processing operations.
 
@@ -84,8 +84,8 @@ fn main() -> Result<()> {
     combined_image.write(&Utf8Path::new("from_a_over_b.exr"))?;
 
     // `image_cache` gets dropped here but the shared cache still exists
-    // and can be accessed by creating a new `ImageCache::shared()` will
-    // access this instance.
+    // and can be accessed by creating a new `ImageCache::shared()` which
+    // will access this instance.
 
     Ok(())
 }
@@ -101,6 +101,8 @@ fn main() -> Result<()> {
 
 ### Dependencies
 
+* We currently build against/require OIIO `v2.5`.
+
 * [`babble`](https://github.com/anderslanglands/babble).
 
   As of this writing `openimageio` depends on `babble` ≥ `v0.8` and the
@@ -115,7 +117,8 @@ fn main() -> Result<()> {
 sudo apt install clang-17 libclang-17-dev
 ```
 
-The rest of the dependencies:
+The rest of the dependencies (note that latest Ubuntu is still on `v2.4` – you
+may need to build from source):
 
 ```
 sudo apt install cmake libimath-dev libopenimageio-dev
