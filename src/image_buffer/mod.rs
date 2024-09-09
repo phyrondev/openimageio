@@ -12,7 +12,7 @@ pub mod algorithms;
 mod internal;
 
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
-pub type ImageBuf<'a> = ImageBuffer<'a>;
+pub type ImageBuf = ImageBuffer;
 
 /// This is a placeholder for now.
 //pub struct IoProxy;
@@ -55,7 +55,7 @@ pub struct FromFileOptions<'a> {
     pub mip_level: u32,
     /// Optionally, an `ImageCache` to use, if possible, rather than reading
     /// the entire image file into memory.
-    pub image_cache: Option<&'a ImageCache>,
+    pub image_cache: Option<ImageCache>,
     /// Optionally, a pointer to an `ImageSpec` whose metadata contains
     /// configuration hints that set options related to the opening and reading
     /// of the file.
@@ -74,7 +74,7 @@ pub struct WriteOptions<'a> {
     pub file_format: Option<Ustr>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub enum ImageBufferStorage {
     /// An [`ImageBuffer`] that doesn't represent any image at all (either
@@ -116,13 +116,14 @@ pub enum ImageBufferStorage {
 /// [`ImageBuf`] is available behind a `type` alias.
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/index.html)
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub struct ImageBuffer<'a> {
+#[derive(Debug, PartialEq, Eq)]
+pub struct ImageBuffer {
     ptr: *mut oiio_ImageBuf_t,
-    _marker: PhantomData<*mut &'a ()>,
+    image_cache: Option<ImageCache>,
+    //_marker: PhantomData<*mut &'a ()>,
 }
 
-impl<'a> Default for ImageBuffer<'a> {
+impl Default for ImageBuffer {
     /// Default constructor makes an empty/uninitialized `ImageBuffer`. There
     /// isn't much you can do with an uninitialized buffer until you call
     /// [`reset()`](ImageBuffer::reset). The storage type of a
@@ -133,7 +134,7 @@ impl<'a> Default for ImageBuffer<'a> {
     }
 }
 
-impl<'a> Clone for ImageBuffer<'a> {
+impl Clone for ImageBuffer {
     fn clone(&self) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
         unsafe {
@@ -147,13 +148,14 @@ impl<'a> Clone for ImageBuffer<'a> {
 
             Self {
                 ptr: ptr.assume_init(),
-                _marker: PhantomData,
+                image_cache: self.image_cache.clone(),
+                //_marker: PhantomData,
             }
         }
     }
 }
 
-impl<'a> Drop for ImageBuffer<'a> {
+impl Drop for ImageBuffer {
     fn drop(&mut self) {
         unsafe { oiio_ImageBuf_dtor(self.ptr) };
     }
@@ -167,7 +169,7 @@ enum InitializePixels {
     Yes = 1,
 }
 
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     pub fn new() -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
@@ -176,7 +178,8 @@ impl<'a> ImageBuffer<'a> {
                 oiio_ImageBuf_default(&mut ptr as *mut _ as _);
                 ptr.assume_init()
             },
-            _marker: PhantomData,
+            image_cache: None,
+            //_marker: PhantomData,
         }
     }
 
@@ -200,7 +203,7 @@ impl<'a> ImageBuffer<'a> {
     }*/
 }
 
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     #[inline(always)]
     pub fn from_file(name: &Utf8Path) -> Result<Self> {
         Self::from_file_with(name, &FromFileOptions::default())
@@ -208,7 +211,7 @@ impl<'a> ImageBuffer<'a> {
 
     pub fn from_file_with(
         name: &Utf8Path,
-        options: &FromFileOptions<'a>,
+        options: &FromFileOptions<'_>,
     ) -> Result<Self> {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
@@ -220,7 +223,8 @@ impl<'a> ImageBuffer<'a> {
                     options.mip_level as _,
                     options
                         .image_cache
-                        .map(|c| c.ptr)
+                        .as_ref()
+                        .map(|c| c.as_raw_ptr_mut())
                         .unwrap_or(ptr::null_mut()),
                     options
                         .image_spec
@@ -231,7 +235,8 @@ impl<'a> ImageBuffer<'a> {
                 );
                 ptr.assume_init()
             },
-            _marker: PhantomData,
+            image_cache: options.image_cache.clone(),
+            //_marker: PhantomData,
         }
         .ok_or_error_owned()
     }
@@ -333,8 +338,15 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
+pub struct PixelsOptions<'a> {
+    type_description: &'a TypeDescription,
+    x_stride: Option<u32>,
+    y_stride: Option<u32>,
+    z_stride: Option<u32>,
+}
+
 /// # Getters
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     /// Returns `true` if the `ImageBuffer` is initialized, `false` otherwise.
     ///
     /// # For C++ Developers
@@ -551,6 +563,60 @@ impl<'a> ImageBuffer<'a> {
         }
     }
 
+    pub fn cache(&self) -> Option<ImageCache> {
+        self.image_cache.clone()
+    }
+
+    /// Get a regio of pixels from the image buffer.
+    // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
+    // implement for all base_types in TypeDescription.
+    pub fn pixels(
+        &self,
+        region_of_interest: &RegionOfInterest,
+    ) -> Result<Vec<f32>> {
+        if ImageBufferStorage::Uninitialized == self.storage() {
+            return Ok(Vec::new());
+        }
+
+        let region = match region_of_interest {
+            RegionOfInterest::All => match self.region_of_interest() {
+                RegionOfInterest::All => return Ok(Vec::new()),
+                RegionOfInterest::Region(roi) => roi,
+            },
+            RegionOfInterest::Region(roi) => roi.clone(),
+        };
+
+        let mut type_description = self.type_description();
+        type_description.base_type = Some(BaseType::F32);
+
+        let size = type_description.size() * region.size();
+        let mut data = Vec::with_capacity(size);
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBuf_get_pixels(
+                self.ptr,
+                *region_of_interest.as_raw_ptr(),
+                (&type_description).into(),
+                data.as_mut_ptr() as _,
+                i64::MIN,
+                i64::MIN,
+                i64::MIN,
+                &mut is_ok as *mut _ as _,
+            );
+
+            data.set_len(size);
+
+            if is_ok.assume_init() {
+                Ok(data)
+            } else {
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
+            }
+        }
+    }
+
     /// Return the text of all pending error messages issued against this
     /// `ImageBuffer`, and clear the pending error message unless clear is
     /// `false`.
@@ -601,7 +667,7 @@ impl<'a> ImageBuffer<'a> {
 /// TypeUnknown means to use whatever data type is used by the src. If *this is
 /// already initialized and has APPBUFFER storage (“wrapping” an application
 /// buffer), this parameter is ignored.
-impl ImageBuffer<'_> {
+impl ImageBuffer {
     pub fn copy(&self, type_description: &TypeDescription) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
@@ -614,7 +680,8 @@ impl ImageBuffer<'_> {
 
             Self {
                 ptr: ptr.assume_init(),
-                _marker: PhantomData,
+                image_cache: self.image_cache.clone(),
+                //_marker: PhantomData,
             }
         }
     }
@@ -627,8 +694,8 @@ impl ImageBuffer<'_> {
 }
 
 #[cfg(feature = "image")]
-impl<'a> From<ImageBuffer<'a>> for image::RgbImage {
-    fn from(image_buffer: ImageBuffer<'a>) -> Self {
+impl From<ImageBuffer> for image::RgbImage {
+    fn from(image_buffer: ImageBuffer) -> Self {
         let type_description = image_buffer.type_description();
         if BaseType::U8 == type_description.base_type
             && Aggregate::Vec3 == type_description.aggregate
@@ -655,16 +722,16 @@ impl<'a> From<ImageBuffer<'a>> for image::RgbImage {
     }
 }
 /*
-impl<'a> IntoIterator for ImageBuffer<'a> {
+impl IntoIterator for ImageBuffer {
     pub fn iter(&self) -> ImageBufferIterator {}
 }
 
 struct ImageBufferIterator<'a, T> {
-    image_buffer: ImageBuffer<'a>,
+    image_buffer: ImageBuffer,
     ptr: *mut T,
 }
 
-impl<'a> IntoIterator for ImageBuffer<'a> {
+impl IntoIterator for ImageBuffer {
     type IntoIter = ImageBufferIterator<'a, oiio_Iterator_t>;
     type Item<'a> = &'a [f32];
 

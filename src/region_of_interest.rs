@@ -25,6 +25,50 @@ pub enum RegionOfInterest {
 pub type Roi = RegionOfInterest;
 
 impl RegionOfInterest {
+    pub fn from_union(a: &Self, b: &Self) -> Self {
+        let mut result = a.clone();
+        result.union(b);
+        result
+    }
+
+    pub fn from_intersection(a: &Self, b: &Self) -> Self {
+        let mut result = a.clone();
+        result.intersection(b);
+        result
+    }
+
+    pub fn union(&mut self, b: &Self) {
+        match self {
+            RegionOfInterest::All => {
+                // Do nothing.
+                ()
+            }
+            RegionOfInterest::Region(a) => match b {
+                RegionOfInterest::All => *self = b.clone(),
+                RegionOfInterest::Region(b) => {
+                    *self = RegionOfInterest::Region(a.union(b).clone());
+                }
+            },
+        }
+    }
+
+    pub fn intersection(&mut self, b: &Self) {
+        match self {
+            RegionOfInterest::All => *self = b.clone(),
+            RegionOfInterest::Region(a) => match b {
+                RegionOfInterest::All => {
+                    // Do nothing.
+                    ()
+                }
+                RegionOfInterest::Region(b) => {
+                    *self = RegionOfInterest::Region(a.intersection(b).clone());
+                }
+            },
+        }
+    }
+}
+
+impl RegionOfInterest {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_ROI_t {
         match self {
             RegionOfInterest::All => &ALL as *const Region as _,
@@ -112,6 +156,11 @@ impl Region {
         debug_assert!(self.z.start < self.z.end);
 
         (self.z.end - self.z.start) as _
+    }
+
+    /// Total number of pixels in the region.
+    pub fn size(&self) -> usize {
+        self.width() as usize * self.height() as usize * self.depth() as usize
     }
 
     /// Number of channels in the region.

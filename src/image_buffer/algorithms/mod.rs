@@ -17,7 +17,7 @@
 //! error, the result image returned can have any error conditions checked with
 //! has_error() and geterror().
 //!
-//!    ```
+//!    ```ignore
 //!    // Method 1: Return an image result
 //!    let dest = ImageBuffer::from_over(fg, bg)?;
 //!    ```
@@ -27,7 +27,7 @@
 //!    The function is called on a destination `ImageBuffer` where the results
 //!    will be stored.
 //!
-//!    ```
+//!    ```ignore
 //!    // Method 2: Write into an existing image
 //!    fg.over(&bg)?;
 //!    ```
@@ -37,7 +37,7 @@
 //!    Most functions that take &mut self as an argument will return this from
 //! the    function call. This allows you to chain calls together.
 //!
-//!    ```
+//!    ```ignore
 //!    // Chaining methods
 //!    let mut dest = ImageBuffer::new_with(100, 100, TypeDesc::FLOAT)?;
 //!

@@ -3,7 +3,7 @@ use anyhow::Result;
 use core::{mem::MaybeUninit, ptr};
 use ustr::Ustr;
 
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     fn fill_ffi(&mut self, values: &[f32], options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -89,7 +89,7 @@ impl<'a> ImageBuffer<'a> {
 ///
 /// A single set of channel values that will apply to the whole
 /// `RegionOfInterest`.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     #[inline]
     pub fn from_fill(
         values: &[f32],
@@ -146,7 +146,7 @@ impl<'a> ImageBuffer<'a> {
 ///
 /// Two sets of valuesthat will create a linearly interpolated gradient from top
 /// to bottom of the `RegionOfInterest`.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     #[inline]
     pub fn from_fill_vertical(
         start: &[f32],
@@ -182,7 +182,7 @@ impl<'a> ImageBuffer<'a> {
 ///
 /// Four sets of values that will be bilinearly interpolated across all four
 /// corners of the `RegionOfInterest`.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     #[inline]
     pub fn from_fill_corners(
         top_left: &[f32],
@@ -313,7 +313,7 @@ pub struct NoiseOptions {
     /// channels specified by `region_of_interest`, but if it is `false`, a
     /// separate noise value will be computed for each channel in the
     /// region.
-    monochromatic: bool,
+    pub monochromatic: bool,
     /// The random number generator is actually driven by a hash on the *image
     /// space* coordinates and channel, independently of the *pixel data
     /// window* of of the resp. [`ImageBuffer`] or the
@@ -322,7 +322,7 @@ pub struct NoiseOptions {
     /// for the same seed value, the noise at a given pixel coordinate
     /// `(x, y, z)` in channel `c` will be completely deterministic and
     /// repeatable.
-    seed: i32,
+    pub seed: i32,
     /// See the [Region of Interest](#region-of-interest) section on
     /// [`ImageBuffer`].
     pub region_of_interest: RegionOfInterest,
@@ -330,7 +330,7 @@ pub struct NoiseOptions {
     pub thread_count: u16,
 }
 
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     fn zero_ffi(&mut self, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -377,7 +377,7 @@ impl<'a> ImageBuffer<'a> {
     }
 }
 
-enum NoiseType {
+pub enum NoiseType {
     Gaussian,
     White,
     Uniform,
@@ -398,7 +398,7 @@ impl From<NoiseType> for StringView<'static> {
 }
 
 // Internal noise FFI call.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     fn noise_ffi(
         &mut self,
         noise_type: NoiseType,
@@ -445,36 +445,11 @@ impl<'a> ImageBuffer<'a> {
 ///   sampling and dither.
 ///
 /// * `salt` changes to value `a` the portion of pixels given by `b`.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     /// Add noise.
     ///
     /// Errors will be logged.
     pub fn noise(
-        &mut self,
-        noise_type: NoiseType,
-        a: f32,
-        b: f32,
-    ) -> &mut Self {
-        let is_ok = self.noise_ffi(noise_type, a, b, &NoiseOptions::default());
-        self.ok_or_log_error(is_ok)
-    }
-
-    /// Add noise with [`NoiseOptions`].
-    ///
-    /// Errors will be logged.
-    pub fn noise_with(
-        &mut self,
-        noise_type: NoiseType,
-        a: f32,
-        b: f32,
-        options: &NoiseOptions,
-    ) -> &mut Self {
-        let is_ok = self.noise_ffi(noise_type, a, b, options);
-        self.ok_or_log_error(is_ok)
-    }
-
-    /// Try adding noise.
-    pub fn try_noise(
         &mut self,
         noise_type: NoiseType,
         a: f32,
@@ -484,8 +459,10 @@ impl<'a> ImageBuffer<'a> {
         self.ok_or_error(is_ok)
     }
 
-    /// Try adding noise with [`NoiseOptions`].
-    pub fn try_noise_with(
+    /// Add noise with [`NoiseOptions`].
+    ///
+    /// Errors will be logged.
+    pub fn noise_with(
         &mut self,
         noise_type: NoiseType,
         a: f32,
@@ -602,7 +579,7 @@ impl Default for RenderTextOptions<'_> {
     }
 }
 
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     fn render_text_ffi(
         &mut self,
         x: i32,
@@ -654,7 +631,7 @@ impl<'a> ImageBuffer<'a> {
 ///   indications that the text spans multiple rows.
 ///
 /// * `options` -- See [`RenderTextOptions`].
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     /// Render text into an image.
     ///
     /// Text will be rendered into the existing image by essentially doing an

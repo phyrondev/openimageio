@@ -132,7 +132,7 @@
 //! * Type- and function names were changed to adhere to the official [Rust API Naming](https://rust-lang.github.io/api-guidelines/naming.html)
 //!   guidelines and [RFC 344](https://github.com/rust-lang/rfcs/blob/master/text/0344-conventions-galore.md).
 //!
-//!   That said --, for all types were names were changed the crate ships with
+//!   That said --, for all types where names were changed, the crate ships with
 //!   `type` aliases that mirror the original C++ names as much as possible
 //!   within the constraints referenced in the previous paragraph.
 //!
@@ -205,7 +205,7 @@
 //! `Default::default()` `struct`-initialization shorthand:
 //!
 //! ```
-//! # use openimageio::{ImageBuffer, operators::{
+//! # use openimageio::{ImageBuffer, algorithms::{
 //! #     PixelFilter, RotateOptions
 //! # }, Utf8Path};
 //! # use std::f32::consts::TAU;

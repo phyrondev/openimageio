@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(oiio VERSION 0.1 LANGUAGES C CXX)
 
-find_package(OpenImageIO 2.5 REQUIRED)
+find_package(OpenImageIO 2.4 REQUIRED)
 find_package(babble 0.8 CONFIG REQUIRED)
 
 include(GNUInstallDirs)

@@ -1,5 +1,8 @@
 use crate::*;
+use core::mem::MaybeUninit;
 use once_cell::sync::OnceCell;
+use parking_lot::RwLock;
+use std::{ops::DerefMut, sync::Arc};
 
 // The OIIO C++ API wants the user to decide on resource deallocation if this
 // also deletes the shared cache. We turn this on its head by moving the
@@ -64,9 +67,18 @@ fn set_or_get_persist(persist: bool) -> bool {
 /// An least-recently-used scheme is used to evic tiles from the cache that
 /// haven't been accessed recently.
 
+#[derive(Clone, Debug)]
 pub struct ImageCache {
-    pub(crate) ptr: *mut oiio_ImageCache_t,
+    pub(crate) ptr: Arc<RwLock<*mut oiio_ImageCache_t>>,
 }
+
+impl PartialEq for ImageCache {
+    fn eq(&self, other: &Self) -> bool {
+        *self.ptr.read() == *other.ptr.read()
+    }
+}
+
+impl Eq for ImageCache {}
 
 impl Default for ImageCache {
     fn default() -> Self {
@@ -77,13 +89,13 @@ impl Default for ImageCache {
 impl ImageCache {
     /// Create a unique `ImageCache`.
     pub fn new() -> Self {
-        let mut ptr = std::mem::MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
+        let mut ptr = MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
 
         Self {
-            ptr: unsafe {
+            ptr: Arc::new(RwLock::new(unsafe {
                 oiio_ImageCache_create(false, &mut ptr as *mut _ as _);
                 ptr.assume_init()
-            },
+            })),
         }
     }
 
@@ -101,22 +113,21 @@ impl ImageCache {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
 
         Self {
-            ptr: unsafe {
+            ptr: Arc::new(RwLock::new(unsafe {
                 oiio_ImageCache_create(true, &mut ptr as *mut _ as _);
                 ptr.assume_init()
-            },
+            })),
         }
     }
 }
 
-#[cfg(feature = "ffi")]
 impl ImageCache {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_ImageCache_t {
-        self.ptr
+        *self.ptr.read()
     }
 
     pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageCache_t {
-        self.ptr
+        *self.ptr.read()
     }
 }
 
@@ -127,8 +138,20 @@ impl Drop for ImageCache {
     /// the implementation will only release its resources when the last shared
     /// instance goes out of scope.
     fn drop(&mut self) {
-        unsafe {
-            oiio_ImageCache_destroy(self.ptr, !set_or_get_persist(false));
+        let ptr_locked = self.ptr.write_arc();
+
+        if 1 == Arc::<RwLock<*mut oiio_ImageCache_t>>::strong_count(&self.ptr) {
+            /// FIXME? Can we have a situation where the cache is dropped
+            /// while another thread copies some object that holds a reference
+            /// to the cache?
+            /// If that were the case try_unwrap() would return
+            /// Result::Err and we wouldn't be able to the destructor.
+            unsafe {
+                oiio_ImageCache_destroy(
+                    *ptr_locked, //.deref_mut(),
+                    !set_or_get_persist(false),
+                );
+            }
         }
     }
 }

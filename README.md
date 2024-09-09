@@ -39,9 +39,9 @@ OIIO consists of:
   the nice caching behavior of ImageCache. This is used in commercial renderers
   and has been used on many large VFX and animated films.
 
-* `ImageBuffer` -- a simple class for storing and manipulating whole images in
-  memory, including a collection of the most useful computations you might want
-  to do involving those images, including many image processing operations.
+* `ImageBuffer` – a simple class for storing and manipulating whole images in
+  memory and a collection of the most useful computations you might want to do
+  involving those images, including many image processing operations.
 
 ## Example
 
@@ -96,9 +96,9 @@ fn main() -> Result<()> {
 
 ## Features
 
-* `algorithms` -- enables useful `ImageBuffer` algorithms. Enabled by default.
+* `algorithms` – enables useful `ImageBuffer` algorithms. Enabled by default.
 
-* `ffi` -- exposes the low-level FFI bindings to OIIO. Disabled by default.
+* `ffi` – exposes the low-level FFI bindings to OIIO. Disabled by default.
 
 ## Building
 

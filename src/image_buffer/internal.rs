@@ -4,7 +4,7 @@ use log::error;
 
 static UNKNOWN_ERROR: &str = "unknown error";
 
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     #[inline(always)]
     pub(crate) fn ok_or_error_owned(self) -> Result<Self> {
         if self.is_ok() {

@@ -25,8 +25,12 @@ BBL_MODULE(oiio) {
         .m(&OIIO::ImageCache::get_perthread_info)
         .m(&OIIO::ImageCache::create_thread_info)
         .m(&OIIO::ImageCache::destroy_thread_info)
-        .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *, const OIIO::TextureOpt * ))
+        // v2.5+ signature
+        //.m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *, const OIIO::TextureOpt * ))
+        //    &OIIO::ImageCache::get_image_handle, "get_image_handle")
+        .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *))
             &OIIO::ImageCache::get_image_handle, "get_image_handle")
+
         // .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(const std::wstring &, OIIO::ImageCache::Perthread *))
         //     &OIIO::ImageCache::get_image_handle, "get_image_handle_w")
         .m(&OIIO::ImageCache::good)

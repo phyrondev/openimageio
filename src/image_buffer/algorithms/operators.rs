@@ -75,7 +75,7 @@ impl From<PixelFilter> for Ustr {
 }
 
 // Actual implementations.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     fn compare_ffi(
         &self,
         other: &ImageBuffer,
@@ -130,7 +130,7 @@ impl From<oiio_CompareResults_t> for CompareResult {
 /// The difference threshold (for any individual color channel in any pixel) for
 /// a 'failure' is `failure_threshold`, and for a 'warning' is
 /// `warning_threshold`.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     /// The comparison will be for all channels, on the union of the defined
     /// pixel windows of the two images (for either image, undefined pixels
     /// will be assumed to be black).
@@ -167,7 +167,7 @@ impl<'a> ImageBuffer<'a> {
 }
 
 // Actual implementations.
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     fn over_ffi(&mut self, other: &ImageBuffer, options: Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -189,7 +189,7 @@ impl<'a> ImageBuffer<'a> {
         a: &ImageBuffer,
         b: &ImageBuffer,
         options: Options,
-    ) -> ImageBuffer<'a> {
+    ) -> ImageBuffer {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
@@ -203,7 +203,23 @@ impl<'a> ImageBuffer<'a> {
 
             Self {
                 ptr: ptr.assume_init(),
-                _marker: PhantomData,
+                image_cache: {
+                    let cache_a = a.cache();
+                    let cache_b = b.cache();
+
+                    // If both buffers have the same cache (or no cache), use
+                    // that.
+                    if cache_a == cache_b {
+                        cache_a
+                    } else {
+                        // Otherwise, use the cache that is not `None` (if any).
+                        if cache_a.is_some() {
+                            cache_a
+                        } else {
+                            cache_b
+                        }
+                    }
+                }, //_marker: PhantomData,
             }
         }
     }
@@ -291,7 +307,7 @@ pub struct RotateOptions {
 /// passed, and a reasonable filter width if filterwidth is 0. (Note that some
 /// filter choices only make sense with particular width, in which case this
 /// filterwidth parameter may be ignored.)
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     pub fn rotate(&mut self, angle: f32) -> &mut Self {
         let mut rotated = ImageBuffer::new();
         let is_ok = rotated.rotate_ffi(self, angle, &RotateOptions::default());
@@ -354,7 +370,7 @@ impl<'a> ImageBuffer<'a> {
 /// # Over
 ///
 /// These implement [Porter-Duff compositing](https://en.wikipedia.org/wiki/Alpha_compositing).
-impl<'a> ImageBuffer<'a> {
+impl ImageBuffer {
     pub fn from_over(a: &ImageBuffer, b: &ImageBuffer) -> Self {
         let mut image_buffer =
             ImageBuffer::from_over_ffi(a, b, Options::default());
@@ -431,7 +447,7 @@ mod tests {
 
     #[test]
     fn rotate() -> Result<()> {
-        use crate::operators::PixelFilter::BlackmanHarris;
+        use crate::algorithms::PixelFilter::BlackmanHarris;
         use camino::Utf8Path as Path;
 
         let mut image_buf = ImageBuffer::from_file(Path::new(

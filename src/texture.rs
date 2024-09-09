@@ -298,7 +298,9 @@ impl<'a> TextureSystem<'a> {
             ptr: unsafe {
                 oiio_TextureSystem_create(
                     shared,
-                    image_cache.map(|c| c.ptr).unwrap_or(ptr::null_mut()) as _,
+                    image_cache
+                        .map(|c| c.as_raw_ptr_mut())
+                        .unwrap_or(ptr::null_mut()) as _,
                     &mut ptr as *mut _ as *mut _,
                 );
                 ptr.assume_init()

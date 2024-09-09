@@ -11,6 +11,10 @@ pub fn main() {
     #[cfg(target_os = "linux")]
     println!("cargo::rustc-link-arg=-lstdc++");
 
+    if let Ok(cmake_install_prefix) = std::env::var("CMAKE_INSTALL_PREFIX") {
+        println!("cargo:rustc-link-search={}/lib", cmake_install_prefix);
+    }
+
     let _dst = Config::new("oiio", "bbl-oiio")
         .define("BBL_LANGUAGES", "rust")
         .build();

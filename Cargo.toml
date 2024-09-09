@@ -19,6 +19,7 @@ camino = "1.1"
 log = "0.4"
 num_enum = "0.7"
 once_cell = { version = "1", features = ["parking_lot"] }
+parking_lot = { version = "0.12.3", features = ["arc_lock", "deadlock_detection", "nightly"] }
 ustr = "1.0.0"
 
 [features]
