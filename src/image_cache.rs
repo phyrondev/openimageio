@@ -42,7 +42,7 @@ fn set_or_get_persist(persist: bool) -> bool {
 ///
 /// * Simpler interface -- the only supported operations are:
 ///
-///   * Asking for an [`ImageSpec`] of a subimage.
+///   * Asking for an [`ImageSpecification`] of a subimage.
 ///
 ///   * Retrieving a block of pixels.
 ///
@@ -141,11 +141,11 @@ impl Drop for ImageCache {
         let ptr_locked = self.ptr.write_arc();
 
         if 1 == Arc::<RwLock<*mut oiio_ImageCache_t>>::strong_count(&self.ptr) {
-            /// FIXME? Can we have a situation where the cache is dropped
-            /// while another thread copies some object that holds a reference
-            /// to the cache?
-            /// If that were the case try_unwrap() would return
-            /// Result::Err and we wouldn't be able to the destructor.
+            // FIXME? Can we have a situation where the cache is dropped
+            // while another thread copies some object that holds a reference
+            // to the cache?
+            // If that were the case try_unwrap() would return
+            // Result::Err and we wouldn't be able to the destructor.
             unsafe {
                 oiio_ImageCache_destroy(
                     *ptr_locked, //.deref_mut(),

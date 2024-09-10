@@ -1,5 +1,5 @@
 use crate::*;
-use core::num::NonZeroUsize;
+use core::num::NonZeroU32;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 /// Describes the base data types that correspond (mostly) to the Rust
@@ -85,11 +85,31 @@ impl From<oiio_BASETYPE> for Option<BaseType> {
 /// Describes whether a [`TypeDesc`] is a simple scalar of one of the
 /// [`BaseType`]s, or one of several simple aggregates.
 ///
-/// Note that aggregates and arrays _enuare different. A `TypeDesc(F32, 3)`
-/// is an array of three `f32`s, a `TypeDesc(F32, Aggregate::Vec3)` is a single
-/// three-component vector comprised of `f32`s, and `TypeDesc(F32, 3,
-/// Aggregate::Vec3)` is an array of three vectors, each of which is comprised
-/// of three `f32`s.
+/// Note that *aggregates* and *arrays* are different.
+///
+/// * An array of three `f32`s: ```ignore TypeDescription { base_type:
+///   Some(BaseType::F32), array_len: Some(3), ..Default::default() } ```
+///
+/// * A single three-component vector comprised of `f32`s.
+///
+///   ```ignore
+///   TypeDescription {
+///       base_type: Some(BaseType::F32),
+///       aggregate: Aggregate::Vec3,
+///       ..Default::default()
+///   }
+///   ```
+///
+/// * An array of three vectors, each of which is comprised of three `f32`s:
+///
+///   ```ignore
+///   TypeDescription {
+///       base_type: Some(BaseType::F32),
+///       array_len: Some(3),
+///       aggregate: Aggregate::Vec3,
+///       ..Default::default()
+///   }
+///   ```
 #[derive(
     Clone,
     Copy,
@@ -158,20 +178,47 @@ pub enum VecSemantics {
     Box = oiio_VECSEMANTICS::oiio_VECSEMANTICS_BOX.0 as _,
 }
 
-#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
+#[repr(C)]
 pub enum ArrayLen {
-    Specific(NonZeroUsize),
+    Specific(NonZeroU32),
     #[default]
     Unspecific,
 }
 
-#[derive(Default, Clone, Copy, Eq, PartialEq, Hash)]
+/// There are two kinds of data that are important to OpenImageIO:
+///
+/// * Internal data is in the memory of the computer, used by an application
+///   program.
+///
+/// * Native file data is what is stored in an image file itself (i.e., on the
+///   "other side" of the abstraction layer that OpenImageIO provides).
+///
+/// Both internal and file data is stored in a particular data format that
+/// describes the numerical encoding of the values. OpenImageIO understands
+/// several types of data encodings, and `TypeDescription` allows their
+/// enumeration.
+///
+/// A `TypeDescription` describes a base data format type, aggregation into
+/// simple vector and matrix types, and an array length (if it’s an array).
+///
+/// # C++
+///
+/// The name was changed to not contain abbreviations. The original name,
+/// [`TypeDesc`] is available behind a `type` alias.
+///
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#data-type-descriptions-typedesc)
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
+#[repr(C)]
 pub struct TypeDescription {
     pub base_type: Option<BaseType>,
     pub aggregate: Aggregate,
     pub vec_semantics: Option<VecSemantics>,
     pub array_len: Option<ArrayLen>,
 }
+
+/// Convenience type alias for developers familiar with the OpenImageIO C++ API.
+pub type TypeDesc = TypeDescription;
 
 impl TypeDescription {
     pub fn is_array(&self) -> bool {
@@ -284,9 +331,7 @@ impl From<&oiio_TypeDesc_t> for TypeDescription {
             array_len: match t.arraylen {
                 l if 0 == l || l < -1 => None,
                 -1 => Some(ArrayLen::Unspecific),
-                l => {
-                    Some(ArrayLen::Specific(NonZeroUsize::new(l as _).unwrap()))
-                }
+                l => Some(ArrayLen::Specific(NonZeroU32::new(l as _).unwrap())),
             },
         }
     }
@@ -311,5 +356,25 @@ impl From<&TypeDescription> for oiio_TypeDesc_t {
             },
             reserved: 0,
         }
+    }
+}
+
+impl From<TypeDescription> for oiio_TypeDesc_t {
+    fn from(t: TypeDescription) -> Self {
+        (&t).into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_type_description() {
+        let t = TypeDescription::default();
+
+        let c_type = oiio_TypeDesc_t::from(&t);
+
+        println!("C Type: {:?}", c_type);
     }
 }

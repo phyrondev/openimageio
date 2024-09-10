@@ -23,6 +23,14 @@ bool ImageBuf_write_with_spec(OIIO::ImageBuf const& buf, OIIO::string_view const
     return buf.write(file_name, type_desc, file_format);
 }
 
+/// Workaround: if we pass in an OIIO::TypeDesc from Rust, we get an "invalid memory reference" crash here.
+/// TODO: figure out why and use ImageBuf::get_pixels() directly
+bool get_pixels_01(OIIO::ImageBuf const& buf, OIIO::ROI roi, OIIO::TypeDesc::BASETYPE base_type, void* result) {
+    OIIO::TypeDesc type_desc = OIIO::TypeDesc(base_type, 0);
+
+    return buf.get_pixels(roi, type_desc, result);
+}
+
 }
 
 BBL_MODULE(oiio) {
@@ -183,6 +191,7 @@ BBL_MODULE(oiio) {
     //bbl::fn(&bblext::ImageBuf_file_format_name);
     bbl::fn(&bblext::ImageBuf_write);
     bbl::fn(&bblext::ImageBuf_write_with_spec);
+    bbl::fn(&bblext::get_pixels_01);
 
     bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
         .smartptr_to<OIIO::ImageBuf>()

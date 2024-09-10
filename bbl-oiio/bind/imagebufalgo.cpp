@@ -80,4 +80,9 @@ BBL_MODULE(oiio) {
     // render_text()
     bbl::fn((bool (*)(OIIO::ImageBuf&, int, int, OIIO::string_view, int, OIIO::string_view, OIIO::cspan<float>, OIIO::ImageBufAlgo::TextAlignX, OIIO::ImageBufAlgo::TextAlignY, int, OIIO::ROI, int))
         &OIIO::ImageBufAlgo::render_text, "ImageBufAlgo_render_text");
+
+    // colorconvert()
+    //bbl::fn((bool (*)(OIIO::ImageBuf&, const OIIO::ImageBuf&, OIIO::string_view, OIIO::string_view, bool, OIIO::string_view, OIIO::string_view, const OIIO::ColorConfig *, OIIO::ROI, int))
+      //  &OIIO::ImageBufAlgo::colorconvert, "ImageBufAlgo_colorconvert");
+
 }

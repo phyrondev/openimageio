@@ -5,7 +5,7 @@ use core::{
     ops::Range,
 };
 
-static ALL: Region = Region {
+pub(crate) static ALL: Region = Region {
     x: i32::MIN..0,
     y: 0..0,
     z: 0..0,
@@ -25,6 +25,13 @@ pub enum RegionOfInterest {
 pub type Roi = RegionOfInterest;
 
 impl RegionOfInterest {
+    pub fn region(&self) -> Option<&Region> {
+        match self {
+            RegionOfInterest::All => None,
+            RegionOfInterest::Region(r) => Some(r),
+        }
+    }
+
     pub fn from_union(a: &Self, b: &Self) -> Self {
         let mut result = a.clone();
         result.union(b);
@@ -156,11 +163,6 @@ impl Region {
         debug_assert!(self.z.start < self.z.end);
 
         (self.z.end - self.z.start) as _
-    }
-
-    /// Total number of pixels in the region.
-    pub fn size(&self) -> usize {
-        self.width() as usize * self.height() as usize * self.depth() as usize
     }
 
     /// Number of channels in the region.
@@ -371,14 +373,14 @@ impl Region {
     }
 }
 
-impl From<oiio_ROI_t> for Region {
-    fn from(src: oiio_ROI_t) -> Region {
-        unsafe { transmute(src) }
-    }
-}
-
 mod internal {
     use super::*;
+
+    impl From<oiio_ROI_t> for Region {
+        fn from(src: oiio_ROI_t) -> Region {
+            unsafe { transmute(src) }
+        }
+    }
 
     impl TryFrom<*const oiio_ROI_t> for RegionOfInterest {
         type Error = ();
@@ -424,5 +426,20 @@ mod internal {
                 RegionOfInterest::Region(r) => unsafe { transmute(r) },
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_region() {
+        let region =
+            RegionOfInterest::Region(Region::new_3d(3..42, 5..16, -33..9));
+
+        let c_region = oiio_ROI_t::from(region.clone());
+
+        println!("C Region: {:?}", c_region);
     }
 }

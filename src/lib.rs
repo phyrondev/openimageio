@@ -174,7 +174,9 @@
 //! The [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)
 //! is mostly used for opaque/side-effects-free `struct` initalization in the
 //! wild and quite verbose. But it is seldom used for optional function
-//! parameters. It also requires a lot of boilerplate code.
+//! parameters. It also requires a lot of boilerplate code. Even when such code
+//! is automatically generated this incurs a compile-time cost for generation
+//! and compilation.
 //!
 //! Instead the
 //! [init-struct pattern](https://xaeroxe.github.io/init-struct-pattern/)
@@ -197,8 +199,8 @@
 //!
 //! On the Rust side we expose a simple version,
 //! [`rotate()`](ImageBuffer::rotate) but also an equivalent,
-//! [`rotate_with()`](ImageBuffer::rotate_with), that takes a single
-//! [`RotateOptions`](operators::RotateOptions) parameter with the
+//! [`rotate_with()`](ImageBuffer::rotate_with), that takes a reference to a
+//! single [`RotateOptions`](operators::RotateOptions) parameter with the
 //! aforementioned five parameters.
 //!
 //! Specifying each of these can be (partially) omitted by using

@@ -66,6 +66,13 @@ pub enum ChannelFormat {
 /// that the image is stored in a file organized into rectangular *tiles*
 /// of these dimensions. The default value of `0` for these fields indicates
 /// that the image is stored in scanline order, rather than as tiles.
+///
+/// # C++
+///
+/// The name was changed to not contain abbreviations. The original name,
+/// [`ImageSpec`], is available behind a `type` alias.
+///
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#image-specification-imagespec)
 pub struct ImageSpecification {
     /// Origin (upper left corner) of pixel data.
     x: i32,
@@ -142,7 +149,10 @@ pub struct ImageSpecification {
     extra_attribs: ParamValueList,*/
 }
 
-pub(crate) struct ImageSpec {
+/// Convenience type alias for developers familiar with the OpenImageIO C++ API.
+type ImageSpec = ImageSpecification;
+
+pub(crate) struct ImageSpecInternal {
     pub(crate) ptr: *mut oiio_ImageSpec_t,
 }
 
@@ -158,7 +168,7 @@ pub(crate) struct ImageSpec {
     }
 }*/
 
-impl From<&ImageSpecification> for ImageSpec {
+impl From<&ImageSpecification> for ImageSpecInternal {
     fn from(i: &ImageSpecification) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
@@ -242,7 +252,7 @@ impl From<&ImageSpecification> for ImageSpec {
     }
 }
 
-impl ImageSpec {
+impl ImageSpecInternal {
     pub fn new() -> Self {
         Self::new_with(&TypeDescription::default())
     }
@@ -284,7 +294,7 @@ impl ImageSpec {
 }
 
 #[cfg(feature = "ffi")]
-impl ImageSpec {
+impl ImageSpecInternal {
     pub fn as_raw_ptr(&self) -> *const oiio_ImageSpec_t {
         self.ptr
     }
@@ -294,13 +304,13 @@ impl ImageSpec {
     }
 }
 
-impl Default for ImageSpec {
+impl Default for ImageSpecInternal {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Drop for ImageSpec {
+impl Drop for ImageSpecInternal {
     fn drop(&mut self) {
         unsafe { oiio_ImageSpec_dtor(self.ptr) };
     }

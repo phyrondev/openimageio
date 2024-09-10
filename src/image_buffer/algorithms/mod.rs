@@ -1,4 +1,4 @@
-//! A set of image processing functions that operate on [ImageBuffer]s.
+//! A set of image processing functions that operate on [`ImageBuffer`]s.
 //!
 //! # Common Principles
 //!

@@ -44,8 +44,7 @@ impl From<WrapMode> for oiio_WrapMode {
     }
 }
 
-/// Optional parameters for the `from_file_with()`/`try_from_file_with()`
-/// methods.
+/// Optional parameters for the [`ImageBuffer::from_file_with()`] method.
 #[derive(Default)]
 pub struct FromFileOptions<'a> {
     /// The subimage to read (defaults to the first subimage of the file).
@@ -70,7 +69,17 @@ pub trait FnProgress<'a>: Fn(f32) + 'a {}
 
 #[derive(Default)]
 pub struct WriteOptions<'a> {
+    /// Optional override of the pixel data format to use in the file being
+    /// written. The default (UNKNOWN) means to try writing the same
+    /// data format that as pixels are stored within the ImageBuf memory (or
+    /// whatever type was specified by a prior call to set_write_format()). In
+    /// either case, if the file format does not support that data type,
+    /// another will be automatically chosen that is supported by the file type
+    /// and loses as little precision as possible.
     pub type_desc: Option<&'a TypeDescription>,
+    /// Optional override of the file format to write. The default (`None`)
+    /// means to infer the file format from the extension of the
+    /// filename (for example, `"foo.tif"`" will write a TIFF file).
     pub file_format: Option<Ustr>,
 }
 
@@ -110,12 +119,12 @@ pub enum ImageBufferStorage {
 /// This has an explicit lifetime so we that lifetimes of optional dependencies
 /// can be tied to it. E.g. that of an `ImageCache`.
 ///
-/// # For C++ Developers
+/// # C++
 ///
 /// The name was changed to not contain abbreviations. The original name,
 /// [`ImageBuf`] is available behind a `type` alias.
 ///
-/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/index.html)
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imagebuf.html)
 #[derive(Debug, PartialEq, Eq)]
 pub struct ImageBuffer {
     ptr: *mut oiio_ImageBuf_t,
@@ -203,12 +212,29 @@ impl ImageBuffer {
     }*/
 }
 
+/// # Constructors & Resetting
 impl ImageBuffer {
+    /// Construct a read-only `ImageBuffer` that will be used to read the named
+    /// file (at the given subimage and MIP-level, defaulting to the first in
+    /// the file). But don’t read it yet! The image will actually be read
+    /// lazily, only when other methods need to access the spec and/or pixels,
+    /// or when an explicit call to `init_specification()` or `read()` is made,
+    /// whichever comes first.
+    ///
+    /// The implementation may end up either reading the entire image internally
+    /// owned memory (if so, the storage will be
+    /// [`LocalBuffer`](ImageBufferStorage::LocalBuffer)), or it may rely on
+    /// being backed by an [`ImageCache`] (in this case, the storage will be
+    /// [`ImageCache`](ImageBufferStorage::ImageCache)) -- depending on the
+    /// image size and other factors.
     #[inline(always)]
     pub fn from_file(name: &Utf8Path) -> Result<Self> {
         Self::from_file_with(name, &FromFileOptions::default())
     }
 
+    /// Construct a read-only `ImageBuffer`.
+    ///
+    /// See [`from_file()`](ImageBuffer::from_file) for details.
     pub fn from_file_with(
         name: &Utf8Path,
         options: &FromFileOptions<'_>,
@@ -228,7 +254,7 @@ impl ImageBuffer {
                         .unwrap_or(ptr::null_mut()),
                     options
                         .image_spec
-                        .map(|s| ImageSpec::from(s).ptr)
+                        .map(|s| ImageSpecInternal::from(s).ptr)
                         .unwrap_or(ptr::null_mut()),
                     ptr::null_mut() as _,
                     &mut ptr as *mut _ as _,
@@ -245,76 +271,9 @@ impl ImageBuffer {
     /// to resemble a freshly constructed one using the default constructor
     /// (holding no image, with storage [`ImageBufferStorage::Uninitialized`]).
     pub fn reset(&mut self) {
-        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
-
         unsafe {
-            oiio_ImageBuf_reset_00(&mut ptr as *mut _ as _);
-            self.ptr = ptr.assume_init();
+            oiio_ImageBuf_reset_00(self.ptr);
         };
-    }
-
-    /// Write the image to the named file, converted to the specified pixel data
-    /// type dtype (TypeUnknown signifies to use the data type of the buffer),
-    /// and file format (an empty fileformat means to infer the type from the
-    /// filename extension). By default, it will always try to write a
-    /// scanline-oriented file, unless the set_write_tiles() method has been
-    /// used to override this.
-    ///
-    /// # Arguments
-    ///
-    /// * `file_name` -– The filename to write to.
-    ///
-    /// * dtype – Optional override of the pixel data format to use in the file
-    ///   being written. The default (UNKNOWN) means to try writing the same
-    ///   data format that as pixels are stored within the ImageBuf memory (or
-    ///   whatever type was specified by a prior call to set_write_format()). In
-    ///   either case, if the file format does not support that data type,
-    ///   another will be automatically chosen that is supported by the file
-    ///   type and loses as little precision as possible.
-    ///
-    /// fileformat – Optional override of the file format to write. The default
-    /// (empty string) means to infer the file format from the extension of the
-    /// filename (for example, “foo.tif” will write a TIFF file).
-    ///
-    /// progress_callback – If progress_callback is
-    /// non-NULL, the underlying write, if expensive, may make several calls to
-    /// progress_callback(progress_callback_data, portion_done) which allows you
-    /// to implement some sort of progress meter.
-    ///
-    /// Returns [`Ok`] upon success, or an erro false if the write failed (in
-    /// which case, you should be able to retrieve an error message via
-    /// geterror()).
-    pub fn write_with(
-        &self,
-        file: &Utf8Path,
-        options: &WriteOptions,
-    ) -> Result<()> {
-        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBuf_write_with_spec(
-                self.ptr,
-                StringView::from(file).ptr,
-                options
-                    .type_desc
-                    .map(|t| t.into())
-                    .unwrap_or((&TypeDescription::default()).into()),
-                match options.file_format {
-                    Some(file_format) => StringView::from(file_format),
-                    None => StringView::default(),
-                }
-                .ptr,
-                &mut is_ok as *mut _ as _,
-            );
-
-            if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(self
-                    .error(true)
-                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
-            } else {
-                Ok(())
-            }
-        }
     }
 
     pub fn write(&self, file: &Utf8Path) -> Result<()> {
@@ -336,15 +295,162 @@ impl ImageBuffer {
             }
         }
     }
+
+    /// Write the image to the named file, converted to the specified pixel data
+    /// type (`base_type: None` signifies to use the data type of the buffer),
+    /// and file format (an empty fileformat means to infer the type from the
+    /// filename extension). By default, it will always try to write a
+    /// scanline-oriented file, unless the `set_write_tiles()` method has been
+    /// used to override this.
+    ///
+    /// Returns [`Ok`] upon success, or an error if the write failed.
+    pub fn write_with(
+        &self,
+        file_name: &Utf8Path,
+        options: &WriteOptions,
+    ) -> Result<()> {
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBuf_write_with_spec(
+                self.ptr,
+                StringView::from(file_name).ptr,
+                options
+                    .type_desc
+                    .map(|t| t.into())
+                    .unwrap_or((&TypeDescription::default()).into()),
+                match options.file_format {
+                    Some(file_format) => StringView::from(file_format),
+                    None => StringView::default(),
+                }
+                .ptr,
+                &mut is_ok as *mut _ as _,
+            );
+
+            if !is_ok.assume_init() || !self.is_ok() {
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
+            } else {
+                Ok(())
+            }
+        }
+    }
 }
 
-pub struct PixelsOptions<'a> {
-    type_description: &'a TypeDescription,
+pub struct PixelsOptions {
     x_stride: Option<u32>,
     y_stride: Option<u32>,
     z_stride: Option<u32>,
 }
 
+pub trait Pixels<T> {
+    fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<T>>;
+}
+
+impl Pixels<f32> for ImageBuffer {
+    /// Get a regio of pixels from the image buffer.
+    // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
+    // implement for all base_types in TypeDescription.
+    fn pixels(
+        &self,
+        region_of_interest: &RegionOfInterest,
+    ) -> Result<Vec<f32>> {
+        if ImageBufferStorage::Uninitialized == self.storage() {
+            // An uninitialized image buffer has no pixels but it's not an error
+            // to ask for them.
+            return Ok(Vec::new());
+        }
+
+        let region = match region_of_interest {
+            RegionOfInterest::All => match self.region_of_interest() {
+                RegionOfInterest::All => {
+                    // If this image buffer is uninitialized, we can't get
+                    // here because `self.storage()` will return
+                    // `ImageBufferStorage::Uninitialized`.
+                    unreachable!()
+                }
+                RegionOfInterest::Region(roi) => roi,
+            },
+            RegionOfInterest::Region(roi) => roi.clone(),
+        };
+
+        let size = region.pixel_count() * region.channel_count() as usize;
+        let mut data = Vec::<f32>::with_capacity(size);
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_get_pixels_01(
+                self.ptr,
+                region_of_interest.clone().into(),
+                oiio_BASETYPE::oiio_BASETYPE_FLOAT,
+                data.as_mut_ptr() as _,
+                &mut is_ok as *mut _ as _,
+            );
+
+            if is_ok.assume_init() {
+                data.set_len(size);
+                Ok(data)
+            } else {
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
+            }
+        }
+    }
+}
+
+impl Pixels<u8> for ImageBuffer {
+    /// Get a regio of pixels from the image buffer.
+    // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
+    // implement for all base_types in TypeDescription.
+    fn pixels(
+        &self,
+        region_of_interest: &RegionOfInterest,
+    ) -> Result<Vec<u8>> {
+        if ImageBufferStorage::Uninitialized == self.storage() {
+            // An uninitialized image buffer has no pixels but it's not an error
+            // to ask for them.
+            return Ok(Vec::new());
+        }
+
+        let region = match region_of_interest {
+            RegionOfInterest::All => match self.region_of_interest() {
+                RegionOfInterest::All => {
+                    // If this image buffer is uninitialized, we can't get
+                    // here because `self.storage()` will return
+                    // `ImageBufferStorage::Uninitialized`.
+                    unreachable!()
+                }
+                RegionOfInterest::Region(roi) => roi,
+            },
+            RegionOfInterest::Region(roi) => roi.clone(),
+        };
+
+        let size = region.pixel_count() * region.channel_count() as usize;
+        let mut data = Vec::<u8>::with_capacity(size);
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_get_pixels_01(
+                self.ptr,
+                region_of_interest.clone().into(),
+                oiio_BASETYPE::oiio_BASETYPE_UINT8,
+                data.as_mut_ptr() as _,
+                &mut is_ok as *mut _ as _,
+            );
+
+            if is_ok.assume_init() {
+                data.set_len(size);
+                Ok(data)
+            } else {
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
+            }
+        }
+    }
+}
 /// # Getters
 impl ImageBuffer {
     /// Returns `true` if the `ImageBuffer` is initialized, `false` otherwise.
@@ -567,56 +673,6 @@ impl ImageBuffer {
         self.image_cache.clone()
     }
 
-    /// Get a regio of pixels from the image buffer.
-    // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
-    // implement for all base_types in TypeDescription.
-    pub fn pixels(
-        &self,
-        region_of_interest: &RegionOfInterest,
-    ) -> Result<Vec<f32>> {
-        if ImageBufferStorage::Uninitialized == self.storage() {
-            return Ok(Vec::new());
-        }
-
-        let region = match region_of_interest {
-            RegionOfInterest::All => match self.region_of_interest() {
-                RegionOfInterest::All => return Ok(Vec::new()),
-                RegionOfInterest::Region(roi) => roi,
-            },
-            RegionOfInterest::Region(roi) => roi.clone(),
-        };
-
-        let mut type_description = self.type_description();
-        type_description.base_type = Some(BaseType::F32);
-
-        let size = type_description.size() * region.size();
-        let mut data = Vec::with_capacity(size);
-        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBuf_get_pixels(
-                self.ptr,
-                *region_of_interest.as_raw_ptr(),
-                (&type_description).into(),
-                data.as_mut_ptr() as _,
-                i64::MIN,
-                i64::MIN,
-                i64::MIN,
-                &mut is_ok as *mut _ as _,
-            );
-
-            data.set_len(size);
-
-            if is_ok.assume_init() {
-                Ok(data)
-            } else {
-                Err(anyhow!(self
-                    .error(true)
-                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
-            }
-        }
-    }
-
     /// Return the text of all pending error messages issued against this
     /// `ImageBuffer`, and clear the pending error message unless clear is
     /// `false`.
@@ -694,33 +750,43 @@ impl ImageBuffer {
 }
 
 #[cfg(feature = "image")]
-impl From<ImageBuffer> for image::RgbImage {
-    fn from(image_buffer: ImageBuffer) -> Self {
-        let type_description = image_buffer.type_description();
-        if BaseType::U8 == type_description.base_type
-            && Aggregate::Vec3 == type_description.aggregate
-            && VecSemantics::Color == image_buffer.vec_semantics()
-        {
-            image::ImageBuffer::from_raw(
-                image_buffer.width(),
-                image_buffer.height(),
-                image_buffer.data(),
-            )
-            .unwrap()
-        } else {
-            // Make a copy of the image buffer with a matching
-            // `TypdeDescription` for our target pixel type.
-            image_buffer
-                .copy(&TypeDescription {
-                    base_type: BaseType::U8,
-                    aggregate: Aggregate::Vec3,
-                    vec_semantics: Some(VecSemantics::Color),
-                    ..Default::default()
-                })
-                .into()
-        }
+impl TryFrom<ImageBuffer> for image::RgbImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+
+        let mut region = image_buffer.region_of_interest().region().unwrap().clone();
+        /// Strip the alpha channel from the image or fill missing channels with 0.
+        region.set_channel(0..3);
+
+        image::ImageBuffer::from_vec(
+            region.width(),
+            region.height(),
+            image_buffer.pixels(&RegionOfInterest::Region(region))?
+        ).ok_or(anyhow!("Failed to convert image to RgbImage"))
     }
 }
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::RgbaImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+
+        let mut region = image_buffer.region_of_interest().region().unwrap().clone();
+        /// Strip the alpha channel from the image or fill missing channels with 0.
+        region.set_channel(0..4);
+
+        image::ImageBuffer::from_vec(
+            region.width(),
+            region.height(),
+            image_buffer.pixels(&RegionOfInterest::Region(region))?
+        ).ok_or(anyhow!("Failed to convert image to RgbaImage"))
+    }
+}
+
+
+
 /*
 impl IntoIterator for ImageBuffer {
     pub fn iter(&self) -> ImageBufferIterator {}
@@ -816,8 +882,6 @@ mod tests {
 
     #[test]
     fn load() -> Result<()> {
-        use camino::Utf8Path;
-
         //let image_cache = ImageCache::shared(false);
 
         let image_buf = ImageBuffer::from_file(Utf8Path::new(
@@ -830,6 +894,34 @@ mod tests {
         );
         println!("Storage:       {:?}", image_buf.storage());
         println!("Channel Count: {:?}", image_buf.channel_count());
+
+        Ok(())
+    }
+
+    #[test]
+    fn pixels() -> Result<()> {
+        let image_buf = ImageBuffer::from_file(Utf8Path::new(
+            "assets/j0.3toD__F16_RGBA.exr",
+        ))?;
+
+        let pixels: Vec<f32> = image_buf.pixels(&RegionOfInterest::All)?;
+
+        //println!("Pixels: {:?}", pixels);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "image")]
+    #[test]
+    fn test_image_crate() -> Result<()> {
+
+        let image_buf = ImageBuffer::from_file(Utf8Path::new(
+            "assets/j0.3toD__F16_RGBA.exr",
+        ))?;
+
+        let image: image::RgbaImage = image_buf.try_into()?;
+
+        image.save("test.png")?;
 
         Ok(())
     }

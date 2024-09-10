@@ -78,7 +78,7 @@ impl From<InterpolationMode> for oiio_InterpMode {
     }
 }
 
-/// Holds many options controlling single-point texture lookups.  Because each
+/// Holds many options controlling single-point texture lookups. Because each
 /// texture lookup call takes a reference to a `TextureOptions`.
 #[derive(Debug, PartialEq)]
 pub struct TextureOptions<'a> {
@@ -278,8 +278,10 @@ impl<'a, 'b> TextureHandle<'a, 'b> {
 }
 
 /// Manages texture files, caches of open file handles as well as tiles of
-/// texels. This allows huge amounts of textures to be accessed by an
-/// application with low memory footprint
+/// texels.
+///
+/// This allows huge amounts of textures to be accessed by an application with
+/// low memory footprint
 ///
 /// The `TextureSystem` also provides ways to perform antialiased texture-,
 /// shadow map-, and environment map lookups.

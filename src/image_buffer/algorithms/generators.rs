@@ -475,7 +475,7 @@ impl ImageBuffer {
 }
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
-enum TextAlignX {
+pub enum TextAlignX {
     #[default]
     Left = oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
     Center = oiio_TextAlignX::oiio_TextAlignX_Center.0 as _,
@@ -495,7 +495,7 @@ impl From<TextAlignX> for oiio_TextAlignX {
 }
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
-enum TextAlignY {
+pub enum TextAlignY {
     #[default]
     Baseline = oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _,
     Top = oiio_TextAlignY::oiio_TextAlignY_Top.0 as _,

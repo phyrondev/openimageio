@@ -36,8 +36,8 @@ OIIO consists of:
   megabytes at most) of runtime memory.
 
 * A `TextureSystem` class that provides filtered MIP-map texture lookups, atop
-  the nice caching behavior of ImageCache. This is used in commercial renderers
-  and has been used on many large VFX and animated films.
+  the nice caching behavior of `ImageCache`. This is used in commercial
+  renderers and has been used on many large VFX and animated films.
 
 * `ImageBuffer` – a simple class for storing and manipulating whole images in
   memory and a collection of the most useful computations you might want to do
@@ -148,3 +148,9 @@ export BBL_PLUGIN_PATH=/usr/local/plugins/
 
 If you use a local build of OpenImageIO you can point CMake to it by setting
 the `CMAKE_PREFIX_PATH` to the `dist` directory of your build.
+
+For example:
+
+```
+CMAKE_PREFIX_PATH=$HOME/code/OpenImageIO/dist cargo test
+```

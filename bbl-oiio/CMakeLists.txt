@@ -8,8 +8,9 @@ include(GNUInstallDirs)
 
 # The bindfile contains all our binding definitions
 set(bindfiles
-  bind/bbl-misc.cpp
   bind/attrdelegate.cpp
+  bind/bbl-misc.cpp
+  bind/color.cpp
   bind/deepdata.cpp
   bind/filesystem.cpp
   bind/filter.cpp
