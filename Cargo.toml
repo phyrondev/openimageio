@@ -32,6 +32,7 @@ ustr = "1"
 default = ["algorithms"]
 # Enable a bunch of composting- & generator methods on `ImageBuffer`.
 algorithms = []
+# Enable one-way conversion from `ImageBuffer` to `image::DynamicImage`.
 image = ["dep:image"]
 # Make the OpenImageIO FFI this crate uses public.
 ffi = []

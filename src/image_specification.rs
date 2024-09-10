@@ -150,7 +150,7 @@ pub struct ImageSpecification {
 }
 
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
-type ImageSpec = ImageSpecification;
+pub type ImageSpec = ImageSpecification;
 
 pub(crate) struct ImageSpecInternal {
     pub(crate) ptr: *mut oiio_ImageSpec_t,
@@ -269,6 +269,7 @@ impl ImageSpecInternal {
         }
     }
 
+    /*
     pub fn new_with_dimensions(
         x_res: u32,
         y_res: u32,
@@ -290,7 +291,7 @@ impl ImageSpecInternal {
                 ptr: ptr.assume_init(),
             }
         }
-    }
+    }*/
 }
 
 #[cfg(feature = "ffi")]

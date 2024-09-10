@@ -2,7 +2,7 @@ use crate::*;
 use core::mem::MaybeUninit;
 use once_cell::sync::OnceCell;
 use parking_lot::RwLock;
-use std::{ops::DerefMut, sync::Arc};
+use std::sync::Arc;
 
 // The OIIO C++ API wants the user to decide on resource deallocation if this
 // also deletes the shared cache. We turn this on its head by moving the

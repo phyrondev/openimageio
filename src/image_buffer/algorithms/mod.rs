@@ -12,10 +12,10 @@
 //!
 //! 1. Return an `ImageBuffer`.
 //!
-//!    The return value is a new ImageBuf containing the result image. In this
-//! case, an entirely new image will be created to hold the result. In case of
-//! error, the result image returned can have any error conditions checked with
-//! has_error() and geterror().
+//!    The return value is a new `ImageBuffer` containing the result image. In
+//! this    case, an entirely new image will be created to hold the result. In
+//! case of    error, the result image returned can have any error conditions
+//! checked with    has_error() and geterror().
 //!
 //!    ```ignore
 //!    // Method 1: Return an image result
@@ -35,7 +35,7 @@
 //! 3. Chaining
 //!
 //!    Most functions that take &mut self as an argument will return this from
-//! the    function call. This allows you to chain calls together.
+//!    the function call. This allows you to chain calls together.
 //!
 //!    ```ignore
 //!    // Chaining methods

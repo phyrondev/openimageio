@@ -16,10 +16,7 @@
 //! * [Over](ImageBuffer#over)
 use crate::{image_buffer::algorithms::Options, *};
 use anyhow::Result;
-use core::{
-    marker::PhantomData,
-    mem::{transmute, MaybeUninit},
-};
+use core::mem::{transmute, MaybeUninit};
 use ustr::{ustr, Ustr};
 
 #[derive(Clone, Copy, Default)]

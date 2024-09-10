@@ -1,6 +1,6 @@
 use crate::*;
 use anyhow::{anyhow, Result};
-use core::{ffi::c_int, marker::PhantomData, mem::MaybeUninit, ptr};
+use core::{ffi::c_int, mem::MaybeUninit, ptr};
 use std::string::String;
 use ustr::Ustr;
 
@@ -404,10 +404,7 @@ impl Pixels<u8> for ImageBuffer {
     /// Get a regio of pixels from the image buffer.
     // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
     // implement for all base_types in TypeDescription.
-    fn pixels(
-        &self,
-        region_of_interest: &RegionOfInterest,
-    ) -> Result<Vec<u8>> {
+    fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<u8>> {
         if ImageBufferStorage::Uninitialized == self.storage() {
             // An uninitialized image buffer has no pixels but it's not an error
             // to ask for them.
@@ -754,16 +751,18 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
     type Error = anyhow::Error;
 
     fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
-
-        let mut region = image_buffer.region_of_interest().region().unwrap().clone();
-        /// Strip the alpha channel from the image or fill missing channels with 0.
+        let mut region =
+            image_buffer.region_of_interest().region().unwrap().clone();
+        // Strip the alpha channel from the image and/or fill missing channels
+        // with 0.
         region.set_channel(0..3);
 
         image::ImageBuffer::from_vec(
             region.width(),
             region.height(),
-            image_buffer.pixels(&RegionOfInterest::Region(region))?
-        ).ok_or(anyhow!("Failed to convert image to RgbImage"))
+            image_buffer.pixels(&RegionOfInterest::Region(region))?,
+        )
+        .ok_or(anyhow!("Failed to convert image to RgbImage"))
     }
 }
 
@@ -772,20 +771,19 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
     type Error = anyhow::Error;
 
     fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
-
-        let mut region = image_buffer.region_of_interest().region().unwrap().clone();
-        /// Strip the alpha channel from the image or fill missing channels with 0.
+        let mut region =
+            image_buffer.region_of_interest().region().unwrap().clone();
+        // Fill missing channels with 0.
         region.set_channel(0..4);
 
         image::ImageBuffer::from_vec(
             region.width(),
             region.height(),
-            image_buffer.pixels(&RegionOfInterest::Region(region))?
-        ).ok_or(anyhow!("Failed to convert image to RgbaImage"))
+            image_buffer.pixels(&RegionOfInterest::Region(region))?,
+        )
+        .ok_or(anyhow!("Failed to convert image to RgbaImage"))
     }
 }
-
-
 
 /*
 impl IntoIterator for ImageBuffer {
@@ -914,7 +912,6 @@ mod tests {
     #[cfg(feature = "image")]
     #[test]
     fn test_image_crate() -> Result<()> {
-
         let image_buf = ImageBuffer::from_file(Utf8Path::new(
             "assets/j0.3toD__F16_RGBA.exr",
         ))?;

@@ -48,7 +48,6 @@ impl RegionOfInterest {
         match self {
             RegionOfInterest::All => {
                 // Do nothing.
-                ()
             }
             RegionOfInterest::Region(a) => match b {
                 RegionOfInterest::All => *self = b.clone(),
@@ -65,7 +64,6 @@ impl RegionOfInterest {
             RegionOfInterest::Region(a) => match b {
                 RegionOfInterest::All => {
                     // Do nothing.
-                    ()
                 }
                 RegionOfInterest::Region(b) => {
                     *self = RegionOfInterest::Region(a.intersection(b).clone());
@@ -422,8 +420,14 @@ mod internal {
     impl From<RegionOfInterest> for oiio_ROI_t {
         fn from(src: RegionOfInterest) -> oiio_ROI_t {
             match src {
-                RegionOfInterest::All => unsafe { transmute(ALL.clone()) },
-                RegionOfInterest::Region(r) => unsafe { transmute(r) },
+                RegionOfInterest::All => unsafe {
+                    transmute::<region_of_interest::Region, ffi::oiio_ROI_t>(
+                        ALL.clone(),
+                    )
+                },
+                RegionOfInterest::Region(r) => unsafe {
+                    transmute::<region_of_interest::Region, ffi::oiio_ROI_t>(r)
+                },
             }
         }
     }
