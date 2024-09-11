@@ -166,9 +166,16 @@ impl Default for ColorConvertOptions {
 
 /// # Color Conversion
 impl ImageBuffer {
-
-    pub fn color_convert(&mut self, from_space: Option<Ustr>, to_space: Ustr) -> Result<&mut Self> {
-        self.color_convert_with(from_space, to_space, &ColorConvertOptions::default())
+    pub fn color_convert(
+        &mut self,
+        from_space: Option<Ustr>,
+        to_space: Ustr,
+    ) -> Result<&mut Self> {
+        self.color_convert_with(
+            from_space,
+            to_space,
+            &ColorConvertOptions::default(),
+        )
     }
 
     pub fn color_convert_with(
@@ -190,8 +197,17 @@ impl ImageBuffer {
         self.mut_self_or_error(is_ok)
     }
 
-    pub fn from_color_convert(source: &ImageBuffer, from_space: Option<Ustr>, to_space: Ustr) -> Result<Self> {
-        Self::from_color_convert_with(source, from_space, to_space, &ColorConvertOptions::default())
+    pub fn from_color_convert(
+        source: &ImageBuffer,
+        from_space: Option<Ustr>,
+        to_space: Ustr,
+    ) -> Result<Self> {
+        Self::from_color_convert_with(
+            source,
+            from_space,
+            to_space,
+            &ColorConvertOptions::default(),
+        )
     }
 
     pub fn from_color_convert_with(
@@ -269,20 +285,23 @@ impl ImageBuffer {
 
         println!("color convert from space: {:?}", from_space);
 
-
         unsafe {
             oiio_ImageBufAlgo_colorconvert(
                 dest.ptr,
                 source.ptr,
-                from_space.map_or(StringView::default().ptr, |s| StringView::from(s).ptr),
+                from_space.map_or(StringView::default().ptr, |s| {
+                    StringView::from(s).ptr
+                }),
                 StringView::from(to_space).ptr,
                 options.unpremultiply,
-                options
-                    .context_key
-                    .map_or(StringView::default().ptr, |s| StringView::from(s).ptr),
+                options.context_key.map_or(StringView::default().ptr, |s| {
+                    StringView::from(s).ptr
+                }),
                 options
                     .context_value
-                    .map_or(StringView::default().ptr, |s| StringView::from(s).ptr),
+                    .map_or(StringView::default().ptr, |s| {
+                        StringView::from(s).ptr
+                    }),
                 options.config.as_ref().map_or(ptr::null_mut(), |s| s.ptr),
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,

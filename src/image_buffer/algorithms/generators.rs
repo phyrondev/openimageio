@@ -311,12 +311,7 @@ mod tests {
         let mut image_buf = ImageBuffer::from_fill_vertical(
             &pink,
             &red,
-            &Region::new(
-                0..640,
-                0..480,
-                Some(0..1),
-                Some(0..3),
-            ),
+            &Region::new(0..640, 0..480, Some(0..1), Some(0..3)),
         )?;
 
         // Draw a filled red rectangle overtop existing image A.
@@ -332,12 +327,7 @@ mod tests {
         )?;
 
         // Draw a filled red rectangle overtop existing image A.
-        image_buf.fill_corners(
-            &red,
-            &blue,
-            &yellow,
-            &pink,
-        )?;
+        image_buf.fill_corners(&red, &blue, &yellow, &pink)?;
 
         compare_images(&image_buf, "test_fill.png")?;
 

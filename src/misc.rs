@@ -1,7 +1,7 @@
 use crate::*;
+use anyhow::Result;
 use core::{marker::PhantomData, mem::MaybeUninit};
 use num_traits::{Bounded, Num, NumCast};
-use anyhow::Result;
 
 /// The type of each channel in a pixel. For example, this can be `u8`, `u16`,
 /// `f32`.
@@ -73,7 +73,6 @@ impl Drop for CspanF32<'_> {
         }
     }
 }
-
 
 #[cfg(test)]
 pub fn compare_images(image_buf: &ImageBuffer, name: &str) -> Result<()> {

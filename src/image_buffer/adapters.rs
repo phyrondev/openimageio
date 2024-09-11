@@ -12,6 +12,7 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
+        // Make sure we're in the expected color space.
         image_buffer.color_convert(None, "sRGB".into())?;
 
         // Strip the alpha channel from the image and/or fill missing channels
@@ -38,11 +39,12 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
+        // Make sure we're in the expected color space.
         image_buffer.color_convert(None, "sRGB".into())?;
 
-        // Strip missing channels resp. fill with 0.
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
         region.set_channel(0..4);
-
 
         image::ImageBuffer::from_vec(
             region.width(),
@@ -105,7 +107,6 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
