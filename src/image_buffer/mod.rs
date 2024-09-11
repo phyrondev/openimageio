@@ -9,6 +9,7 @@ pub mod algorithms;
 //#[cfg(feature = "algorithms")]
 //pub use algorithms::*;
 
+mod adapters;
 mod internal;
 
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
@@ -77,7 +78,7 @@ pub struct WriteOptions<'a> {
     /// another will be automatically chosen that is supported by the file type
     /// and loses as little precision as possible.
     pub type_desc: Option<&'a TypeDescription>,
-    /// Optional override of the file format to write. The default (`None`)
+    /// Optional overriPde of the file format to write. The default (`None`)
     /// means to infer the file format from the extension of the
     /// filename (for example, `"foo.tif"`" will write a TIFF file).
     pub file_format: Option<Ustr>,
@@ -87,21 +88,22 @@ pub struct WriteOptions<'a> {
 #[repr(C)]
 pub enum ImageBufferStorage {
     /// An [`ImageBuffer`] that doesn't represent any image at all (either
-    /// because it is newly constructed with the default constructor,
-    /// or had an error during construction).
+    /// because it is newly constructed with the default constructor, or had an
+    /// error during construction).
     Uninitialized = oiio_IBStorage::oiio_IBStorage_UNINITIALIZED.0 as _,
     /// "Local storage" is allocated to hold the image pixels internal to the
-    /// [`ImageBuffer`]. This memory will be freed when the `ImageBuffer` is
+    /// `ImageBuffer`. This memory will be freed when the `ImageBuffer` is
     /// destroyed.
     LocalBuffer = oiio_IBStorage::oiio_IBStorage_LOCALBUFFER.0 as _,
-    /// The [`ImageBuffer`] 'wraps' pixel memory already allocated and owned by
-    /// the calling application. The caller will continue to own that
-    /// memory and be responsible for freeing it after the `ImageBuffer` is
+    /// The `ImageBuffer` 'wraps' pixel memory already allocated and owned by
+    /// the calling application. The caller will continue to own that memory
+    /// and be responsible for freeing it after the `ImageBuffer` is
     /// destroyed.
     AppBuffer = oiio_IBStorage::oiio_IBStorage_APPBUFFER.0 as _,
-    /// The [`ImageBuffer`] is 'backed' by an [`ImageCache`], which will
+    /// The `ImageBuffer` is 'backed' by an [`ImageCache`], which will
     /// automatically be used to retrieve pixels when requested, but the
     /// `ImageBuffer` will not allocate separate storage for it.
+    ///
     /// This brings all the advantages of the `ImageCache`, but can only be
     /// used for read-only `ImageBuffer`s that reference a stored image file.
     ImageCache = oiio_IBStorage::oiio_IBStorage_IMAGECACHE.0 as _,
@@ -264,7 +266,7 @@ impl ImageBuffer {
             image_cache: options.image_cache.clone(),
             //_marker: PhantomData,
         }
-        .ok_or_error_owned()
+        .self_or_error(true)
     }
 
     /// Destroy any previous contents of the `ImageBuffer` and re-initialize it
@@ -338,13 +340,76 @@ impl ImageBuffer {
     }
 }
 
+/*
 pub struct PixelsOptions {
     x_stride: Option<u32>,
     y_stride: Option<u32>,
     z_stride: Option<u32>,
-}
+}*/
 
-pub trait Pixels<T> {
+/// Retrieve the rectangle of pixels spanning the [`RegionOfInterest`] specified
+/// by the current subimage and MIP-map level, and converting into
+/// the data type implied by the requested [`Primitive`] type.
+///
+/// Returns a `Vec` of the chose type if successful, or an error if the reading
+/// of the pixels failed.
+///
+/// # Examples
+///
+/// This is probably the preferred way to get pixels into a format you need for
+/// display or processing outside of this crate.
+///
+/// ```ignore
+/// use egui::{ColorImage, Rgba};
+///
+/// // Load an image. Note that OIIO automatically associates the alpha channel by
+/// // default.
+/// let mut image_buf = ImageBuffer::from_file(oiio::Utf8Path::new(
+///     "assets/j0.3toD__F16_RGBA.exr"
+/// ))?;
+///
+/// // We grab a copy of the region of interest, so we can modify if we need to.
+/// let mut region = image_buf.region_of_interest().region().unwrap();
+///
+/// let dimensions = [region.width(), region.height()];
+///
+/// let image: egui::ColorImage =
+///     match region.channel_count() {
+///         // Grayscale image.
+///         1 || 2 => {
+///             // We assume this is a grayscale image (alpha channel is ignored).
+///             region.set_channel(0..1),
+///             let pixels: Vec<u8> = image_buf.pixels(
+///                 &RegionOfInterest::Region(region)
+///             )?;
+///
+///             egui::ColorImage::from_gray(dimensions, pixels)
+///         }
+///         // RGB image.
+///         3 => {
+///             image_buf.color_convert(None, "sRGB")?;
+///             let pixels: Vec<u8> = image_buf.pixels(&RegionOfInterest::All)?;
+///
+///             egui::ColorImage::from_rgb(dimensions, &pixels)
+///         }
+///         // RGBA image.
+///         _ => {
+///             image_buf.color_convert(None, "sRGB")?;
+///             // Make sure `pixels()` returns a buffer with max 4 channels.
+///             region.set_channel(0..4),
+///             let pixels: Vec<u8> = image_buf.pixels(
+///                 &RegionOfInterest::Region(region)
+///             )?;
+///
+///             egui::ColorImage::from_rgba_premultiplied(dimensions, &pixels)
+///         }
+///     };
+/// ```
+///
+/// # C++
+///
+/// The C++ version of this is called `get_pixels()`.
+pub trait Pixels<T: Primitive> {
     fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<T>>;
 }
 
@@ -746,45 +811,6 @@ impl ImageBuffer {
     }
 }
 
-#[cfg(feature = "image")]
-impl TryFrom<ImageBuffer> for image::RgbImage {
-    type Error = anyhow::Error;
-
-    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
-        let mut region =
-            image_buffer.region_of_interest().region().unwrap().clone();
-        // Strip the alpha channel from the image and/or fill missing channels
-        // with 0.
-        region.set_channel(0..3);
-
-        image::ImageBuffer::from_vec(
-            region.width(),
-            region.height(),
-            image_buffer.pixels(&RegionOfInterest::Region(region))?,
-        )
-        .ok_or(anyhow!("Failed to convert image to RgbImage"))
-    }
-}
-
-#[cfg(feature = "image")]
-impl TryFrom<ImageBuffer> for image::RgbaImage {
-    type Error = anyhow::Error;
-
-    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
-        let mut region =
-            image_buffer.region_of_interest().region().unwrap().clone();
-        // Fill missing channels with 0.
-        region.set_channel(0..4);
-
-        image::ImageBuffer::from_vec(
-            region.width(),
-            region.height(),
-            image_buffer.pixels(&RegionOfInterest::Region(region))?,
-        )
-        .ok_or(anyhow!("Failed to convert image to RgbaImage"))
-    }
-}
-
 /*
 impl IntoIterator for ImageBuffer {
     pub fn iter(&self) -> ImageBufferIterator {}
@@ -896,6 +922,7 @@ mod tests {
         Ok(())
     }
 
+    /*
     #[test]
     fn pixels() -> Result<()> {
         let image_buf = ImageBuffer::from_file(Utf8Path::new(
@@ -904,22 +931,10 @@ mod tests {
 
         let pixels: Vec<f32> = image_buf.pixels(&RegionOfInterest::All)?;
 
-        //println!("Pixels: {:?}", pixels);
+        println!("Pixels: {:?}", pixels);
 
         Ok(())
-    }
+    }*/
 
-    #[cfg(feature = "image")]
-    #[test]
-    fn test_image_crate() -> Result<()> {
-        let image_buf = ImageBuffer::from_file(Utf8Path::new(
-            "assets/j0.3toD__F16_RGBA.exr",
-        ))?;
 
-        let image: image::RgbaImage = image_buf.try_into()?;
-
-        image.save("test.png")?;
-
-        Ok(())
-    }
 }

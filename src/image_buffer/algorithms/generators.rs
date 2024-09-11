@@ -91,54 +91,51 @@ impl ImageBuffer {
 /// `RegionOfInterest`.
 impl ImageBuffer {
     #[inline]
-    pub fn from_fill(
-        values: &[f32],
-        region_of_interest: &RegionOfInterest,
-    ) -> Self {
+    pub fn from_fill(values: &[f32], region: &Region) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.fill_with(
+        let is_ok = image_buffer.fill_ffi(
             values,
             &Options {
-                region_of_interest: region_of_interest.clone(),
+                region_of_interest: RegionOfInterest::Region(region.clone()),
                 ..Default::default()
             },
         );
-        image_buffer
+
+        image_buffer.self_or_error(is_ok)
     }
 
     #[inline]
     pub fn from_fill_with(
         values: &[f32],
-        region_of_interest: &RegionOfInterest,
+        region: &Region,
         thread_count: Option<u16>,
-    ) -> Self {
+    ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.fill_with(
+        let is_ok = image_buffer.fill_ffi(
             values,
             &Options {
-                region_of_interest: region_of_interest.clone(),
+                region_of_interest: RegionOfInterest::Region(region.clone()),
                 thread_count: thread_count.unwrap_or(0),
             },
         );
-        image_buffer
+
+        image_buffer.self_or_error(is_ok)
     }
 
-    pub fn fill(&mut self, values: &[f32]) -> &mut Self {
+    pub fn fill(&mut self, values: &[f32]) -> Result<&mut Self> {
         let is_ok = self.fill_ffi(values, &Options::default());
 
-        self.ok_or_log_error(is_ok);
-        self
+        self.mut_self_or_error(is_ok)
     }
 
     pub fn fill_with(
         &mut self,
         values: &[f32],
         options: &Options,
-    ) -> &mut Self {
+    ) -> Result<&mut Self> {
         let is_ok = self.fill_ffi(values, options);
 
-        self.ok_or_log_error(is_ok);
-        self
+        self.mut_self_or_error(is_ok)
     }
 }
 
@@ -151,18 +148,48 @@ impl ImageBuffer {
     pub fn from_fill_vertical(
         start: &[f32],
         end: &[f32],
-        options: &Options,
-    ) -> Self {
+        region: &Region,
+    ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.fill_vertical_with(start, end, options);
-        image_buffer
+        let is_ok = image_buffer.fill_vertical_ffi(
+            start,
+            end,
+            &Options {
+                region_of_interest: RegionOfInterest::Region(region.clone()),
+                ..Default::default()
+            },
+        );
+
+        image_buffer.self_or_error(is_ok)
     }
 
-    pub fn fill_vertical(&mut self, start: &[f32], end: &[f32]) -> &mut Self {
+    pub fn from_fill_vertical_with(
+        start: &[f32],
+        end: &[f32],
+        region: &Region,
+        thread_count: Option<u16>,
+    ) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.fill_vertical_ffi(
+            start,
+            end,
+            &Options {
+                region_of_interest: RegionOfInterest::Region(region.clone()),
+                thread_count: thread_count.unwrap_or(0),
+            },
+        );
+
+        image_buffer.self_or_error(is_ok)
+    }
+
+    pub fn fill_vertical(
+        &mut self,
+        start: &[f32],
+        end: &[f32],
+    ) -> Result<&mut Self> {
         let is_ok = self.fill_vertical_ffi(start, end, &Options::default());
 
-        self.ok_or_log_error(is_ok);
-        self
+        self.mut_self_or_error(is_ok)
     }
 
     pub fn fill_vertical_with(
@@ -170,11 +197,10 @@ impl ImageBuffer {
         start: &[f32],
         end: &[f32],
         options: &Options,
-    ) -> &mut Self {
+    ) -> Result<&mut Self> {
         let is_ok = self.fill_vertical_ffi(start, end, options);
 
-        self.ok_or_log_error(is_ok);
-        self
+        self.mut_self_or_error(is_ok)
     }
 }
 
@@ -189,17 +215,44 @@ impl ImageBuffer {
         top_right: &[f32],
         bottom_left: &[f32],
         bottom_right: &[f32],
-        options: &Options,
-    ) -> Self {
+        region: &Region,
+    ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.fill_corners_with(
+        let is_ok = image_buffer.fill_corners_ffi(
             top_left,
             top_right,
             bottom_left,
             bottom_right,
-            options,
+            &Options {
+                region_of_interest: RegionOfInterest::Region(region.clone()),
+                ..Default::default()
+            },
         );
-        image_buffer
+
+        image_buffer.self_or_error(is_ok)
+    }
+
+    pub fn from_fill_corners_with(
+        top_left: &[f32],
+        top_right: &[f32],
+        bottom_left: &[f32],
+        bottom_right: &[f32],
+        region: &Region,
+        thread_count: Option<u16>,
+    ) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.fill_corners_ffi(
+            top_left,
+            top_right,
+            bottom_left,
+            bottom_right,
+            &Options {
+                region_of_interest: RegionOfInterest::Region(region.clone()),
+                thread_count: thread_count.unwrap_or(0),
+            },
+        );
+
+        image_buffer.self_or_error(is_ok)
     }
 
     pub fn fill_corners(
@@ -208,7 +261,7 @@ impl ImageBuffer {
         top_right: &[f32],
         bottom_left: &[f32],
         bottom_right: &[f32],
-    ) -> &mut Self {
+    ) -> Result<&mut Self> {
         let is_ok = self.fill_corners_ffi(
             top_left,
             top_right,
@@ -217,8 +270,7 @@ impl ImageBuffer {
             &Options::default(),
         );
 
-        self.ok_or_log_error(is_ok);
-        self
+        self.mut_self_or_error(is_ok)
     }
 
     pub fn fill_corners_with(
@@ -228,7 +280,7 @@ impl ImageBuffer {
         bottom_left: &[f32],
         bottom_right: &[f32],
         options: &Options,
-    ) -> &mut Self {
+    ) -> Result<&mut Self> {
         let is_ok = self.fill_corners_ffi(
             top_left,
             top_right,
@@ -237,8 +289,7 @@ impl ImageBuffer {
             options,
         );
 
-        self.ok_or_log_error(is_ok);
-        self
+        self.mut_self_or_error(is_ok)
     }
 }
 
@@ -260,43 +311,33 @@ mod tests {
         let mut image_buf = ImageBuffer::from_fill_vertical(
             &pink,
             &red,
-            &Options {
-                region_of_interest: Roi::Region(Region::new(
-                    0..640,
-                    0..480,
-                    Some(0..1),
-                    Some(0..3),
-                )),
-                ..Default::default()
-            },
-        );
+            &Region::new(
+                0..640,
+                0..480,
+                Some(0..1),
+                Some(0..3),
+            ),
+        )?;
 
         // Draw a filled red rectangle overtop existing image A.
         image_buf.fill_with(
             &red,
             &Options {
-                region_of_interest: Roi::Region(Region::new_2d(
+                region_of_interest: RegionOfInterest::Region(Region::new_2d(
                     50..100,
                     75..175,
                 )),
                 ..Default::default()
             },
-        );
+        )?;
 
         // Draw a filled red rectangle overtop existing image A.
-        image_buf.fill_corners_with(
+        image_buf.fill_corners(
             &red,
             &blue,
             &yellow,
             &pink,
-            &Options {
-                region_of_interest: Roi::Region(Region::new_2d(
-                    100..160,
-                    175..275,
-                )),
-                ..Default::default()
-            },
-        );
+        )?;
 
         compare_images(&image_buf, "test_fill.png")?;
 
@@ -346,34 +387,42 @@ impl ImageBuffer {
         }
     }
 
-    /// Set all channels to black.
-    ///
-    /// Errors will be logged.
-    pub fn zero(&mut self) -> &mut Self {
+    pub fn from_zero(region: &Region) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.zero_ffi(&Options {
+            region_of_interest: RegionOfInterest::Region(region.clone()),
+            ..Default::default()
+        });
+
+        image_buffer.self_or_error(is_ok)
+    }
+
+    pub fn from_zero_with(
+        region: &Region,
+        thread_count: Option<u16>,
+    ) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.zero_ffi(&Options {
+            region_of_interest: RegionOfInterest::Region(region.clone()),
+            thread_count: thread_count.unwrap_or(0),
+        });
+
+        image_buffer.self_or_error(is_ok)
+    }
+
+    /// Set all channels to zero.
+    pub fn zero(&mut self) -> Result<&mut Self> {
         let is_ok = self.zero_ffi(&Options::default());
-        self.ok_or_log_error(is_ok)
+
+        self.mut_self_or_error(is_ok)
     }
 
-    /// Set all channels as described by the [`RegionOfInterest`] to black.
-    ///
-    /// Errors will be logged.
-    pub fn zero_with(&mut self, options: &Options) -> &mut Self {
+    /// Set all channels to as described by the [`RegionOfInterest`] to
+    /// zero.
+    pub fn zero_with(&mut self, options: &Options) -> Result<&mut Self> {
         let is_ok = self.zero_ffi(options);
-        self.ok_or_log_error(is_ok)
-    }
 
-    /// Try setting all channels as described by the [`RegionOfInterest`] to
-    /// black.
-    pub fn try_zero(&mut self) -> Result<&mut Self> {
-        let is_ok = self.zero_ffi(&Options::default());
-        self.ok_or_error(is_ok)
-    }
-
-    /// Try setting all channels as described by the [`RegionOfInterest`] to
-    /// black.
-    pub fn try_zero_with(&mut self, options: &Options) -> Result<&mut Self> {
-        let is_ok = self.zero_ffi(options);
-        self.ok_or_error(is_ok)
+        self.mut_self_or_error(is_ok)
     }
 }
 
@@ -456,7 +505,8 @@ impl ImageBuffer {
         b: f32,
     ) -> Result<&mut Self> {
         let is_ok = self.noise_ffi(noise_type, a, b, &NoiseOptions::default());
-        self.ok_or_error(is_ok)
+
+        self.mut_self_or_error(is_ok)
     }
 
     /// Add noise with [`NoiseOptions`].
@@ -470,7 +520,8 @@ impl ImageBuffer {
         options: &NoiseOptions,
     ) -> Result<&mut Self> {
         let is_ok = self.noise_ffi(noise_type, a, b, options);
-        self.ok_or_error(is_ok)
+
+        self.mut_self_or_error(is_ok)
     }
 }
 
@@ -636,10 +687,16 @@ impl ImageBuffer {
     ///
     /// Text will be rendered into the existing image by essentially doing an
     /// 'over' of the character into the existing pixel data.
-    pub fn render_text(&mut self, x: i32, y: i32, text: &str) -> &mut Self {
+    pub fn render_text(
+        &mut self,
+        x: i32,
+        y: i32,
+        text: &str,
+    ) -> Result<&mut Self> {
         let is_ok =
             self.render_text_ffi(x, y, text, &RenderTextOptions::default());
-        self.ok_or_log_error(is_ok)
+
+        self.mut_self_or_error(is_ok)
     }
 
     /// Render text into an image buffer with given [`RenderTextOptions`].
@@ -652,24 +709,26 @@ impl ImageBuffer {
         y: i32,
         text: &str,
         options: &RenderTextOptions,
-    ) -> &mut Self {
+    ) -> Result<&mut Self> {
         let is_ok = self.render_text_ffi(x, y, text, options);
-        self.ok_or_log_error(is_ok)
+
+        self.mut_self_or_error(is_ok)
     }
 
     /// Create an image buffer from rendering text.
     ///
     /// The resulting image will be initialized to be a black background exactly
     /// large enough to contain the rasterized text.
-    pub fn from_render_text(
-        x: i32,
-        y: i32,
-        text: &str,
-        options: &RenderTextOptions,
-    ) -> Self {
+    pub fn from_render_text(x: i32, y: i32, text: &str) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.render_text_with(x, y, text, options);
-        image_buffer
+        let is_ok = image_buffer.render_text_ffi(
+            x,
+            y,
+            text,
+            &RenderTextOptions::default(),
+        );
+
+        image_buffer.self_or_error(is_ok)
     }
 
     /// Create an image buffer from rendering text with given
@@ -682,9 +741,10 @@ impl ImageBuffer {
         y: i32,
         text: &str,
         options: &RenderTextOptions,
-    ) -> Self {
+    ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        image_buffer.render_text_with(x, y, text, options);
-        image_buffer
+        let is_ok = image_buffer.render_text_ffi(x, y, text, options);
+
+        image_buffer.self_or_error(is_ok)
     }
 }

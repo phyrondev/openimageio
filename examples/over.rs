@@ -27,7 +27,7 @@ fn main() -> Result<()> {
 
     // Compose fg over bg, replacing the data window of fg  with the result.
     // I.e. the result will be cropped at fg's original dimensions of 1024×1024.
-    image_buf_a.over(&image_buf_b);
+    image_buf_a.over(&image_buf_b)?;
 
     // Write the result. The file format is inferred from the extension.
     image_buf_a.write(Utf8Path::new("over.exr"))?;

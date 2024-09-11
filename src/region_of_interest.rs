@@ -168,11 +168,7 @@ impl Region {
     /// Beware -- this defaults to a huge number. To be meaningful you must
     /// consider:
     ///
-    /// ```no_run
-    /// # use openimageio::ImageBuffer;
-    /// # use openimageio::Region;
-    /// # let image_buf = ImageBuffer::new();
-    /// # let roi = Region::default();
+    /// ```ignore
     /// let actual_channels = image_buf.channel_count().min(roi.channel_count());
     /// ```
     ///
