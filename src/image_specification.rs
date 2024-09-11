@@ -1,4 +1,4 @@
-use crate::{String as OiioString, *};
+use crate::*;
 use core::mem::MaybeUninit;
 use ustr::Ustr;
 

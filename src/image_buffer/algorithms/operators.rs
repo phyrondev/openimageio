@@ -15,7 +15,7 @@
 //!
 //! * [Over](ImageBuffer#over)
 use crate::{image_buffer::algorithms::Options, *};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use core::{
     mem::{transmute, MaybeUninit},
     ptr,
@@ -122,25 +122,6 @@ impl From<oiio_CompareResults_t> for CompareResult {
         unsafe { transmute(compare_result) }
     }
 }
-
-pub struct ColorConfig {
-    pub(crate) ptr: *mut oiio_ColorConfig_t,
-}
-
-/*
-impl ColorConfig {
-    pub fn new() -> Self {
-        Self {
-            ptr: unsafe { oiio_ColorConfig_new() },
-        }
-    }
-}
-
-impl Drop for ColorConfig {
-    fn drop(&mut self) {
-        unsafe { oiio_ColorConfig_dtor(self.ptr) }
-    }
-}*/
 
 pub struct ColorConvertOptions {
     pub unpremultiply: bool,
@@ -283,8 +264,6 @@ impl ImageBuffer {
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
-        println!("color convert from space: {:?}", from_space);
-
         unsafe {
             oiio_ImageBufAlgo_colorconvert(
                 dest.ptr,
@@ -307,8 +286,6 @@ impl ImageBuffer {
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
-
-            println!("color convert is ok: {:?}", is_ok);
 
             is_ok.assume_init()
         }

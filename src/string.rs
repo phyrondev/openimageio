@@ -7,11 +7,11 @@ use core::{
 use std::fmt::{Display, Formatter};
 
 // Wraps a C++ String.
-pub(crate) struct String {
+pub(crate) struct OiioString {
     ptr: *mut oiio_String_t,
 }
 
-impl String {
+impl OiioString {
     pub(crate) fn is_empty(&self) -> bool {
         let mut is_empty = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -33,21 +33,21 @@ impl String {
     }
 }
 
-impl Drop for String {
+impl Drop for OiioString {
     fn drop(&mut self) {
         unsafe { oiio_String_dtor(self.ptr) };
     }
 }
 
-impl From<*mut oiio_String_t> for String {
-    fn from(ptr: *mut oiio_String_t) -> String {
+impl From<*mut oiio_String_t> for OiioString {
+    fn from(ptr: *mut oiio_String_t) -> Self {
         Self { ptr }
     }
 }
 
 /// This fails with an [`Error`](std::fmt::Error) both if the formattimng does
 /// not succeed or if the string contains non-valid UTF-8.
-impl Display for String {
+impl Display for OiioString {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut ptr = MaybeUninit::<*const c_char>::uninit();
         let mut size = MaybeUninit::<c_ulong>::uninit();
@@ -74,7 +74,7 @@ impl Display for String {
     }
 }
 
-impl String {
+impl OiioString {
     pub fn new(s: &str) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_String_t>::uninit();
 

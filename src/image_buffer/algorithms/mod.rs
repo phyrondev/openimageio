@@ -13,9 +13,11 @@
 //! 1. Return an `ImageBuffer`.
 //!
 //!    The return value is a new `ImageBuffer` containing the result image. In
-//! this    case, an entirely new image will be created to hold the result. In
-//! case of    error, the result image returned can have any error conditions
-//! checked with    has_error() and geterror().
+//!    this case, an entirely new image will be created to hold the result.
+//!
+//!    In case of error, the result image returned can have any error conditions
+//!    checked with [`is_ok()`](ImageBuffer::is_ok) and
+//!    [`error()`](ImageBuffer::error).
 //!
 //!    ```ignore
 //!    // Method 1: Return an image result
@@ -25,28 +27,30 @@
 //! 2. Modify an existing `ImageBuffer`.
 //!
 //!    The function is called on a destination `ImageBuffer` where the results
-//!    will be stored.
+//!    will be stored. These variants return `Result<&mut Self>` which allows
+//!    chaining calls together and checking for errors at the same time (see
+//!    next section).
 //!
 //!    ```ignore
 //!    // Method 2: Write into an existing image
 //!    fg.over(&bg)?;
 //!    ```
 //!
-//! 3. Chaining
+//! ## Chaining
 //!
-//!    Most functions that take &mut self as an argument will return this from
-//!    the function call. This allows you to chain calls together.
+//! Most functions that take &mut self as an argument will return this from
+//! the function call. This allows you to chain calls together.
 //!
-//!    ```ignore
-//!    // Chaining methods
-//!    let mut dest = ImageBuffer::new_with(100, 100, TypeDesc::FLOAT)?;
+//! ```ignore
+//! // Chaining methods
+//! let mut dest = ImageBuffer::new_with(100, 100, TypeDesc::FLOAT)?;
 //!
-//!    // Compose a 42° rotated text over the `dest` buffer.
-//!    dest.over(
-//!        &ImageBuffer::from_render_text(0, 0, "HelloWorld!")?
-//!            .rotate(42.0)?
-//!    )?;
-//!    ```
+//! // Compose a 42° rotated text over the `dest` buffer.
+//! dest.over(
+//!     &ImageBuffer::from_render_text(0, 0, "HelloWorld!")?
+//!         .rotate(42.0)?
+//! )?;
+//! ```
 //!
 //! For a small minority of functions, there are only input images, and no image
 //! outputs (e.g., `is_monochrome()`). In such cases, the error message should

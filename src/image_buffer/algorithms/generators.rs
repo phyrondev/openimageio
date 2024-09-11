@@ -336,8 +336,8 @@ mod tests {
 }
 
 /// Optional parameters for [`ImageBuffer`]'s
-/// [`noise_with()`](ImageBuffer::noise_with) and
-/// [`try_noise_with()`](ImageBuffer::try_noise_with) methods.
+/// [`from_noise_with()`](ImageBuffer::from_noise_with) and
+/// [`noise_with()`](ImageBuffer::noise_with) methods.
 #[derive(Clone, Default)]
 pub struct NoiseOptions {
     /// If this flag is `true`, a single noise value will be applied to all

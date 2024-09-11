@@ -11,6 +11,8 @@ pub mod algorithms;
 
 mod adapters;
 mod internal;
+mod pixels;
+pub use pixels::*;
 
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
 pub type ImageBuf = ImageBuffer;
@@ -340,181 +342,12 @@ impl ImageBuffer {
     }
 }
 
-/*
-pub struct PixelsOptions {
-    x_stride: Option<u32>,
-    y_stride: Option<u32>,
-    z_stride: Option<u32>,
-}*/
-
-/// Retrieve the rectangle of pixels spanning the [`RegionOfInterest`] specified
-/// by the current subimage and MIP-map level, and converting into
-/// the data type implied by the requested [`Primitive`] type.
-///
-/// Returns a `Vec` of the chose type if successful, or an error if the reading
-/// of the pixels failed.
-///
-/// # Examples
-///
-/// This is probably the preferred way to get pixels into a format you need for
-/// display or processing outside of this crate.
-///
-/// ```ignore
-/// use egui::{ColorImage, Rgba};
-///
-/// // Load an image. Note that OIIO automatically associates the alpha channel by
-/// // default.
-/// let mut image_buf = ImageBuffer::from_file(oiio::Utf8Path::new(
-///     "assets/j0.3toD__F16_RGBA.exr"
-/// ))?;
-///
-/// // We grab a copy of the region of interest, so we can modify if we need to.
-/// let mut region = image_buf.region_of_interest().region().unwrap();
-///
-/// let dimensions = [region.width(), region.height()];
-///
-/// let image: egui::ColorImage =
-///     match region.channel_count() {
-///         // Grayscale image.
-///         1 || 2 => {
-///             // We assume this is a grayscale image (alpha channel is ignored).
-///             region.set_channel(0..1),
-///             let pixels: Vec<u8> = image_buf.pixels(
-///                 &RegionOfInterest::Region(region)
-///             )?;
-///
-///             egui::ColorImage::from_gray(dimensions, pixels)
-///         }
-///         // RGB image.
-///         3 => {
-///             image_buf.color_convert(None, "sRGB")?;
-///             let pixels: Vec<u8> = image_buf.pixels(&RegionOfInterest::All)?;
-///
-///             egui::ColorImage::from_rgb(dimensions, &pixels)
-///         }
-///         // RGBA image.
-///         _ => {
-///             image_buf.color_convert(None, "sRGB")?;
-///             // Make sure `pixels()` returns a buffer with max 4 channels.
-///             region.set_channel(0..4),
-///             let pixels: Vec<u8> = image_buf.pixels(
-///                 &RegionOfInterest::Region(region)
-///             )?;
-///
-///             egui::ColorImage::from_rgba_premultiplied(dimensions, &pixels)
-///         }
-///     };
-/// ```
-///
-/// # C++
-///
-/// The C++ version of this is called `get_pixels()`.
-pub trait Pixels<T: Primitive> {
-    fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<T>>;
-}
-
-impl Pixels<f32> for ImageBuffer {
-    /// Get a regio of pixels from the image buffer.
-    // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
-    // implement for all base_types in TypeDescription.
-    fn pixels(
-        &self,
-        region_of_interest: &RegionOfInterest,
-    ) -> Result<Vec<f32>> {
-        if ImageBufferStorage::Uninitialized == self.storage() {
-            // An uninitialized image buffer has no pixels but it's not an error
-            // to ask for them.
-            return Ok(Vec::new());
-        }
-
-        let region = match region_of_interest {
-            RegionOfInterest::All => match self.region_of_interest() {
-                RegionOfInterest::All => {
-                    // If this image buffer is uninitialized, we can't get
-                    // here because `self.storage()` will return
-                    // `ImageBufferStorage::Uninitialized`.
-                    unreachable!()
-                }
-                RegionOfInterest::Region(roi) => roi,
-            },
-            RegionOfInterest::Region(roi) => roi.clone(),
-        };
-
-        let size = region.pixel_count() * region.channel_count() as usize;
-        let mut data = Vec::<f32>::with_capacity(size);
-        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_get_pixels_01(
-                self.ptr,
-                region_of_interest.clone().into(),
-                oiio_BASETYPE::oiio_BASETYPE_FLOAT,
-                data.as_mut_ptr() as _,
-                &mut is_ok as *mut _ as _,
-            );
-
-            if is_ok.assume_init() {
-                data.set_len(size);
-                Ok(data)
-            } else {
-                Err(anyhow!(self
-                    .error(true)
-                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
-            }
-        }
-    }
-}
-
-impl Pixels<u8> for ImageBuffer {
-    /// Get a regio of pixels from the image buffer.
-    // TODO: Add a Pixels trait that is generic over T (returns Vec<T>) and
-    // implement for all base_types in TypeDescription.
-    fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<u8>> {
-        if ImageBufferStorage::Uninitialized == self.storage() {
-            // An uninitialized image buffer has no pixels but it's not an error
-            // to ask for them.
-            return Ok(Vec::new());
-        }
-
-        let region = match region_of_interest {
-            RegionOfInterest::All => match self.region_of_interest() {
-                RegionOfInterest::All => {
-                    // If this image buffer is uninitialized, we can't get
-                    // here because `self.storage()` will return
-                    // `ImageBufferStorage::Uninitialized`.
-                    unreachable!()
-                }
-                RegionOfInterest::Region(roi) => roi,
-            },
-            RegionOfInterest::Region(roi) => roi.clone(),
-        };
-
-        let size = region.pixel_count() * region.channel_count() as usize;
-        let mut data = Vec::<u8>::with_capacity(size);
-        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_get_pixels_01(
-                self.ptr,
-                region_of_interest.clone().into(),
-                oiio_BASETYPE::oiio_BASETYPE_UINT8,
-                data.as_mut_ptr() as _,
-                &mut is_ok as *mut _ as _,
-            );
-
-            if is_ok.assume_init() {
-                data.set_len(size);
-                Ok(data)
-            } else {
-                Err(anyhow!(self
-                    .error(true)
-                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
-            }
-        }
-    }
-}
 /// # Getters
 impl ImageBuffer {
+    gen_fn_is_ok!(oiio_ImageBuf_has_error);
+
+    gen_fn_error!(oiio_ImageBuf_geterror);
+
     /// Returns `true` if the `ImageBuffer` is initialized, `false` otherwise.
     ///
     /// # For C++ Developers
@@ -719,48 +552,8 @@ impl ImageBuffer {
         let mut dst = MaybeUninit::<ImageSpec>::uninit();
     }*/
 
-    /// Returns `true` if the `ImageBuffer` has had an error and has an error
-    /// message ready to retrieve via [`error()`](self::error()).
-    pub fn is_ok(&self) -> bool {
-        let mut is_error = MaybeUninit::<bool>::uninit();
-
-        unsafe {
-            oiio_ImageBuf_has_error(self.ptr, &mut is_error as *mut _ as _);
-
-            !is_error.assume_init()
-        }
-    }
-
     pub fn cache(&self) -> Option<ImageCache> {
         self.image_cache.clone()
-    }
-
-    /// Return the text of all pending error messages issued against this
-    /// `ImageBuffer`, and clear the pending error message unless clear is
-    /// `false`.
-    ///
-    /// If no error message is pending, this will return `None`.
-    pub fn error(&self, clear: bool) -> Option<String> {
-        let mut error = MaybeUninit::<*mut oiio_String_t>::uninit();
-
-        if unsafe {
-            0 != oiio_ImageBuf_geterror(
-                self.ptr,
-                clear,
-                &mut error as *mut _ as _,
-            )
-        } {
-            // Something went wrong.
-            None
-        } else {
-            let error = crate::String::from(unsafe { error.assume_init() });
-
-            if error.is_empty() {
-                None
-            } else {
-                Some(error.to_string())
-            }
-        }
     }
 }
 

@@ -200,7 +200,7 @@
 //! On the Rust side we expose a simple version,
 //! [`rotate()`](ImageBuffer::rotate) but also an equivalent,
 //! [`rotate_with()`](ImageBuffer::rotate_with), that takes a reference to a
-//! single [`RotateOptions`](operators::RotateOptions) parameter with the
+//! single [`RotateOptions`](algorithms::RotateOptions) parameter with the
 //! aforementioned five parameters.
 //!
 //! Specifying each of these can be (partially) omitted by using
@@ -237,6 +237,9 @@ pub use ffi::*;
 #[cfg(not(feature = "ffi"))]
 pub(crate) use ffi::*;
 
+mod color;
+pub use color::*;
+
 mod file_system;
 pub use file_system::*;
 
@@ -269,3 +272,44 @@ pub use type_description::*;
 
 mod ustring;
 pub use ustring::*;
+
+use num_traits::{Bounded, Num, NumCast};
+
+/// The type of each channel in a pixel. For example, this can be `u8`, `u16`,
+/// `f32`.
+pub trait Primitive:
+    Copy + NumCast + Num + PartialOrd<Self> + Clone + Bounded
+{
+    /// The maximum value for this type of primitive within the context of
+    /// color. For floats, the maximum is `1.0`, whereas the integer types
+    /// inherit their usual maximum values.
+    const DEFAULT_MAX_VALUE: Self;
+
+    /// The minimum value for this type of primitive within the context of
+    /// color. For floats, the minimum is `0.0`, whereas the integer types
+    /// inherit their usual minimum values.
+    const DEFAULT_MIN_VALUE: Self;
+}
+
+macro_rules! declare_primitive {
+    ($base:ty: ($from:expr)..$to:expr) => {
+        impl Primitive for $base {
+            const DEFAULT_MAX_VALUE: Self = $to;
+            const DEFAULT_MIN_VALUE: Self = $from;
+        }
+    };
+}
+
+declare_primitive!(usize: (0)..Self::MAX);
+declare_primitive!(u8: (0)..Self::MAX);
+declare_primitive!(u16: (0)..Self::MAX);
+declare_primitive!(u32: (0)..Self::MAX);
+declare_primitive!(u64: (0)..Self::MAX);
+
+declare_primitive!(isize: (Self::MIN)..Self::MAX);
+declare_primitive!(i8: (Self::MIN)..Self::MAX);
+declare_primitive!(i16: (Self::MIN)..Self::MAX);
+declare_primitive!(i32: (Self::MIN)..Self::MAX);
+declare_primitive!(i64: (Self::MIN)..Self::MAX);
+declare_primitive!(f32: (0.0)..1.0);
+declare_primitive!(f64: (0.0)..1.0);
