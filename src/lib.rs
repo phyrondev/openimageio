@@ -192,7 +192,7 @@
 //! * One without the optional parameters (using defaults).
 //!
 //! * One with a `_with` suffix that takes a resp. parameter `struct` for which
-//!   [`Default`] is alwayws implemented.
+//!   [`Default`] is always implemented.
 //!
 //! For example, the [`ImageBuffer::rotate()`] method has a useful C++ variant
 //! taking *five* extra parameters.
@@ -228,7 +228,9 @@
 //! # Ok::<(), anyhow::Error>(())
 //! ```
 //!
-//! ## Opaque Types
+//! # Features
+//!
+#![doc = document_features::document_features!()]
 pub use camino::{Utf8Path, Utf8PathBuf};
 
 mod ffi;

@@ -15,8 +15,9 @@ log = "0.4"
 [dependencies]
 anyhow = "1"
 camino = "1"
+document-features = "0.2"
 egui = { version = "0.28", default-features = false, optional = true }
-half = { version = "2.4", features = ["num-traits"], optional = true }
+#half = { version = "2.4", features = ["num-traits"], optional = true }
 image = { version = "0.25", default-features = false, features = [
     "png",
 ], optional = true }
@@ -33,13 +34,14 @@ ustr = "1"
 
 [features]
 default = ["algorithms"]
-# Enable a bunch of composting- & generator methods on `ImageBuffer`.
+## Enable a bunch of composting- & generator methods on `ImageBuffer`.
 algorithms = []
-# Enable one-way conversion from `ImageBuffer` to `egui::ColorImage`.
+## Enable one-way conversion from `ImageBuffer` to `egui::ColorImage`.
 egui = ["dep:egui"]
 # Enable `f16` support.
-half = ["dep:half"]
-# Enable one-way conversion from `ImageBuffer` to `image::DynamicImage`.
+#half = ["dep:half"]
+## Enable one-way conversion from `ImageBuffer` to `image::DynamicImage`.
 image = ["dep:image"]
-# Make the OpenImageIO FFI this crate uses public.
+#! ### Special Features
+## Make the OpenImageIO FFI this crate uses public.
 ffi = []
