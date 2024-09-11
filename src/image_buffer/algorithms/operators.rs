@@ -281,7 +281,10 @@ impl ImageBuffer {
                     .map_or(StringView::default().ptr, |s| {
                         StringView::from(s).ptr
                     }),
-                options.config.as_ref().map_or(ptr::null_mut(), |s| s.ptr),
+                options
+                    .config
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| *s.read_arc()),
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
