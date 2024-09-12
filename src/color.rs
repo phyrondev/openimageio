@@ -23,6 +23,12 @@ pub struct ColorConfig {
     pub(crate) ptr: Arc<RwLock<*mut oiio_ColorConfig_t>>,
 }
 
+impl Default for ColorConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// # Constructors
 impl ColorConfig {
     /// Construct a OpenColorIO configuration by reading the env variable

@@ -45,3 +45,6 @@ image = ["dep:image"]
 #! ### Special Features
 ## Make the OpenImageIO FFI this crate uses public.
 ffi = []
+
+[package.metadata.docs.rs]
+features = ["algorithms", "egui", "image"]

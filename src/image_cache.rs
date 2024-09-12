@@ -72,6 +72,9 @@ pub struct ImageCache {
     pub(crate) ptr: Arc<RwLock<*mut oiio_ImageCache_t>>,
 }
 
+unsafe impl Send for ImageCache {}
+unsafe impl Sync for ImageCache {}
+
 impl PartialEq for ImageCache {
     fn eq(&self, other: &Self) -> bool {
         *self.ptr.read() == *other.ptr.read()
