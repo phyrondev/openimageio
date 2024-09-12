@@ -22,6 +22,7 @@ impl OiioString {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn len(&self) -> usize {
         let mut len = std::mem::MaybeUninit::<usize>::uninit();
 

@@ -122,6 +122,7 @@ impl ColorConfig {
         self.ptr.read_arc()
     }
 
+    #[allow(dead_code)]
     pub(crate) fn write_arc(
         &self,
     ) -> ArcRwLockWriteGuard<RawRwLock, *mut oiio_ColorConfig_t> {

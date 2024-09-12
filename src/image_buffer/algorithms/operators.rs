@@ -15,7 +15,7 @@
 //!
 //! * [Over](ImageBuffer#over)
 use crate::{image_buffer::algorithms::Options, *};
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use core::{
     mem::{transmute, MaybeUninit},
     ptr,

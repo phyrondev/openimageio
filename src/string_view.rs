@@ -26,6 +26,7 @@ impl<'a> StringView<'a> {
         }
     }
 
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         let mut len = std::mem::MaybeUninit::<usize>::uninit();
 

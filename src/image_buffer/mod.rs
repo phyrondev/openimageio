@@ -17,100 +17,6 @@ pub use pixels::*;
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
 pub type ImageBuf = ImageBuffer;
 
-/// This is a placeholder for now.
-//pub struct IoProxy;
-
-#[derive(Default, Debug)]
-#[repr(C)]
-pub enum WrapMode {
-    #[default]
-    Default = oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _,
-    Black = oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
-    Clamp = oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
-    Periodic = oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _,
-    Mirror = oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
-}
-
-impl From<WrapMode> for oiio_WrapMode {
-    fn from(wrap_mode: WrapMode) -> Self {
-        Self(match wrap_mode {
-            WrapMode::Default => {
-                oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _
-            }
-            WrapMode::Black => oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
-            WrapMode::Clamp => oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
-            WrapMode::Periodic => {
-                oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _
-            }
-            WrapMode::Mirror => oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
-        })
-    }
-}
-
-/// Optional parameters for the [`ImageBuffer::from_file_with()`] method.
-#[derive(Default)]
-pub struct FromFileOptions<'a> {
-    /// The subimage to read (defaults to the first subimage of the file).
-    pub sub_image: u32,
-    /// The miplevel to read (defaults to the highest-res miplevel of the
-    /// file).
-    pub mip_level: u32,
-    /// Optionally, an `ImageCache` to use, if possible, rather than reading
-    /// the entire image file into memory.
-    pub image_cache: Option<ImageCache>,
-    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
-    /// configuration hints that set options related to the opening and reading
-    /// of the file.
-    pub image_spec: Option<&'a ImageSpecification>,
-    // Optional pointer to an `IoProxy` to use when reading from the file.
-    // The lifetime of the proxy will be tied to the given `ImageBuffer`.
-    // TODO io_proxy:
-    // Option<&'a IoProxy>,
-}
-
-pub trait FnProgress<'a>: Fn(f32) + 'a {}
-
-#[derive(Default)]
-pub struct WriteOptions<'a> {
-    /// Optional override of the pixel data format to use in the file being
-    /// written. The default (UNKNOWN) means to try writing the same
-    /// data format that as pixels are stored within the ImageBuf memory (or
-    /// whatever type was specified by a prior call to set_write_format()). In
-    /// either case, if the file format does not support that data type,
-    /// another will be automatically chosen that is supported by the file type
-    /// and loses as little precision as possible.
-    pub type_desc: Option<&'a TypeDescription>,
-    /// Optional overriPde of the file format to write. The default (`None`)
-    /// means to infer the file format from the extension of the
-    /// filename (for example, `"foo.tif"`" will write a TIFF file).
-    pub file_format: Option<Ustr>,
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(C)]
-pub enum ImageBufferStorage {
-    /// An [`ImageBuffer`] that doesn't represent any image at all (either
-    /// because it is newly constructed with the default constructor, or had an
-    /// error during construction).
-    Uninitialized = oiio_IBStorage::oiio_IBStorage_UNINITIALIZED.0 as _,
-    /// "Local storage" is allocated to hold the image pixels internal to the
-    /// `ImageBuffer`. This memory will be freed when the `ImageBuffer` is
-    /// destroyed.
-    LocalBuffer = oiio_IBStorage::oiio_IBStorage_LOCALBUFFER.0 as _,
-    /// The `ImageBuffer` 'wraps' pixel memory already allocated and owned by
-    /// the calling application. The caller will continue to own that memory
-    /// and be responsible for freeing it after the `ImageBuffer` is
-    /// destroyed.
-    AppBuffer = oiio_IBStorage::oiio_IBStorage_APPBUFFER.0 as _,
-    /// The `ImageBuffer` is 'backed' by an [`ImageCache`], which will
-    /// automatically be used to retrieve pixels when requested, but the
-    /// `ImageBuffer` will not allocate separate storage for it.
-    ///
-    /// This brings all the advantages of the `ImageCache`, but can only be
-    /// used for read-only `ImageBuffer`s that reference a stored image file.
-    ImageCache = oiio_IBStorage::oiio_IBStorage_IMAGECACHE.0 as _,
-}
-
 /// Stores an entire image.
 ///
 /// Provides an API for reading, writing, and manipulating images as a single
@@ -135,6 +41,9 @@ pub struct ImageBuffer {
     image_cache: Option<ImageCache>,
     //_marker: PhantomData<*mut &'a ()>,
 }
+
+unsafe impl Send for ImageBuffer {}
+unsafe impl Sync for ImageBuffer {}
 
 impl Default for ImageBuffer {
     /// Default constructor makes an empty/uninitialized `ImageBuffer`. There
@@ -602,6 +511,97 @@ impl ImageBuffer {
 
         image_buffer.copy(type_description)
     }
+}
+
+#[derive(Default, Debug)]
+#[repr(C)]
+pub enum WrapMode {
+    #[default]
+    Default = oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _,
+    Black = oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
+    Clamp = oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
+    Periodic = oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _,
+    Mirror = oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
+}
+
+impl From<WrapMode> for oiio_WrapMode {
+    fn from(wrap_mode: WrapMode) -> Self {
+        Self(match wrap_mode {
+            WrapMode::Default => {
+                oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _
+            }
+            WrapMode::Black => oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
+            WrapMode::Clamp => oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
+            WrapMode::Periodic => {
+                oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _
+            }
+            WrapMode::Mirror => oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
+        })
+    }
+}
+
+/// Optional parameters for the [`ImageBuffer::from_file_with()`] method.
+#[derive(Default)]
+pub struct FromFileOptions<'a> {
+    /// The subimage to read (defaults to the first subimage of the file).
+    pub sub_image: u32,
+    /// The miplevel to read (defaults to the highest-res miplevel of the
+    /// file).
+    pub mip_level: u32,
+    /// Optionally, an `ImageCache` to use, if possible, rather than reading
+    /// the entire image file into memory.
+    pub image_cache: Option<ImageCache>,
+    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
+    /// configuration hints that set options related to the opening and reading
+    /// of the file.
+    pub image_spec: Option<&'a ImageSpecification>,
+    // Optional pointer to an `IoProxy` to use when reading from the file.
+    // The lifetime of the proxy will be tied to the given `ImageBuffer`.
+    // TODO io_proxy:
+    // Option<&'a IoProxy>,
+}
+
+pub trait FnProgress<'a>: Fn(f32) + 'a {}
+
+#[derive(Default)]
+pub struct WriteOptions<'a> {
+    /// Optional override of the pixel data format to use in the file being
+    /// written. The default (UNKNOWN) means to try writing the same
+    /// data format that as pixels are stored within the ImageBuf memory (or
+    /// whatever type was specified by a prior call to set_write_format()). In
+    /// either case, if the file format does not support that data type,
+    /// another will be automatically chosen that is supported by the file type
+    /// and loses as little precision as possible.
+    pub type_desc: Option<&'a TypeDescription>,
+    /// Optional overriPde of the file format to write. The default (`None`)
+    /// means to infer the file format from the extension of the
+    /// filename (for example, `"foo.tif"`" will write a TIFF file).
+    pub file_format: Option<Ustr>,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
+pub enum ImageBufferStorage {
+    /// An [`ImageBuffer`] that doesn't represent any image at all (either
+    /// because it is newly constructed with the default constructor, or had an
+    /// error during construction).
+    Uninitialized = oiio_IBStorage::oiio_IBStorage_UNINITIALIZED.0 as _,
+    /// "Local storage" is allocated to hold the image pixels internal to the
+    /// `ImageBuffer`. This memory will be freed when the `ImageBuffer` is
+    /// destroyed.
+    LocalBuffer = oiio_IBStorage::oiio_IBStorage_LOCALBUFFER.0 as _,
+    /// The `ImageBuffer` 'wraps' pixel memory already allocated and owned by
+    /// the calling application. The caller will continue to own that memory
+    /// and be responsible for freeing it after the `ImageBuffer` is
+    /// destroyed.
+    AppBuffer = oiio_IBStorage::oiio_IBStorage_APPBUFFER.0 as _,
+    /// The `ImageBuffer` is 'backed' by an [`ImageCache`], which will
+    /// automatically be used to retrieve pixels when requested, but the
+    /// `ImageBuffer` will not allocate separate storage for it.
+    ///
+    /// This brings all the advantages of the `ImageCache`, but can only be
+    /// used for read-only `ImageBuffer`s that reference a stored image file.
+    ImageCache = oiio_IBStorage::oiio_IBStorage_IMAGECACHE.0 as _,
 }
 
 /*
