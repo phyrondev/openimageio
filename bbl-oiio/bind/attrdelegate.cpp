@@ -41,6 +41,4 @@ BBL_MODULE(oiio) {
         .m(&OpenImageIO_v2_3::AttrDelegate::operator basic_string)
     ;
 #endif
-
-
 }
