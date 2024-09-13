@@ -375,6 +375,6 @@ mod tests {
 
         let c_type = oiio_TypeDesc_t::from(&t);
 
-        println!("C Type: {:?}", c_type);
+        println!("C TypeDesc: {:?}", c_type);
     }
 }

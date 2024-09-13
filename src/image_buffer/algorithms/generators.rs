@@ -4,6 +4,7 @@ use core::{mem::MaybeUninit, ptr};
 use ustr::Ustr;
 
 impl ImageBuffer {
+    #[inline(always)]
     fn fill_ffi(&mut self, values: &[f32], options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -20,6 +21,7 @@ impl ImageBuffer {
         }
     }
 
+    #[inline(always)]
     fn fill_vertical_ffi(
         &mut self,
         start: &[f32],
@@ -42,6 +44,7 @@ impl ImageBuffer {
         }
     }
 
+    #[inline(always)]
     fn fill_corners_ffi(
         &mut self,
         top_left: &[f32],
@@ -90,7 +93,7 @@ impl ImageBuffer {
 /// A single set of channel values that will apply to the whole
 /// `RegionOfInterest`.
 impl ImageBuffer {
-    #[inline]
+    #[named]
     pub fn from_fill(values: &[f32], region: &Region) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_ffi(
@@ -101,10 +104,10 @@ impl ImageBuffer {
             },
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
-    #[inline]
+    #[named]
     pub fn from_fill_with(
         values: &[f32],
         region: &Region,
@@ -119,15 +122,17 @@ impl ImageBuffer {
             },
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn fill(&mut self, values: &[f32]) -> Result<&mut Self> {
         let is_ok = self.fill_ffi(values, &Options::default());
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn fill_with(
         &mut self,
         values: &[f32],
@@ -135,7 +140,7 @@ impl ImageBuffer {
     ) -> Result<&mut Self> {
         let is_ok = self.fill_ffi(values, options);
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -144,7 +149,7 @@ impl ImageBuffer {
 /// Two sets of valuesthat will create a linearly interpolated gradient from top
 /// to bottom of the `RegionOfInterest`.
 impl ImageBuffer {
-    #[inline]
+    #[named]
     pub fn from_fill_vertical(
         start: &[f32],
         end: &[f32],
@@ -160,9 +165,10 @@ impl ImageBuffer {
             },
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_fill_vertical_with(
         start: &[f32],
         end: &[f32],
@@ -179,9 +185,10 @@ impl ImageBuffer {
             },
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn fill_vertical(
         &mut self,
         start: &[f32],
@@ -189,9 +196,10 @@ impl ImageBuffer {
     ) -> Result<&mut Self> {
         let is_ok = self.fill_vertical_ffi(start, end, &Options::default());
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn fill_vertical_with(
         &mut self,
         start: &[f32],
@@ -200,7 +208,7 @@ impl ImageBuffer {
     ) -> Result<&mut Self> {
         let is_ok = self.fill_vertical_ffi(start, end, options);
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -209,7 +217,7 @@ impl ImageBuffer {
 /// Four sets of values that will be bilinearly interpolated across all four
 /// corners of the `RegionOfInterest`.
 impl ImageBuffer {
-    #[inline]
+    #[named]
     pub fn from_fill_corners(
         top_left: &[f32],
         top_right: &[f32],
@@ -229,9 +237,10 @@ impl ImageBuffer {
             },
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_fill_corners_with(
         top_left: &[f32],
         top_right: &[f32],
@@ -252,9 +261,10 @@ impl ImageBuffer {
             },
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn fill_corners(
         &mut self,
         top_left: &[f32],
@@ -270,9 +280,10 @@ impl ImageBuffer {
             &Options::default(),
         );
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn fill_corners_with(
         &mut self,
         top_left: &[f32],
@@ -289,7 +300,7 @@ impl ImageBuffer {
             options,
         );
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -362,6 +373,7 @@ pub struct NoiseOptions {
 }
 
 impl ImageBuffer {
+    #[inline(always)]
     fn zero_ffi(&mut self, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -376,7 +388,10 @@ impl ImageBuffer {
             is_ok.assume_init()
         }
     }
+}
 
+impl ImageBuffer {
+    #[named]
     pub fn from_zero(region: &Region) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.zero_ffi(&Options {
@@ -384,9 +399,10 @@ impl ImageBuffer {
             ..Default::default()
         });
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_zero_with(
         region: &Region,
         thread_count: Option<u16>,
@@ -397,22 +413,24 @@ impl ImageBuffer {
             thread_count: thread_count.unwrap_or(0),
         });
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
     /// Set all channels to zero.
+    #[named]
     pub fn zero(&mut self) -> Result<&mut Self> {
         let is_ok = self.zero_ffi(&Options::default());
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     /// Set all channels to as described by the [`RegionOfInterest`] to
     /// zero.
+    #[named]
     pub fn zero_with(&mut self, options: &Options) -> Result<&mut Self> {
         let is_ok = self.zero_ffi(options);
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -438,6 +456,7 @@ impl From<NoiseType> for StringView<'static> {
 
 // Internal noise FFI call.
 impl ImageBuffer {
+    #[inline(always)]
     fn noise_ffi(
         &mut self,
         noise_type: NoiseType,
@@ -486,8 +505,7 @@ impl ImageBuffer {
 /// * `salt` changes to value `a` the portion of pixels given by `b`.
 impl ImageBuffer {
     /// Add noise.
-    ///
-    /// Errors will be logged.
+    #[named]
     pub fn noise(
         &mut self,
         noise_type: NoiseType,
@@ -496,12 +514,11 @@ impl ImageBuffer {
     ) -> Result<&mut Self> {
         let is_ok = self.noise_ffi(noise_type, a, b, &NoiseOptions::default());
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     /// Add noise with [`NoiseOptions`].
-    ///
-    /// Errors will be logged.
+    #[named]
     pub fn noise_with(
         &mut self,
         noise_type: NoiseType,
@@ -511,7 +528,7 @@ impl ImageBuffer {
     ) -> Result<&mut Self> {
         let is_ok = self.noise_ffi(noise_type, a, b, options);
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -621,6 +638,7 @@ impl Default for RenderTextOptions<'_> {
 }
 
 impl ImageBuffer {
+    #[inline(always)]
     fn render_text_ffi(
         &mut self,
         x: i32,
@@ -677,6 +695,7 @@ impl ImageBuffer {
     ///
     /// Text will be rendered into the existing image by essentially doing an
     /// 'over' of the character into the existing pixel data.
+    #[named]
     pub fn render_text(
         &mut self,
         x: i32,
@@ -686,13 +705,14 @@ impl ImageBuffer {
         let is_ok =
             self.render_text_ffi(x, y, text, &RenderTextOptions::default());
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     /// Render text into an image buffer with given [`RenderTextOptions`].
     ///
     /// Text will be rendered into the existing image by essentially doing an
     /// 'over' of the character into the existing pixel data.
+    #[named]
     pub fn render_text_with(
         &mut self,
         x: i32,
@@ -702,13 +722,14 @@ impl ImageBuffer {
     ) -> Result<&mut Self> {
         let is_ok = self.render_text_ffi(x, y, text, options);
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     /// Create an image buffer from rendering text.
     ///
     /// The resulting image will be initialized to be a black background exactly
     /// large enough to contain the rasterized text.
+    #[named]
     pub fn from_render_text(x: i32, y: i32, text: &str) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.render_text_ffi(
@@ -718,7 +739,7 @@ impl ImageBuffer {
             &RenderTextOptions::default(),
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
     /// Create an image buffer from rendering text with given
@@ -726,6 +747,7 @@ impl ImageBuffer {
     ///
     /// The resulting image will be initialized to be a black background exactly
     /// large enough to contain the rasterized text.
+    #[named]
     pub fn from_render_text_with(
         x: i32,
         y: i32,
@@ -735,6 +757,6 @@ impl ImageBuffer {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.render_text_ffi(x, y, text, options);
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 }

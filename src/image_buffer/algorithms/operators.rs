@@ -147,18 +147,26 @@ impl Default for ColorConvertOptions {
 
 /// # Color Conversion
 impl ImageBuffer {
+    #[named]
     pub fn color_convert(
         &mut self,
         from_space: Option<Ustr>,
         to_space: Ustr,
     ) -> Result<&mut Self> {
-        self.color_convert_with(
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = Self::color_convert_ffi(
+            &mut image_buffer,
+            self,
             from_space,
             to_space,
             &ColorConvertOptions::default(),
-        )
+        );
+        *self = image_buffer;
+
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn color_convert_with(
         &mut self,
         from_space: Option<Ustr>,
@@ -175,22 +183,28 @@ impl ImageBuffer {
         );
         *self = image_buffer;
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_color_convert(
         source: &ImageBuffer,
         from_space: Option<Ustr>,
         to_space: Ustr,
     ) -> Result<Self> {
-        Self::from_color_convert_with(
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = Self::color_convert_ffi(
+            &mut image_buffer,
             source,
             from_space,
             to_space,
             &ColorConvertOptions::default(),
-        )
+        );
+
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_color_convert_with(
         source: &ImageBuffer,
         from_space: Option<Ustr>,
@@ -206,7 +220,7 @@ impl ImageBuffer {
             options,
         );
 
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 }
 
@@ -434,13 +448,15 @@ pub struct RotateOptions {
 /// filter choices only make sense with particular width, in which case this
 /// filterwidth parameter may be ignored.)
 impl ImageBuffer {
+    #[named]
     pub fn from_rotate(src: &ImageBuffer, angle: f32) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok =
             image_buffer.rotate_ffi(src, angle, &RotateOptions::default());
-        image_buffer.self_or_error(is_ok)
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_rotate_with(
         src: &ImageBuffer,
         angle: f32,
@@ -448,9 +464,11 @@ impl ImageBuffer {
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.rotate_ffi(src, angle, options);
-        image_buffer.self_or_error(is_ok)
+
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_rotate_around(
         src: &ImageBuffer,
         angle: f32,
@@ -465,9 +483,11 @@ impl ImageBuffer {
             center_y,
             &RotateOptions::default(),
         );
-        image_buffer.self_or_error(is_ok)
+
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn from_rotate_around_with(
         src: &ImageBuffer,
         angle: f32,
@@ -478,17 +498,20 @@ impl ImageBuffer {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer
             .rotate_around_ffi(src, angle, center_x, center_y, options);
-        image_buffer.self_or_error(is_ok)
+
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn rotate(&mut self, angle: f32) -> Result<&mut Self> {
         let mut rotated = ImageBuffer::new();
         let is_ok = rotated.rotate_ffi(self, angle, &RotateOptions::default());
         *self = rotated;
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn rotate_with(
         &mut self,
         angle: f32,
@@ -498,9 +521,10 @@ impl ImageBuffer {
         let is_ok = rotated.rotate_ffi(self, angle, options);
         *self = rotated;
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn rotate_around(
         &mut self,
         angle: f32,
@@ -517,9 +541,10 @@ impl ImageBuffer {
         );
         *self = rotated;
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn rotate_around_with(
         &mut self,
         angle: f32,
@@ -532,7 +557,7 @@ impl ImageBuffer {
             rotated.rotate_around_ffi(self, angle, center_x, center_y, options);
         *self = rotated;
 
-        self.mut_self_or_error(is_ok)
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -540,32 +565,40 @@ impl ImageBuffer {
 ///
 /// These implement [Porter-Duff compositing](https://en.wikipedia.org/wiki/Alpha_compositing).
 impl ImageBuffer {
+    #[named]
     pub fn from_over(a: &ImageBuffer, b: &ImageBuffer) -> Result<Self> {
         let image_buffer = ImageBuffer::from_over_ffi(a, b, Options::default());
-        image_buffer.self_or_error(true)
+
+        image_buffer.self_or_error(true, function_name!())
     }
 
+    #[named]
     pub fn from_over_with(
         a: &ImageBuffer,
         b: &ImageBuffer,
         options: Options,
     ) -> Result<Self> {
         let image_buffer = ImageBuffer::from_over_ffi(a, b, options);
-        image_buffer.self_or_error(true)
+
+        image_buffer.self_or_error(true, function_name!())
     }
 
+    #[named]
     pub fn over(&mut self, other: &ImageBuffer) -> Result<&mut Self> {
         let is_ok = self.over_ffi(other, Options::default());
-        self.mut_self_or_error(is_ok)
+
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
+    #[named]
     pub fn over_with(
         &mut self,
         other: &ImageBuffer,
         options: Options,
     ) -> Result<&mut Self> {
         let is_ok = self.over_ffi(other, options);
-        self.mut_self_or_error(is_ok)
+
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 
@@ -580,8 +613,10 @@ mod tests {
         let mut image_buf_b = ImageBuffer::new();
         let image_buf_c = ImageBuffer::new();
 
+        //println!("Over test");
         image_buf_a.over(image_buf_b.over(&image_buf_c)?)?;
 
+        //println!("Over test done");
         Ok(())
     }
 

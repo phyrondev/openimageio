@@ -438,8 +438,8 @@ mod tests {
         let region =
             RegionOfInterest::Region(Region::new_3d(3..42, 5..16, -33..9));
 
-        let c_region = oiio_ROI_t::from(region.clone());
+        let c_region = oiio_ROI_t::from(region);
 
-        println!("C Region: {:?}", c_region);
+        println!("C ROI: {:?}", c_region);
     }
 }

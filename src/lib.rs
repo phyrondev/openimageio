@@ -229,9 +229,9 @@
 //! ```
 //!
 //! # Features
-//!
 #![doc = document_features::document_features!()]
 pub use camino::{Utf8Path, Utf8PathBuf};
+pub(crate) use function_name::named;
 
 mod ffi;
 #[cfg(feature = "ffi")]

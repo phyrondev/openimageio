@@ -17,6 +17,7 @@ anyhow = "1"
 camino = "1"
 document-features = "0.2"
 egui = { version = "0.28", default-features = false, optional = true }
+function_name = "0.3.0"
 #half = { version = "2.4", features = ["num-traits"], optional = true }
 image = { version = "0.25", default-features = false, features = [
     "png",

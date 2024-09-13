@@ -9,7 +9,9 @@ pub mod algorithms;
 //#[cfg(feature = "algorithms")]
 //pub use algorithms::*;
 
+#[cfg(any(feature = "image", feature = "egui"))]
 mod adapters;
+
 mod internal;
 mod pixels;
 pub use pixels::*;
@@ -125,33 +127,12 @@ impl ImageBuffer {
     }*/
 }
 
-/// # Constructors & Resetting
 impl ImageBuffer {
-    /// Construct a read-only `ImageBuffer` that will be used to read the named
-    /// file (at the given subimage and MIP-level, defaulting to the first in
-    /// the file). But don’t read it yet! The image will actually be read
-    /// lazily, only when other methods need to access the spec and/or pixels,
-    /// or when an explicit call to `init_specification()` or `read()` is made,
-    /// whichever comes first.
-    ///
-    /// The implementation may end up either reading the entire image internally
-    /// owned memory (if so, the storage will be
-    /// [`LocalBuffer`](ImageBufferStorage::LocalBuffer)), or it may rely on
-    /// being backed by an [`ImageCache`] (in this case, the storage will be
-    /// [`ImageCache`](ImageBufferStorage::ImageCache)) -- depending on the
-    /// image size and other factors.
-    #[inline(always)]
-    pub fn from_file(name: &Utf8Path) -> Result<Self> {
-        Self::from_file_with(name, &FromFileOptions::default())
-    }
-
-    /// Construct a read-only `ImageBuffer`.
-    ///
-    /// See [`from_file()`](ImageBuffer::from_file) for details.
-    pub fn from_file_with(
+    #[named]
+    pub fn from_file_ffi(
         name: &Utf8Path,
         options: &FromFileOptions<'_>,
-    ) -> Result<Self> {
+    ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         Self {
@@ -177,7 +158,39 @@ impl ImageBuffer {
             image_cache: options.image_cache.clone(),
             //_marker: PhantomData,
         }
-        .self_or_error(true)
+    }
+}
+
+/// # Constructors & Resetting
+impl ImageBuffer {
+    /// Construct a read-only `ImageBuffer` that will be used to read the named
+    /// file (at the given subimage and MIP-level, defaulting to the first in
+    /// the file). But don’t read it yet! The image will actually be read
+    /// lazily, only when other methods need to access the spec and/or pixels,
+    /// or when an explicit call to `init_specification()` or `read()` is made,
+    /// whichever comes first.
+    ///
+    /// The implementation may end up either reading the entire image internally
+    /// owned memory (if so, the storage will be
+    /// [`LocalBuffer`](ImageBufferStorage::LocalBuffer)), or it may rely on
+    /// being backed by an [`ImageCache`] (in this case, the storage will be
+    /// [`ImageCache`](ImageBufferStorage::ImageCache)) -- depending on the
+    /// image size and other factors.
+    #[named]
+    pub fn from_file(name: &Utf8Path) -> Result<Self> {
+        Self::from_file_ffi(name, &FromFileOptions::default())
+            .self_or_error(true, function_name!())
+    }
+
+    /// Construct a read-only `ImageBuffer`.
+    ///
+    /// See [`from_file()`](ImageBuffer::from_file) for details.]
+    #[named]
+    pub fn from_file_with(
+        name: &Utf8Path,
+        options: &FromFileOptions<'_>,
+    ) -> Result<Self> {
+        Self::from_file_ffi(name, options).self_or_error(true, function_name!())
     }
 
     /// Destroy any previous contents of the `ImageBuffer` and re-initialize it
@@ -467,6 +480,7 @@ impl ImageBuffer {
 }
 
 /// # Copying
+///
 /// Try to copy the pixels and metadata from src to *this (optionally with an
 /// explicit data format conversion).
 ///
@@ -484,9 +498,9 @@ impl ImageBuffer {
 /// app buffer.
 ///
 /// Optionally request the pixel data type to be used. The default of
-/// TypeUnknown means to use whatever data type is used by the src. If *this is
-/// already initialized and has APPBUFFER storage (“wrapping” an application
-/// buffer), this parameter is ignored.
+/// `None` means to use whatever data type is used by the src. If *this is
+/// already initialized and has [`AppBuffer`](ImageBufferStorage::AppBuffer)
+/// storage ('wrapping' an application buffer), this parameter is ignored.
 impl ImageBuffer {
     pub fn copy(&self, type_description: &TypeDescription) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();

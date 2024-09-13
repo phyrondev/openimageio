@@ -24,7 +24,7 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
             region.height(),
             image_buffer.pixels(&RegionOfInterest::Region(region))?,
         )
-        .ok_or(anyhow!("Failed to convert image to RgbImage"))
+        .ok_or(anyhow!("Failed to convert to RgbImage"))
     }
 }
 
@@ -51,7 +51,29 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
             region.height(),
             image_buffer.pixels(&RegionOfInterest::Region(region))?,
         )
-        .ok_or(anyhow!("Failed to convert image to RgbaImage"))
+        .ok_or(anyhow!("Failed to convert to RgbaImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::DynamicImage {
+    type Error = anyhow::Error;
+
+    fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
+        let mut region = image_buffer
+            .region_of_interest()
+            .region()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Make sure we're in the expected color space.
+        image_buffer.color_convert(None, "sRGB".into())?;
+
+        if region.channel_count() < 4 {
+            Ok(image::DynamicImage::ImageRgb8(image_buffer.try_into()?))
+        } else {
+            Ok(image::DynamicImage::ImageRgba8(image_buffer.try_into()?))
+        }
     }
 }
 
@@ -120,7 +142,9 @@ mod tests {
             "assets/j0.3toD__F16_RGBA.exr",
         ))?;
 
-        let image: image::RgbaImage = image_buf.try_into()?;
+        // This will convert to either Rgb8 or Rgba8 and apply
+        // a conversion to sRGB
+        let image: image::DynamicImage = image_buf.try_into()?;
 
         image.save("test.png")?;
 
