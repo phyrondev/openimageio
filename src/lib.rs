@@ -1,5 +1,7 @@
-#![feature(str_from_raw_parts)]
 #![feature(c_size_t)]
+#![feature(once_cell_get_mut)]
+#![feature(structural_match)]
+#![feature(str_from_raw_parts)]
 #![doc(
     html_logo_url = "https://artwork.aswf.io/projects/openimageio/icon/color/openimageio-icon-color.svg"
 )]
@@ -232,6 +234,7 @@
 #![doc = document_features::document_features!()]
 pub use camino::{Utf8Path, Utf8PathBuf};
 pub(crate) use function_name::named;
+pub use ustr::*;
 
 mod ffi;
 #[cfg(feature = "ffi")]

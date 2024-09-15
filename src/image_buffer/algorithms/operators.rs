@@ -14,65 +14,12 @@
 //! ## Compositing
 //!
 //! * [Over](ImageBuffer#over)
-use crate::{image_buffer::algorithms::Options, *};
+use crate::algorithms::*;
 use anyhow::Result;
 use core::{
     mem::{transmute, MaybeUninit},
     ptr,
 };
-use ustr::{ustr, Ustr};
-
-#[derive(Clone, Copy, Default)]
-#[non_exhaustive]
-pub enum PixelFilter {
-    Gaussian,
-    SharpGaussian,
-    Box,
-    Triangle,
-    Mitchell,
-    BlackmanHarris,
-    Bspline,
-    CatmullRom,
-    #[default]
-    Lanczos3,
-    Cubic,
-    Keys,
-    Simon,
-    Rifman,
-    Disk,
-    Binomial,
-    Laplacian,
-}
-
-impl From<PixelFilter> for &str {
-    fn from(pf: PixelFilter) -> Self {
-        match pf {
-            PixelFilter::Gaussian => "gaussian",
-            PixelFilter::SharpGaussian => "sharp-gaussian",
-            PixelFilter::Box => "box",
-            PixelFilter::Triangle => "triangle",
-            PixelFilter::Mitchell => "mitchell",
-            PixelFilter::BlackmanHarris => "blackman-harris",
-            PixelFilter::Bspline => "b-spline",
-            PixelFilter::CatmullRom => "catmull-rom",
-            PixelFilter::Lanczos3 => "lanczos3",
-            PixelFilter::Cubic => "cubic",
-            PixelFilter::Keys => "keys",
-            PixelFilter::Simon => "simon",
-            PixelFilter::Rifman => "rifman",
-            PixelFilter::Disk => "disk",
-            PixelFilter::Binomial => "binomial",
-            PixelFilter::Laplacian => "laplacian",
-            //_ => "unknown",
-        }
-    }
-}
-
-impl From<PixelFilter> for Ustr {
-    fn from(pf: PixelFilter) -> Self {
-        ustr(Into::<&str>::into(pf))
-    }
-}
 
 // Actual implementations.
 impl ImageBuffer {
@@ -154,8 +101,7 @@ impl ImageBuffer {
         to_space: Ustr,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = Self::color_convert_ffi(
-            &mut image_buffer,
+        let is_ok = image_buffer.color_convert_ffi(
             self,
             from_space,
             to_space,
@@ -174,13 +120,8 @@ impl ImageBuffer {
         options: &ColorConvertOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = Self::color_convert_ffi(
-            &mut image_buffer,
-            self,
-            from_space,
-            to_space,
-            options,
-        );
+        let is_ok =
+            image_buffer.color_convert_ffi(self, from_space, to_space, options);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -193,8 +134,7 @@ impl ImageBuffer {
         to_space: Ustr,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = Self::color_convert_ffi(
-            &mut image_buffer,
+        let is_ok = image_buffer.color_convert_ffi(
             source,
             from_space,
             to_space,
@@ -212,13 +152,8 @@ impl ImageBuffer {
         options: &ColorConvertOptions,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = Self::color_convert_ffi(
-            &mut image_buffer,
-            source,
-            from_space,
-            to_space,
-            options,
-        );
+        let is_ok = image_buffer
+            .color_convert_ffi(source, from_space, to_space, options);
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -228,13 +163,14 @@ impl ImageBuffer {
 ///
 /// Numerically compare two images.
 ///
+/// The comparison will be for all channels, on the union of the defined
+/// pixel windows of the two images (for either image, undefined pixels
+/// will be assumed to be black).
+///
 /// The difference threshold (for any individual color channel in any pixel) for
 /// a 'failure' is `failure_threshold`, and for a 'warning' is
 /// `warning_threshold`.
 impl ImageBuffer {
-    /// The comparison will be for all channels, on the union of the defined
-    /// pixel windows of the two images (for either image, undefined pixels
-    /// will be assumed to be black).
     pub fn compare(
         &self,
         other: &ImageBuffer,
@@ -252,10 +188,11 @@ impl ImageBuffer {
     /// If `options.region_of_interest` is supplied, pixels will be compared
     /// for the pixel and channel range that is specified.
     ///
-    /// If `options.region_of_interest` is not supplied, the comparison will be
-    /// for all channels, on the union of the defined pixel windows of the
-    /// two images (for either image, undefined pixels will be assumed to be
-    /// black).
+    /// If `options.region_of_interest` is [`RegionOfInterest::All`] the
+    /// comparison will be for all channels, on the union of the defined
+    /// pixel windows of the two images.
+    ///
+    /// For either image, undefined pixels will be assumed to be black/zero.
     pub fn compare_with(
         &self,
         other: &ImageBuffer,
@@ -270,7 +207,7 @@ impl ImageBuffer {
 // Actual implementations.
 impl ImageBuffer {
     fn color_convert_ffi(
-        dest: &mut ImageBuffer,
+        &mut self,
         source: &ImageBuffer,
         from_space: Option<Ustr>,
         to_space: Ustr,
@@ -280,21 +217,21 @@ impl ImageBuffer {
 
         unsafe {
             oiio_ImageBufAlgo_colorconvert(
-                dest.ptr,
-                source.ptr,
-                from_space.map_or(StringView::default().ptr, |s| {
-                    StringView::from(s).ptr
-                }),
-                StringView::from(to_space).ptr,
+                self.as_raw_ptr_mut(),
+                source.as_raw_ptr(),
+                from_space
+                    .map_or(StringView::default(), |s| StringView::from(s))
+                    .as_raw_ptr() as _,
+                StringView::from(to_space).as_raw_ptr() as _,
                 options.unpremultiply,
-                options.context_key.map_or(StringView::default().ptr, |s| {
-                    StringView::from(s).ptr
-                }),
+                options
+                    .context_key
+                    .map_or(StringView::default(), |s| StringView::from(s))
+                    .as_raw_ptr() as _,
                 options
                     .context_value
-                    .map_or(StringView::default().ptr, |s| {
-                        StringView::from(s).ptr
-                    }),
+                    .map_or(StringView::default(), |s| StringView::from(s))
+                    .as_raw_ptr() as _,
                 options
                     .config
                     .as_ref()

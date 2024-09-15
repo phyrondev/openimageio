@@ -60,7 +60,7 @@ impl TryFrom<ImageBuffer> for image::DynamicImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut region = image_buffer
+        let region = image_buffer
             .region_of_interest()
             .region()
             .ok_or(anyhow!("Image is empty"))?

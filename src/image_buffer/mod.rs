@@ -2,7 +2,6 @@ use crate::*;
 use anyhow::{anyhow, Result};
 use core::{ffi::c_int, mem::MaybeUninit, ptr};
 use std::string::String;
-use ustr::Ustr;
 
 #[cfg(feature = "algorithms")]
 pub mod algorithms;
@@ -40,17 +39,29 @@ pub type ImageBuf = ImageBuffer;
 #[derive(Debug, PartialEq, Eq)]
 pub struct ImageBuffer {
     ptr: *mut oiio_ImageBuf_t,
+    // We keep a clone of an associated `ImageCache` here, if there is one
+    // associated. The latter is just a refernce-counted pointer, internally.
+    // Thusly we can ensure it's not dropped before the owning `ImageBuffer`.
+    //
+    // Alternatively this could be modeled using `PhantomData<*mut &'a ()>` and
+    // a lifetime parameter on `ImageBuffer` (i.e. `ImageCache` just wrapping a
+    // raw pointer, less runtime overhead, and req. checks done at compile
+    // time).
+    //
+    // But that would 'pollute' the `ImageBuffer` type with a lifetime
+    // parameter which IMHO could negatively impact ergonomics for end-users
+    // of this crate.
     image_cache: Option<ImageCache>,
-    //_marker: PhantomData<*mut &'a ()>,
 }
 
 unsafe impl Send for ImageBuffer {}
 unsafe impl Sync for ImageBuffer {}
 
 impl Default for ImageBuffer {
-    /// Default constructor makes an empty/uninitialized `ImageBuffer`. There
-    /// isn't much you can do with an uninitialized buffer until you call
-    /// [`reset()`](ImageBuffer::reset). The storage type of a
+    /// Create an uninitialized/empty `ImageBuffer`.
+    ///
+    /// There isn't much you can do with an uninitialized buffer until you
+    /// call [`reset()`](ImageBuffer::reset). The storage type of a
     /// default-constructed `ImageBuffer` is
     /// [`ImageBufferStorage::Uninitialized`].
     fn default() -> Self {
@@ -128,7 +139,6 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    #[named]
     pub fn from_file_ffi(
         name: &Utf8Path,
         options: &FromFileOptions<'_>,
@@ -524,6 +534,16 @@ impl ImageBuffer {
         let image_buffer = Self::new();
 
         image_buffer.copy(type_description)
+    }
+}
+
+impl ImageBuffer {
+    pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageBuf_t {
+        self.ptr
+    }
+
+    pub(crate) fn as_raw_ptr(&self) -> *const oiio_ImageBuf_t {
+        self.ptr
     }
 }
 

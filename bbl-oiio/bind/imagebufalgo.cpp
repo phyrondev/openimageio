@@ -115,4 +115,16 @@ BBL_MODULE(oiio) {
                     OIIO::string_view, OIIO::ColorConfig *, OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::colorconvert,
           "ImageBufAlgo_colorconvert");
+
+  // v2.5+ signature
+  /*bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &,
+     OIIO::string_view, OIIO::string_view, bool, OIIO::string_view,
+                    OIIO::string_view, const OIIO::ColorConfig *, OIIO::ROI,
+     int)) & OIIO::ImageBufAlgo::colorconvert, "ImageBufAlgo_colorconvert");*/
+
+  // resize()
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::Filter2D *,
+                    OIIO::ROI, int)) &
+              OIIO::ImageBufAlgo::resize,
+          "ImageBufAlgo_resize");
 }

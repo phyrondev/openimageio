@@ -179,7 +179,6 @@ impl<'a> Drop for StringView<'a> {
     }
 }
 
-#[cfg(feature = "ffi")]
 impl<'a> StringView<'a> {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_StringView_t {
         self.ptr as _

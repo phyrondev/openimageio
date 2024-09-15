@@ -13,11 +13,13 @@ bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
 log = "0.4"
 
 [dependencies]
+ahash = "0.8"
 anyhow = "1"
 camino = "1"
 document-features = "0.2"
 egui = { version = "0.28", default-features = false, optional = true }
-function_name = "0.3.0"
+float-derive = "0.1"
+function_name = "0.3"
 #half = { version = "2.4", features = ["num-traits"], optional = true }
 image = { version = "0.25", default-features = false, features = [
     "png",
