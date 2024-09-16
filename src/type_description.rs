@@ -58,11 +58,13 @@ impl From<BaseType> for oiio_BASETYPE {
     }
 }
 
-impl From<oiio_BASETYPE> for Option<BaseType> {
-    fn from(base_type: oiio_BASETYPE) -> Option<BaseType> {
+impl TryFrom<oiio_BASETYPE> for BaseType {
+    type Error = ();
+
+    fn try_from(base_type: oiio_BASETYPE) -> Result<BaseType, Self::Error> {
         match base_type {
-            oiio_BASETYPE::oiio_BASETYPE_NONE => None,
-            _ => Some(match base_type {
+            oiio_BASETYPE::oiio_BASETYPE_NONE => Err(()),
+            _ => Ok(match base_type {
                 oiio_BASETYPE::oiio_BASETYPE_UINT8 => BaseType::U8,
                 oiio_BASETYPE::oiio_BASETYPE_INT8 => BaseType::I8,
                 oiio_BASETYPE::oiio_BASETYPE_UINT16 => BaseType::U16,

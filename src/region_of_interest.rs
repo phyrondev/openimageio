@@ -417,12 +417,12 @@ mod internal {
         fn from(src: RegionOfInterest) -> oiio_ROI_t {
             match src {
                 RegionOfInterest::All => unsafe {
-                    transmute::<region_of_interest::Region, ffi::oiio_ROI_t>(
+                    transmute::<region_of_interest::Region, oiio_ROI_t>(
                         ALL.clone(),
                     )
                 },
                 RegionOfInterest::Region(r) => unsafe {
-                    transmute::<region_of_interest::Region, ffi::oiio_ROI_t>(r)
+                    transmute::<region_of_interest::Region, oiio_ROI_t>(r)
                 },
             }
         }

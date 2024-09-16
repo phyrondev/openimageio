@@ -5,12 +5,8 @@ name = "openimageio"
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0 OR BSD-3-Clause"
-authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Anders Langlands"]
+authors = ["Moritz Moeller <virtualritz@protonmail.com>"]
 homepage = "https://openimageio.org/"
-
-[build-dependencies]
-bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
-log = "0.4"
 
 [dependencies]
 ahash = "0.8"
@@ -27,6 +23,7 @@ image = { version = "0.25", default-features = false, features = [
 log = "0.4"
 num-traits = "0.2"
 num_enum = "0.7"
+openimageio-sys = { version = "0.1", path = "openimageio-sys" }
 once_cell = { version = "1", features = ["parking_lot"] }
 parking_lot = { version = "0.12", features = [
     "arc_lock",
@@ -34,6 +31,9 @@ parking_lot = { version = "0.12", features = [
     "nightly",
 ] }
 ustr = "1"
+
+[dev-dependencies]
+viuer = { version = "0.7", path = "../viuer" }
 
 [features]
 default = ["algorithms"]

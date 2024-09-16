@@ -114,22 +114,26 @@ use ahash::AHashMap as HashMap;
 use core::{cell::OnceCell, mem::MaybeUninit};
 use float_derive::{FloatEq, FloatHash, FloatPartialEq};
 
-pub mod generators;
-pub use generators::*;
-
-pub mod operators;
-pub use operators::*;
-
+pub mod color_convert;
+pub use color_convert::*;
+pub mod compare;
+pub mod fill;
+pub mod over;
+pub mod render_text;
 pub mod resize;
-pub use resize::*;
+pub mod rotate;
+pub use rotate::*;
+pub mod zero;
 
-/// Generic options accepted by most compositing operators.
+/// Generic options accepted by most [`ImageBuffer`]
+/// [algorithms](module@algorithms).
 #[derive(Clone, Default)]
 pub struct Options {
-    /// See the [Region of Interest](#region-of-interest) section on
-    /// [`ImageBuffer`].
+    /// See the [Region of Interest](module@algorithms#region-of-interest)
+    /// section in the [module@algorithms] module. .
     pub region_of_interest: RegionOfInterest,
-    /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
+    /// See the [Multithreading](module@algorithms#multithreading) section
+    /// in the [module@algorithms] module.
     pub thread_count: u16,
 }
 

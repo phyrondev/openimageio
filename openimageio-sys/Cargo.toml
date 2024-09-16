@@ -1,0 +1,13 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "openimageio-sys"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0 OR BSD-3-Clause"
+authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Anders Langlands"]
+homepage = "https://openimageio.org/"
+
+[build-dependencies]
+bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
+log = "0.4"

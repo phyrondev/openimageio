@@ -232,15 +232,15 @@
 //!
 //! # Features
 #![doc = document_features::document_features!()]
+pub use anyhow::Result;
 pub use camino::{Utf8Path, Utf8PathBuf};
 pub(crate) use function_name::named;
 pub use ustr::*;
 
-mod ffi;
 #[cfg(feature = "ffi")]
-pub use ffi::*;
+pub use openimageio_sys::*;
 #[cfg(not(feature = "ffi"))]
-pub(crate) use ffi::*;
+pub(crate) use openimageio_sys::*;
 
 mod color;
 pub use color::*;

@@ -119,8 +119,7 @@ impl Default for ResizeOptions {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
+    #[cfg(feature = "image")]
     #[test]
     fn resize() -> Result<()> {
         let mut image_buffer = ImageBuffer::from_file(Utf8Path::new(
@@ -128,9 +127,27 @@ mod tests {
         ))?;
 
         let region_of_interest =
-            RegionOfInterest::Region(Region::new_2d(0..80, 0..80));
+            RegionOfInterest::Region(Region::new_2d(0..128, 0..128));
 
         image_buffer.resize(&region_of_interest)?;
+        image_buffer.color_convert(None, ustr("sRGB"))?;
+
+        //image_buffer.write(Utf8Path::new("resized.png"))?;
+
+        let image: image::DynamicImage = image_buffer.try_into()?;
+
+        viuer::print(
+            &image,
+            &viuer::Config {
+                // set offset
+                x: 0,
+                y: 0,
+                // set dimensions
+                width: Some(128),
+                height: Some(64),
+                ..Default::default()
+            },
+        )?;
 
         Ok(())
     }
