@@ -106,17 +106,17 @@ impl ImageBuffer {
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
                 from_space
-                    .map_or(StringView::default(), |s| StringView::from(s))
+                    .map_or(StringView::default(), StringView::from)
                     .as_raw_ptr() as _,
                 StringView::from(to_space).as_raw_ptr() as _,
                 options.unpremultiply,
                 options
                     .context_key
-                    .map_or(StringView::default(), |s| StringView::from(s))
+                    .map_or(StringView::default(), StringView::from)
                     .as_raw_ptr() as _,
                 options
                     .context_value
-                    .map_or(StringView::default(), |s| StringView::from(s))
+                    .map_or(StringView::default(), StringView::from)
                     .as_raw_ptr() as _,
                 options
                     .config

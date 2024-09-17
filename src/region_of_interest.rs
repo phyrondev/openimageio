@@ -322,14 +322,10 @@ impl Region {
         let z = z.unwrap_or(0);
         let channel = channel.unwrap_or(0);
 
-        x >= self.x.start
-            && x < self.x.end
-            && y >= self.y.start
-            && y < self.y.end
-            && z >= self.z.start
-            && z < self.z.end
-            && channel >= self.channel.start
-            && channel < self.channel.end
+        self.x.contains(&x)
+            && self.y.contains(&y)
+            && self.z.contains(&z)
+            && self.channel.contains(&channel)
     }
 
     #[inline]
@@ -345,7 +341,7 @@ impl Region {
     }
 
     pub fn is_empty(&self) -> bool {
-        0 != self.pixel_count()
+        0 == self.width() || 0 == self.height() || 0 == self.depth()
     }
 }
 
@@ -385,6 +381,12 @@ impl Region {
         }
 
         self
+    }
+}
+
+impl From<Region> for RegionOfInterest {
+    fn from(src: Region) -> RegionOfInterest {
+        RegionOfInterest::Region(src)
     }
 }
 

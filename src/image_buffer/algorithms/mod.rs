@@ -217,7 +217,7 @@ impl Filter2D {
     /// parameters.
     pub fn new(name: PixelFilter, x_width: f32, y_width: f32) -> Self {
         let mut filter_2d_map = FILTER_2D_MAP;
-        let filter_2d_map = filter_2d_map.get_mut_or_init(|| HashMap::new());
+        let filter_2d_map = filter_2d_map.get_mut_or_init(HashMap::new);
 
         let filter = Filter2DInfo {
             name,
@@ -226,10 +226,10 @@ impl Filter2D {
         };
 
         if let Some(filter_2d) = filter_2d_map.get(&filter) {
-            filter_2d.clone()
+            *filter_2d
         } else {
             let filter_2d = Filter2D::new_ffi(name.into(), x_width, y_width);
-            filter_2d_map.insert(filter, filter_2d.clone());
+            filter_2d_map.insert(filter, filter_2d);
 
             filter_2d
         }
