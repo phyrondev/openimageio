@@ -123,6 +123,8 @@ pub mod render_text;
 pub mod resize;
 pub mod rotate;
 pub use rotate::*;
+pub mod warp;
+pub use warp::*;
 pub mod zero;
 
 /// Generic options accepted by most [`ImageBuffer`]
@@ -209,23 +211,6 @@ pub struct Filter2D {
 }
 
 impl Filter2D {
-    fn new_ffi(name: &str, x_width: f32, y_width: f32) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_Filter2D_t>::uninit();
-
-        unsafe {
-            oiio_Filter2D_create(
-                StringView::from(name).as_raw_ptr() as _,
-                x_width,
-                y_width,
-                &mut ptr as *mut _ as _,
-            );
-
-            Self {
-                ptr: ptr.assume_init(),
-            }
-        }
-    }
-
     /// Create a new 2D pixel filter.
     ///
     /// The filter is cached and reused if you call new() with the same
@@ -260,7 +245,30 @@ impl Filter2D {
     }
 }
 
+impl From<PixelFilter> for Filter2D {
+    fn from(pf: PixelFilter) -> Self {
+        Filter2D::new(pf, 1.0, 1.0)
+    }
+}
+
 impl Filter2D {
+    fn new_ffi(name: &str, x_width: f32, y_width: f32) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_Filter2D_t>::uninit();
+
+        unsafe {
+            oiio_Filter2D_create(
+                StringView::from(name).as_raw_ptr() as _,
+                x_width,
+                y_width,
+                &mut ptr as *mut _ as _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+            }
+        }
+    }
+
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_Filter2D_t {
         self.ptr
     }

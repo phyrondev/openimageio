@@ -44,7 +44,7 @@ impl RegionOfInterest {
         result
     }
 
-    pub fn union(&mut self, b: &Self) {
+    pub fn union(&mut self, b: &Self) -> &mut Self {
         match self {
             RegionOfInterest::All => {
                 // Do nothing.
@@ -56,9 +56,11 @@ impl RegionOfInterest {
                 }
             },
         }
+
+        self
     }
 
-    pub fn intersection(&mut self, b: &Self) {
+    pub fn intersection(&mut self, b: &Self) -> &mut Self {
         match self {
             RegionOfInterest::All => *self = b.clone(),
             RegionOfInterest::Region(a) => match b {
@@ -70,6 +72,16 @@ impl RegionOfInterest {
                 }
             },
         }
+
+        self
+    }
+
+    pub fn uniform_scale(&mut self, scale: f32) -> &mut Self {
+        if let RegionOfInterest::Region(r) = self {
+            r.uniform_scale(scale);
+        }
+
+        self
     }
 }
 
@@ -285,6 +297,15 @@ impl Region {
 
     pub fn set_channel_end(&mut self, channel: u32) {
         self.channel.end = channel;
+    }
+
+    pub fn uniform_scale(&mut self, scale: f32) {
+        self.x = (self.x.start as f32 * scale) as _
+            ..(self.x.end as f32 * scale) as _;
+        self.y = (self.y.start as f32 * scale) as _
+            ..(self.y.end as f32 * scale) as _;
+        self.z = (self.z.start as f32 * scale) as _
+            ..(self.z.end as f32 * scale) as _;
     }
 }
 

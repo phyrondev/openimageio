@@ -89,12 +89,23 @@ mod tests {
 
     #[test]
     fn over() -> Result<()> {
-        let mut image_buf_a = ImageBuffer::new();
-        let mut image_buf_b = ImageBuffer::new();
-        let image_buf_c = ImageBuffer::new();
+        // Load fg image. This is 1024×1024
+        let mut image_buf_a = ImageBuffer::from_file(Utf8Path::new(
+            "assets/j0.3toD__F16_RGBA.exr",
+        ))?;
 
-        //println!("Over test");
-        image_buf_a.over(image_buf_b.over(&image_buf_c)?)?;
+        // Load bg image. This is 2048×1024.
+        let image_buf_b = ImageBuffer::from_file(Utf8Path::new(
+            "assets/wooden_lounge_2k__F32_RGBA.exr",
+        ))?;
+
+        // Compose fg over bg, replacing the data window of fg  with the result.
+        // I.e. the result will be cropped at fg's original dimensions of
+        // 1024×1024.
+        image_buf_a.over(&image_buf_b)?;
+
+        image_buf_a
+            .resize(&image_buf_a.region_of_interest().uniform_scale(0.5))?;
 
         //println!("Over test done");
         Ok(())

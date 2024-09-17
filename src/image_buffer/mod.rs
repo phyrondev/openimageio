@@ -547,7 +547,7 @@ impl ImageBuffer {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 #[repr(C)]
 pub enum WrapMode {
     #[default]

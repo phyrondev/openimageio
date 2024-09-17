@@ -1,12 +1,5 @@
 use crate::{algorithms::*, *};
-
-#[derive(Clone, Default)]
-pub struct RotateOptions {
-    pub pixel_filter: PixelFilter,
-    pub recompute_region_of_interest: bool,
-    pub region_of_interest: RegionOfInterest,
-    pub thread_count: u16,
-}
+use core::ptr;
 
 /// # Rotate
 ///
@@ -141,6 +134,15 @@ impl ImageBuffer {
         self.mut_self_or_error(is_ok, function_name!())
     }
 }
+
+#[derive(Clone, Default)]
+pub struct RotateOptions {
+    pub filter: Option<Filter2D>,
+    pub recompute_region_of_interest: bool,
+    pub region_of_interest: RegionOfInterest,
+    pub thread_count: u16,
+}
+
 impl ImageBuffer {
     fn rotate_ffi(
         &mut self,
@@ -155,8 +157,7 @@ impl ImageBuffer {
                 self.ptr,
                 other.ptr,
                 angle,
-                StringView::from(Into::<Ustr>::into(options.pixel_filter)).ptr,
-                0.0,
+                options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
                 options.recompute_region_of_interest,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
@@ -184,8 +185,7 @@ impl ImageBuffer {
                 angle,
                 center_x,
                 center_y,
-                StringView::from(Into::<&str>::into(options.pixel_filter)).ptr,
-                0.0,
+                options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
                 options.recompute_region_of_interest,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
@@ -203,10 +203,7 @@ mod tests {
 
     #[test]
     fn rotate() -> Result<()> {
-        use crate::algorithms::PixelFilter::BlackmanHarris;
-        use camino::Utf8Path as Path;
-
-        let mut image_buf = ImageBuffer::from_file(Path::new(
+        let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
             "assets/wooden_lounge_2k__F32_RGBA.exr",
         ))?;
 
@@ -216,13 +213,13 @@ mod tests {
                 // Use a Blackmann-Harris filter to avoid halos easily
                 // introduced when operating on HDRs with the default one,
                 // Lanczos3.
-                pixel_filter: BlackmanHarris,
+                filter: Some(PixelFilter::BlackmanHarris.into()),
                 recompute_region_of_interest: true,
                 ..Default::default()
             },
         )?;
 
-        image_buf.write(Path::new("rotated.exr"))?;
+        image_buf.write(Utf8Path::new("rotated.exr"))?;
 
         Ok(())
     }

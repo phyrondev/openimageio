@@ -69,13 +69,13 @@ BBL_MODULE(oiio) {
 
   // rotate()
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, float,
-                    OIIO::string_view, float, bool, OIIO::ROI, int)) &
+                    OIIO::Filter2D *, bool, OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::rotate,
           "ImageBufAlgo_rotate");
 
   // rotate_()
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, float, float,
-                    float, OIIO::string_view, float, bool, OIIO::ROI, int)) &
+                    float, OIIO::Filter2D *, bool, OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::rotate,
           "ImageBufAlgo_rotate_around");
 
@@ -129,9 +129,9 @@ BBL_MODULE(oiio) {
           "ImageBufAlgo_resize");
 
   // warp()
-  /*bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::M33fParam,
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::M33fParam,
                     const OIIO::Filter2D *, bool, OIIO::ImageBuf::WrapMode,
                     OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::warp,
-          "ImageBufAlgo_warp");*/
+          "ImageBufAlgo_warp");
 }
