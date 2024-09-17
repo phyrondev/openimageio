@@ -4,7 +4,7 @@ cargo-features = ["edition2024"]
 name = "openimageio-sys"
 version = "0.1.0"
 edition = "2024"
-license = "Apache-2.0 OR BSD-3-Clause"
+license = "Apache-2.0"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Anders Langlands"]
 homepage = "https://openimageio.org/"
 

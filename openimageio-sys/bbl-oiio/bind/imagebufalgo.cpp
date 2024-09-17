@@ -127,4 +127,11 @@ BBL_MODULE(oiio) {
                     OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::resize,
           "ImageBufAlgo_resize");
+
+  // warp()
+  /*bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::M33fParam,
+                    const OIIO::Filter2D *, bool, OIIO::ImageBuf::WrapMode,
+                    OIIO::ROI, int)) &
+              OIIO::ImageBufAlgo::warp,
+          "ImageBufAlgo_warp");*/
 }

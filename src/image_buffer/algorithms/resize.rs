@@ -119,6 +119,8 @@ impl Default for ResizeOptions {
 
 #[cfg(test)]
 mod tests {
+    use crate::*;
+
     #[cfg(feature = "image")]
     #[test]
     fn resize() -> Result<()> {
@@ -127,7 +129,7 @@ mod tests {
         ))?;
 
         let region_of_interest =
-            RegionOfInterest::Region(Region::new_2d(0..128, 0..128));
+            RegionOfInterest::Region(Region::new_2d(0..80, 0..80));
 
         image_buffer.resize(&region_of_interest)?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
@@ -139,12 +141,8 @@ mod tests {
         viuer::print(
             &image,
             &viuer::Config {
-                // set offset
-                x: 0,
-                y: 0,
-                // set dimensions
-                width: Some(128),
-                height: Some(64),
+                width: Some(80),
+                height: Some(40),
                 ..Default::default()
             },
         )?;

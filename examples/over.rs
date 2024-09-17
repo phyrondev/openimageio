@@ -1,5 +1,5 @@
 use anyhow::Result;
-use openimageio::{FromFileOptions, ImageBuf, ImageCache, Utf8Path};
+use openimageio::{FromFileOptions, ImageBuffer, ImageCache, Utf8Path};
 
 fn main() -> Result<()> {
     // Create a shared cache that will persist after this instance gets dropped.
@@ -8,7 +8,7 @@ fn main() -> Result<()> {
     let image_cache = ImageCache::shared(false);
 
     // Load fg image. This is 1024×1024
-    let mut image_buf_a = ImageBuf::from_file_with(
+    let mut image_buf_a = ImageBuffer::from_file_with(
         Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
         &FromFileOptions {
             image_cache: Some(image_cache.clone()),
@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     )?;
 
     // Load bg image. This is 2048×1024.
-    let image_buf_b = ImageBuf::from_file_with(
+    let image_buf_b = ImageBuffer::from_file_with(
         Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"),
         &FromFileOptions {
             image_cache: Some(image_cache),

@@ -199,7 +199,8 @@ impl ImageBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ImageBuffer, Result};
+    use crate::{algorithms::*, *};
+
     #[test]
     fn rotate() -> Result<()> {
         use crate::algorithms::PixelFilter::BlackmanHarris;

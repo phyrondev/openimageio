@@ -85,8 +85,7 @@ impl ImageBuffer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use anyhow::Result;
+    use crate::*;
 
     #[test]
     fn over() -> Result<()> {
