@@ -28,14 +28,17 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageCache::get_perthread_info)
       .m(&OIIO::ImageCache::create_thread_info)
       .m(&OIIO::ImageCache::destroy_thread_info)
-      // v2.5+ signature
-      //.m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring,
-      // OIIO::ImageCache::Perthread *, const OIIO::TextureOpt * ))
-      //    &OIIO::ImageCache::get_image_handle, "get_image_handle")
+
+#if OIIO_VERSION >= OIIO_MAKE_VERSION(2,5,0)
+      .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring,
+       OIIO::ImageCache::Perthread *, const OIIO::TextureOpt * ))
+          &OIIO::ImageCache::get_image_handle, "get_image_handle")
+#else
       .m((OIIO::ImageCache::ImageHandle *
           (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *)) &
              OIIO::ImageCache::get_image_handle,
          "get_image_handle")
+#endif
 
       // .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(const
       // std::wstring &, OIIO::ImageCache::Perthread *))

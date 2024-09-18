@@ -109,18 +109,18 @@ BBL_MODULE(oiio) {
               OIIO::ImageBufAlgo::render_text,
           "ImageBufAlgo_render_text");
 
-  // colorconvert()
+#if OIIO_VERSION >= OIIO_MAKE_VERSION(2,5,0)
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &,
+     OIIO::string_view, OIIO::string_view, bool, OIIO::string_view,
+                    OIIO::string_view, const OIIO::ColorConfig *, OIIO::ROI,
+     int)) & OIIO::ImageBufAlgo::colorconvert, "ImageBufAlgo_colorconvert");
+#else
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::string_view,
                     OIIO::string_view, bool, OIIO::string_view,
                     OIIO::string_view, OIIO::ColorConfig *, OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::colorconvert,
           "ImageBufAlgo_colorconvert");
-
-  // v2.5+ signature
-  /*bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &,
-     OIIO::string_view, OIIO::string_view, bool, OIIO::string_view,
-                    OIIO::string_view, const OIIO::ColorConfig *, OIIO::ROI,
-     int)) & OIIO::ImageBufAlgo::colorconvert, "ImageBufAlgo_colorconvert");*/
+#endif
 
   // resize()
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::Filter2D *,
