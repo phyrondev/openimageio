@@ -111,8 +111,10 @@
 //! application threads.
 use crate::*;
 use ahash::AHashMap as HashMap;
-use core::{cell::OnceCell, mem::MaybeUninit};
+use core::mem::MaybeUninit;
 use float_derive::{FloatEq, FloatHash, FloatPartialEq};
+use parking_lot::RwLock;
+use std::sync::LazyLock;
 
 pub mod color_convert;
 pub use color_convert::*;
@@ -141,8 +143,8 @@ pub struct Options {
 
 // Global 2D pixel filter registry.
 // FIXME: This is never freed over the lifetime of the program.
-const FILTER_2D_MAP: OnceCell<HashMap<Filter2DInfo, Filter2D>> =
-    OnceCell::new();
+const FILTER_2D_MAP: LazyLock<RwLock<HashMap<Filter2DInfo, Filter2D>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 // This is only used for hashing the filter name & dimensions to lookup the
 // FILTER_2D_MAP.
@@ -216,20 +218,17 @@ impl Filter2D {
     /// The filter is cached and reused if you call new() with the same
     /// parameters.
     pub fn new(name: PixelFilter, x_width: f32, y_width: f32) -> Self {
-        let mut filter_2d_map = FILTER_2D_MAP;
-        let filter_2d_map = filter_2d_map.get_mut_or_init(HashMap::new);
-
         let filter = Filter2DInfo {
             name,
             x_width,
             y_width,
         };
 
-        if let Some(filter_2d) = filter_2d_map.get(&filter) {
+        if let Some(filter_2d) = FILTER_2D_MAP.read().get(&filter) {
             *filter_2d
         } else {
             let filter_2d = Filter2D::new_ffi(name.into(), x_width, y_width);
-            filter_2d_map.insert(filter, filter_2d);
+            FILTER_2D_MAP.write().insert(filter, filter_2d);
 
             filter_2d
         }
@@ -237,11 +236,10 @@ impl Filter2D {
 
     /// Clear the global cache of 2D pixel filters.
     pub fn clear_cache() {
-        if let Some(filter_2d_map) = FILTER_2D_MAP.take() {
-            filter_2d_map.iter().for_each(|(_, filter_2d)| {
-                unsafe { oiio_Filter2D_destroy(filter_2d.ptr) };
-            });
-        }
+        FILTER_2D_MAP.write().retain(|_, filter_2d| {
+            unsafe { oiio_Filter2D_destroy(filter_2d.ptr) };
+            false
+        });
     }
 }
 

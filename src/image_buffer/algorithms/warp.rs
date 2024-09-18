@@ -92,6 +92,12 @@ impl From<Matrix3F32> for &[f32; 9] {
     }
 }
 
+impl From<[f32; 9]> for Matrix3F32 {
+    fn from(matrix: [f32; 9]) -> Self {
+        unsafe { transmute(matrix) }
+    }
+}
+
 struct Matrix33fHelper(*const [f32; 9]);
 
 impl ImageBuffer {
