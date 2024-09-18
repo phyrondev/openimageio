@@ -3,10 +3,15 @@ use core::ptr;
 
 /// # Rotate
 ///
-/// Rotate the src image by the angle (in radians, with positive angles
-/// clockwise). When `center_x` and `center_y` are supplied, they denote the
-/// center of rotation; in their absence, the rotation will be about the center
-/// of the image's *display window*.
+/// Rotate the image.
+///
+/// ## Parameters
+///
+/// * `angle` -- The angle (in radians, with positive angles rotating
+///   clockwise).
+///
+/// * `center_x`, `center_y` -- The center of rotation. The variants that lack
+///   these parameters rotate around the center of the image's *display window*.
 ///
 /// Only the pixels (and channels) of dst that are specified by roi will be
 /// copied from the rotated src; the default roi is to alter all the pixels in
@@ -23,35 +28,35 @@ use core::ptr;
 /// filterwidth parameter may be ignored.)
 impl ImageBuffer {
     #[named]
-    pub fn from_rotate(src: &ImageBuffer, angle: f32) -> Result<Self> {
+    pub fn from_rotate(source: &ImageBuffer, angle: f32) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok =
-            image_buffer.rotate_ffi(src, angle, &RotateOptions::default());
+            image_buffer.rotate_ffi(source, angle, &RotateOptions::default());
         image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
     pub fn from_rotate_with(
-        src: &ImageBuffer,
+        source: &ImageBuffer,
         angle: f32,
         options: &RotateOptions,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.rotate_ffi(src, angle, options);
+        let is_ok = image_buffer.rotate_ffi(source, angle, options);
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
     pub fn from_rotate_around(
-        src: &ImageBuffer,
+        source: &ImageBuffer,
         angle: f32,
         center_x: f32,
         center_y: f32,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.rotate_around_ffi(
-            src,
+            source,
             angle,
             center_x,
             center_y,
@@ -63,7 +68,7 @@ impl ImageBuffer {
 
     #[named]
     pub fn from_rotate_around_with(
-        src: &ImageBuffer,
+        source: &ImageBuffer,
         angle: f32,
         center_x: f32,
         center_y: f32,
@@ -71,7 +76,7 @@ impl ImageBuffer {
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer
-            .rotate_around_ffi(src, angle, center_x, center_y, options);
+            .rotate_around_ffi(source, angle, center_x, center_y, options);
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -203,11 +208,12 @@ mod tests {
 
     #[test]
     fn rotate() -> Result<()> {
-        let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
+        let image_buf = ImageBuffer::from_file(Utf8Path::new(
             "assets/wooden_lounge_2k__F32_RGBA.exr",
         ))?;
 
-        image_buf.rotate_with(
+        let image_buf = ImageBuffer::from_rotate_with(
+            &image_buf,
             42.0 * std::f32::consts::TAU / 360.0,
             &RotateOptions {
                 // Use a Blackmann-Harris filter to avoid halos easily

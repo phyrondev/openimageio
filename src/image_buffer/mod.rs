@@ -280,6 +280,10 @@ impl ImageBuffer {
 
     gen_fn_error!(oiio_ImageBuf_geterror);
 
+    /*pub fn is_cached(&self) -> bool {
+        unsafe { oiio_ImageBuf_is_cached(self.ptr) != 0 }
+    }*/
+
     /// Returns `true` if the `ImageBuffer` is initialized, `false` otherwise.
     ///
     /// # For C++ Developers
@@ -732,7 +736,7 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn load() -> Result<()> {
+    fn image_buffer() -> Result<()> {
         //let image_cache = ImageCache::shared(false);
 
         let image_buf = ImageBuffer::from_file(Utf8Path::new(
@@ -741,7 +745,7 @@ mod tests {
 
         println!(
             "Name:          {}",
-            image_buf.name().ok_or(anyhow!("No name"))?
+            image_buf.name().unwrap_or("No name".into())
         );
         println!("Storage:       {:?}", image_buf.storage());
         println!("Channel Count: {:?}", image_buf.channel_count());

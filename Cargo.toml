@@ -14,10 +14,14 @@ default = ["algorithms"]
 algorithms = []
 ## Enable one-way conversion from `ImageBuffer` to `egui::ColorImage`.
 egui = ["dep:egui"]
+## Enable support for `glam::f32::Mat3`.
+glam = ["dep:glam"]
 # Enable `f16` support.
 #half = ["dep:half"]
 ## Enable one-way conversion from `ImageBuffer` to `image::DynamicImage`.
 image = ["dep:image"]
+## Enable support for `nalgebra::Matrix3<f32>`.
+nalgebra = ["dep:nalgebra"]
 #! ### Special Features
 ## Make the OpenImageIO FFI this crate uses public.
 ffi = []
@@ -45,7 +49,8 @@ parking_lot = { version = "0.12", features = [
     "nightly",
 ] }
 ustr = "1"
-glam = "0.29.0"
+glam = { version = "0.24", optional = true }
+nalgebra = { version = "0.33", optional = true }
 
 [dev-dependencies]
 viuer = "0.7"

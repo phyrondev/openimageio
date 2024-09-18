@@ -90,41 +90,7 @@ impl Default for RenderTextOptions<'_> {
 ///
 /// * `options` -- See [`RenderTextOptions`].
 impl ImageBuffer {
-    /// Render text into an image.
-    ///
-    /// Text will be rendered into the existing image by essentially doing an
-    /// 'over' of the character into the existing pixel data.
-    #[named]
-    pub fn render_text(
-        &mut self,
-        x: i32,
-        y: i32,
-        text: &str,
-    ) -> Result<&mut Self> {
-        let is_ok =
-            self.render_text_ffi(x, y, text, &RenderTextOptions::default());
-
-        self.mut_self_or_error(is_ok, function_name!())
-    }
-
-    /// Render text into an image buffer with given [`RenderTextOptions`].
-    ///
-    /// Text will be rendered into the existing image by essentially doing an
-    /// 'over' of the character into the existing pixel data.
-    #[named]
-    pub fn render_text_with(
-        &mut self,
-        x: i32,
-        y: i32,
-        text: &str,
-        options: &RenderTextOptions,
-    ) -> Result<&mut Self> {
-        let is_ok = self.render_text_ffi(x, y, text, options);
-
-        self.mut_self_or_error(is_ok, function_name!())
-    }
-
-    /// Create an image buffer from rendering text.
+    /// Create an `ImageBuffer` from rendering text.
     ///
     /// The resulting image will be initialized to be a black background exactly
     /// large enough to contain the rasterized text.
@@ -141,7 +107,7 @@ impl ImageBuffer {
         image_buffer.self_or_error(is_ok, function_name!())
     }
 
-    /// Create an image buffer from rendering text with given
+    /// Create an `ImageBuffer` from rendering text with given
     /// [`RenderTextOptions`].
     ///
     /// The resulting image will be initialized to be a black background exactly
@@ -157,6 +123,40 @@ impl ImageBuffer {
         let is_ok = image_buffer.render_text_ffi(x, y, text, options);
 
         image_buffer.self_or_error(is_ok, function_name!())
+    }
+
+    /// Render text.
+    ///
+    /// Text will be rendered into the existing image by essentially doing an
+    /// 'over' of the characters onto the existing pixel data.
+    #[named]
+    pub fn render_text(
+        &mut self,
+        x: i32,
+        y: i32,
+        text: &str,
+    ) -> Result<&mut Self> {
+        let is_ok =
+            self.render_text_ffi(x, y, text, &RenderTextOptions::default());
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    /// Render text with given [`RenderTextOptions`].
+    ///
+    /// Text will be rendered into the existing image by essentially doing an
+    /// 'over' of the characters onto the existing pixel data.
+    #[named]
+    pub fn render_text_with(
+        &mut self,
+        x: i32,
+        y: i32,
+        text: &str,
+        options: &RenderTextOptions,
+    ) -> Result<&mut Self> {
+        let is_ok = self.render_text_ffi(x, y, text, options);
+
+        self.mut_self_or_error(is_ok, function_name!())
     }
 }
 

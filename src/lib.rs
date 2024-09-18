@@ -235,7 +235,6 @@
 #![doc = document_features::document_features!()]
 pub use anyhow::Result;
 pub use camino::{Utf8Path, Utf8PathBuf};
-pub use glam::f32::Mat3;
 pub use ustr::*;
 
 #[cfg(feature = "ffi")]
@@ -247,6 +246,9 @@ pub(crate) use function_name::named;
 
 mod color;
 pub use color::*;
+
+mod cspan;
+pub(crate) use cspan::*;
 
 mod file_system;
 pub use file_system::*;
@@ -282,6 +284,35 @@ mod ustring;
 pub use ustring::*;
 
 use num_traits::{Bounded, Num, NumCast};
+
+struct Matrix33fHelper(*const [f32; 9]);
+
+#[derive(Clone, Copy)]
+pub struct Matrix3F32<'a>(&'a [f32; 9]);
+
+impl<'a> From<&'a [f32; 9]> for Matrix3F32<'a> {
+    fn from(matrix: &'a [f32; 9]) -> Self {
+        Self(matrix)
+    }
+}
+
+#[cfg(feature = "glam")]
+impl<'a> From<&'a glam::f32::Mat3> for Matrix3F32<'a> {
+    fn from(matrix: &glam::f32::Mat3) -> Self {
+        use core::mem::transmute;
+
+        unsafe { Self(transmute(matrix)) }
+    }
+}
+
+#[cfg(feature = "nalgebra")]
+impl<'a> From<&'a nalgebra::Matrix3<f32>> for Matrix3F32<'a> {
+    fn from(matrix: &nalgebra::Matrix3<f32>) -> Self {
+        use core::mem::transmute;
+
+        unsafe { Self(transmute(matrix)) }
+    }
+}
 
 /// The type of each channel in a pixel. For example, this can be `u8`, `u16`,
 /// `f32`.

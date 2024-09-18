@@ -12,16 +12,10 @@ use core::{mem::MaybeUninit, ptr};
 /// [`ImageBuffer`].
 impl ImageBuffer {
     #[named]
-    pub fn from_resize(
-        src: &ImageBuffer,
-        region_of_interest: &RegionOfInterest,
-    ) -> Result<Self> {
+    pub fn from_resize(src: &ImageBuffer, region: &Region) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.resize_ffi(
-            src,
-            region_of_interest,
-            &ResizeOptions::default(),
-        );
+        let is_ok =
+            image_buffer.resize_ffi(src, region, &ResizeOptions::default());
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -29,26 +23,20 @@ impl ImageBuffer {
     #[named]
     pub fn from_resize_with(
         src: &ImageBuffer,
-        region_of_interest: &RegionOfInterest,
+        region: &Region,
         options: &ResizeOptions,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.resize_ffi(src, region_of_interest, options);
+        let is_ok = image_buffer.resize_ffi(src, region, options);
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn resize(
-        &mut self,
-        region_of_interest: &RegionOfInterest,
-    ) -> Result<&mut Self> {
+    pub fn resize(&mut self, region: &Region) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.resize_ffi(
-            self,
-            region_of_interest,
-            &ResizeOptions::default(),
-        );
+        let is_ok =
+            image_buffer.resize_ffi(self, region, &ResizeOptions::default());
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -57,11 +45,11 @@ impl ImageBuffer {
     #[named]
     pub fn resize_with(
         &mut self,
-        region_of_interest: &RegionOfInterest,
+        region: &Region,
         options: &ResizeOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.resize_ffi(self, region_of_interest, options);
+        let is_ok = image_buffer.resize_ffi(self, region, options);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -88,7 +76,7 @@ impl ImageBuffer {
     pub fn resize_ffi(
         &mut self,
         src: &ImageBuffer,
-        region_of_interest: &RegionOfInterest,
+        region: &Region,
         options: &ResizeOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
@@ -98,7 +86,7 @@ impl ImageBuffer {
                 self.as_raw_ptr_mut(),
                 src.as_raw_ptr(),
                 options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
-                region_of_interest.clone().into(),
+                region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -118,10 +106,9 @@ mod tests {
             "assets/j0.3toD__F16_RGBA.exr",
         ))?;
 
-        let region_of_interest =
-            RegionOfInterest::Region(Region::new_2d(0..80, 0..80));
+        let region = Region::new_2d(0..80, 0..80);
 
-        image_buffer.resize(&region_of_interest)?;
+        image_buffer.resize(&region)?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
 
         //image_buffer.write(Utf8Path::new("resized.png"))?;

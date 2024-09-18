@@ -104,9 +104,6 @@ mod tests {
         // 1024×1024.
         image_buf_a.over(&image_buf_b)?;
 
-        image_buf_a
-            .resize(&image_buf_a.region_of_interest().uniform_scale(0.5))?;
-
         //println!("Over test done");
         Ok(())
     }

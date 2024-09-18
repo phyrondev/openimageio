@@ -117,26 +117,25 @@ impl Region {
     pub fn new(
         x: Range<i32>,
         y: Range<i32>,
-        z: Option<Range<i32>>,
+        z: Range<i32>,
         channel: Option<Range<u32>>,
     ) -> Self {
-        let z = z.unwrap_or(0..1);
-        let channel = channel.unwrap_or(0..10000);
+        let channel = channel.unwrap_or(0..4);
 
-        debug_assert!(x.start <= x.end);
-        debug_assert!(y.start <= y.end);
-        debug_assert!(z.start <= z.end);
-        debug_assert!(channel.start < channel.end);
+        assert!(x.start <= x.end);
+        assert!(y.start <= y.end);
+        assert!(z.start <= z.end);
+        assert!(channel.start < channel.end);
 
         Self { x, y, z, channel }
     }
 
     pub fn new_2d(x: Range<i32>, y: Range<i32>) -> Self {
-        Self::new(x, y, None, None)
+        Self::new(x, y, 0..1, None)
     }
 
     pub fn new_3d(x: Range<i32>, y: Range<i32>, z: Range<i32>) -> Self {
-        Self::new(x, y, Some(z), None)
+        Self::new(x, y, z, None)
     }
 
     pub fn from_union(a: &Self, b: &Self) -> Self {
@@ -173,6 +172,15 @@ impl Region {
         debug_assert!(self.z.start < self.z.end);
 
         (self.z.end - self.z.start) as _
+    }
+
+    /// Calculate the center of the region.
+    pub fn center(&self) -> (f32, f32, f32) {
+        (
+            self.x.start as f32 + self.width() as f32 / 2.0,
+            self.y.start as f32 + self.height() as f32 / 2.0,
+            self.z.start as f32 + self.depth() as f32 / 2.0,
+        )
     }
 
     /// Number of channels in the region.
@@ -299,13 +307,13 @@ impl Region {
         self.channel.end = channel;
     }
 
-    pub fn uniform_scale(&mut self, scale: f32) {
+    pub fn uniform_scale(&mut self, scale: f32) -> &mut Self {
         self.x = (self.x.start as f32 * scale) as _
             ..(self.x.end as f32 * scale) as _;
         self.y = (self.y.start as f32 * scale) as _
             ..(self.y.end as f32 * scale) as _;
-        self.z = (self.z.start as f32 * scale) as _
-            ..(self.z.end as f32 * scale) as _;
+
+        self
     }
 }
 
@@ -399,6 +407,12 @@ mod internal {
         }
     }
 
+    impl From<Region> for oiio_ROI_t {
+        fn from(src: Region) -> Self {
+            unsafe { transmute(src) }
+        }
+    }
+
     impl TryFrom<*const oiio_ROI_t> for RegionOfInterest {
         type Error = ();
 
@@ -457,12 +471,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_region() {
+    fn region_of_interest() {
         let region =
             RegionOfInterest::Region(Region::new_3d(3..42, 5..16, -33..9));
 
-        let c_region = oiio_ROI_t::from(region);
-
-        println!("C ROI: {:?}", c_region);
+        assert_eq!(
+            oiio_ROI_t {
+                xbegin: 3,
+                xend: 42,
+                ybegin: 5,
+                yend: 16,
+                zbegin: -33,
+                zend: 9,
+                chbegin: 0,
+                chend: 10000,
+            },
+            oiio_ROI_t::from(region)
+        );
     }
 }

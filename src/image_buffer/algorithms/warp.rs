@@ -2,52 +2,43 @@ use crate::{algorithms::*, *};
 use core::{mem::transmute, ptr};
 
 /// # Warp
-/// Warp the src image using the supplied 3x3 transformation matrix.
 ///
-/// Only the pixels (and channels) of dst that are specified by the optional
-/// `region_of_interest` will be copied from the warped src; the default roi is
-/// to alter all the pixels in dst. If dst is uninitialized, it will be sized to
-/// be an ImageBuf large enough to hold the warped image if recompute_roi is
-/// true, or will have the same ROI as src if recompute_roi is false. It is an
-/// error to pass both an uninitialized dst and an undefined roi.
+/// Warp the image using `st` coordinates from a `warp` image.
 ///
-/// The caller may explicitly pass a reconstruction filter, or specify one by
-/// name and size, or if the name is the empty string resize() will choose a
-/// reasonable high-quality default if nullptr is passed. The filter is used to
-/// weight the src pixels falling underneath it for each dst pixel; the filter’s
-/// size is expressed in pixel units of the dst image.
+/// Each pixel in the `warp` image is used as a normalized image-space
+/// coordinate in the source image, which is then sampled at that position using
+/// the given reconstruction filter to produce an output pixel.
+///
+/// The transform is only defined over the area of the `stbuf` image, and thus
+/// the given `roi` argument will be intersected with its geometry.
+///
+/// \b NOTE: The current behavior of this transform is modeled to match Nuke's
+/// STMap node.
 impl ImageBuffer {
     #[named]
-    pub fn from_warp(
-        src: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32>,
-    ) -> Result<Self> {
+    pub fn from_warp(source: &ImageBuffer, warp: &ImageBuffer) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok =
-            image_buffer.warp_ffi(src, matrix_2d, &WarpOptions::default());
+            image_buffer.warp_ffi(source, warp, &WarpOptions::default());
         image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
     pub fn from_warp_with(
-        src: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32>,
+        source: &ImageBuffer,
+        warp: &ImageBuffer,
         options: &WarpOptions,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.warp_ffi(src, matrix_2d, options);
+        let is_ok = image_buffer.warp_ffi(source, warp, options);
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn warp(
-        &mut self,
-        matrix_2d: impl Into<Matrix3F32>,
-    ) -> Result<&mut Self> {
+    pub fn warp(&mut self, warp: &ImageBuffer) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok =
-            image_buffer.warp_ffi(self, matrix_2d, &WarpOptions::default());
+        let is_ok = image_buffer.warp_ffi(self, warp, &WarpOptions::default());
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -56,11 +47,11 @@ impl ImageBuffer {
     #[named]
     pub fn warp_with(
         &mut self,
-        matrix_2d: impl Into<Matrix3F32>,
+        warp: &ImageBuffer,
         options: &WarpOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.warp_ffi(self, matrix_2d, options);
+        let is_ok = image_buffer.warp_ffi(self, warp, options);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -70,56 +61,33 @@ impl ImageBuffer {
 #[derive(Clone, Default)]
 pub struct WarpOptions {
     pub filter: Option<Filter2D>,
-    pub recompute_region_of_interest: bool,
-    pub wrap_mode: WrapMode,
-    pub edge_clamp: bool,
+    channel_s: Option<u32>,
+    channel_t: Option<u32>,
+    flip: bool,
+    flop: bool,
     pub region_of_interest: RegionOfInterest,
     pub thread_count: u16,
 }
-
-#[derive(Clone, Copy)]
-pub struct Matrix3F32(glam::f32::Mat3);
-
-impl From<glam::f32::Mat3> for Matrix3F32 {
-    fn from(matrix: glam::f32::Mat3) -> Self {
-        Self(matrix)
-    }
-}
-
-impl From<Matrix3F32> for &[f32; 9] {
-    fn from(matrix: Matrix3F32) -> Self {
-        unsafe { transmute(&matrix.0) }
-    }
-}
-
-impl From<[f32; 9]> for Matrix3F32 {
-    fn from(matrix: [f32; 9]) -> Self {
-        unsafe { transmute(matrix) }
-    }
-}
-
-struct Matrix33fHelper(*const [f32; 9]);
 
 impl ImageBuffer {
     fn warp_ffi(
         &mut self,
         other: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32>,
+        warp: &ImageBuffer,
         options: &WarpOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
-        let matrix_2d: Matrix3F32 = matrix_2d.into();
-        let matrix_2d = Matrix33fHelper(&matrix_2d as *const _ as _);
-
         unsafe {
-            oiio_ImageBufAlgo_warp(
+            oiio_ImageBufAlgo_st_warp(
                 self.ptr,
                 other.ptr,
-                &matrix_2d as *const _ as _,
+                warp.ptr,
                 options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
-                options.recompute_region_of_interest,
-                options.wrap_mode.clone().into(),
+                options.channel_s.unwrap_or(0).try_into().unwrap_or(0),
+                options.channel_t.unwrap_or(1).try_into().unwrap_or(1),
+                options.flip as _,
+                options.flop as _,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
@@ -132,7 +100,7 @@ impl ImageBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{algorithms::*, *};
+    use crate::*;
 
     #[test]
     fn warp() -> Result<()> {
@@ -142,18 +110,13 @@ mod tests {
             "assets/wooden_lounge_2k__F32_RGBA.exr",
         ))?;
 
-        let matrix = glam::f32::Mat3::from_cols_array(&[
-            0.7071068, 0.7071068, 0.0, -0.7071068, 0.7071068, 0.0, 20.0,
-            -8.284271, 1.0,
-        ]);
+        let warp =
+            ImageBuffer::from_file(Path::new("assets/warp__U8_RGB.png"))?;
 
-        image_buf.warp_with(
-            matrix,
-            &WarpOptions {
-                recompute_region_of_interest: true,
-                ..Default::default()
-            },
-        )?;
+        // Resize the source image to match the warp image.
+        image_buf.resize(&warp.region_of_interest_full().region().unwrap())?;
+
+        image_buf.warp(&warp)?;
 
         image_buf.write(Path::new("warped.exr"))?;
 

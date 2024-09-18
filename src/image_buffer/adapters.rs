@@ -137,7 +137,7 @@ mod tests {
 
     #[cfg(feature = "image")]
     #[test]
-    fn test_image_crate() -> Result<()> {
+    fn adapter() -> Result<()> {
         let image_buf = ImageBuffer::from_file(Utf8Path::new(
             "assets/j0.3toD__F16_RGBA.exr",
         ))?;
@@ -145,8 +145,6 @@ mod tests {
         // This will convert to either Rgb8 or Rgba8 and apply
         // a conversion to sRGB
         let image: image::DynamicImage = image_buf.try_into()?;
-
-        image.save("test.png")?;
 
         Ok(())
     }

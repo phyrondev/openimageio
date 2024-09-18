@@ -372,7 +372,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_type_description() {
+    fn type_description() {
         let t = TypeDescription::default();
 
         let c_type = oiio_TypeDesc_t::from(&t);

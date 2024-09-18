@@ -125,6 +125,8 @@ pub mod render_text;
 pub mod resize;
 pub mod rotate;
 pub use rotate::*;
+pub mod transform;
+pub use transform::*;
 pub mod warp;
 pub use warp::*;
 pub mod zero;
