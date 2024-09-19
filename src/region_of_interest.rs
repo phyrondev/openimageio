@@ -413,6 +413,12 @@ mod internal {
         }
     }
 
+    impl From<&Region> for *const oiio_ROI_t {
+        fn from(src: &Region) -> Self {
+            src as *const _ as _
+        }
+    }
+
     impl TryFrom<*const oiio_ROI_t> for RegionOfInterest {
         type Error = ();
 

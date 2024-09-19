@@ -96,7 +96,7 @@ macro_rules! pixels {
                 let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
                 unsafe {
-                    oiio_get_pixels(
+                    oiio_ImageBuf_get_pixels(
                         self.ptr,
                         region_of_interest.clone().into(),
                         $base_type,

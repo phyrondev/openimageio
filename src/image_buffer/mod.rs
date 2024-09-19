@@ -493,6 +493,40 @@ impl ImageBuffer {
     }
 }
 
+/// # Setters
+impl ImageBuffer {
+    pub fn set_pixel(&mut self, x: i32, y: i32, z: Option<i32>, value: &[f32]) {
+        unsafe {
+            oiio_ImageBuf_setpixel(
+                self.ptr,
+                x,
+                y,
+                z.unwrap_or(0),
+                value.as_ptr(),
+                value.len() as _,
+            );
+        }
+    }
+
+    pub fn set_origin(&mut self, x: i32, y: i32, z: Option<i32>) {
+        unsafe {
+            oiio_ImageBuf_set_origin(self.ptr, x, y, z.unwrap_or(0));
+        }
+    }
+
+    pub fn set_region_of_interest_full(&mut self, roi: &Region) {
+        unsafe {
+            oiio_ImageBuf_set_roi_full(self.ptr, roi.into());
+        }
+    }
+
+    pub fn expand_region_of_interest_full(&mut self) {
+        unsafe {
+            oiio_ImageBuf_expand_roi_full(self.ptr);
+        }
+    }
+}
+
 /// # Copying
 ///
 /// Try to copy the pixels and metadata from src to *this (optionally with an

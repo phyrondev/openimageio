@@ -1,5 +1,5 @@
 use crate::{algorithms::*, *};
-use core::{mem::transmute, ptr};
+use core::ptr;
 
 /// # Warp
 ///
@@ -12,8 +12,12 @@ use core::{mem::transmute, ptr};
 /// The transform is only defined over the area of the `stbuf` image, and thus
 /// the given `roi` argument will be intersected with its geometry.
 ///
-/// \b NOTE: The current behavior of this transform is modeled to match Nuke's
-/// STMap node.
+/// > The current behavior of this transform is modeled to match Nuke's
+/// **STMap** node.
+///
+/// ## For C++ Developers
+///
+/// The C++ version of this is called `st_warp()`.
 impl ImageBuffer {
     #[named]
     pub fn from_warp(source: &ImageBuffer, warp: &ImageBuffer) -> Result<Self> {

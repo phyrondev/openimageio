@@ -212,7 +212,7 @@ mod tests {
             "assets/wooden_lounge_2k__F32_RGBA.exr",
         ))?;
 
-        let image_buf = ImageBuffer::from_rotate_with(
+        let mut image_buf = ImageBuffer::from_rotate_with(
             &image_buf,
             42.0 * std::f32::consts::TAU / 360.0,
             &RotateOptions {
@@ -224,6 +224,8 @@ mod tests {
                 ..Default::default()
             },
         )?;
+
+        image_buf.expand_region_of_interest_full();
 
         image_buf.write(Utf8Path::new("rotated.exr"))?;
 

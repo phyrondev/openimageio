@@ -29,11 +29,15 @@ bool ImageBuf_write_with_spec(OIIO::ImageBuf const &buf,
 /// Workaround: if we pass in an OIIO::TypeDesc from Rust, we get an "invalid
 /// memory reference" crash here.
 /// TODO: figure out why and use ImageBuf::get_pixels() directly
-bool get_pixels(OIIO::ImageBuf const &buf, OIIO::ROI roi,
-                OIIO::TypeDesc::BASETYPE base_type, void *result) {
+bool ImageBuf_get_pixels(OIIO::ImageBuf const &buf, OIIO::ROI roi,
+                         OIIO::TypeDesc::BASETYPE base_type, void *result) {
   OIIO::TypeDesc type_desc = OIIO::TypeDesc(base_type, 0);
 
   return buf.get_pixels(roi, type_desc, result);
+}
+
+void ImageBuf_expand_roi_full(OIIO::ImageBuf &buf) {
+  buf.set_roi_full(buf.roi());
 }
 
 } // namespace bblext
@@ -140,11 +144,8 @@ BBL_MODULE(oiio) {
       //.m(&OIIO::ImageBuf::interppixel_NDC_full)
       .m(&OIIO::ImageBuf::interppixel_bicubic)
       .m(&OIIO::ImageBuf::interppixel_bicubic_NDC)
-      .m((void(OIIO::ImageBuf::*)(int, int, int, const float *, int)) &
-             OIIO::ImageBuf::setpixel,
-         "setpixel")
+
       //.m(&OIIO::ImageBuf::get_pixels)
-      .m(&OIIO::ImageBuf::set_pixels)
       .m(&OIIO::ImageBuf::initialized)
       .m(&OIIO::ImageBuf::storage)
       .m(&OIIO::ImageBuf::spec)
@@ -152,7 +153,6 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageBuf::nativespec)
       .m(&OIIO::ImageBuf::has_thumbnail)
       .m(&OIIO::ImageBuf::get_thumbnail)
-      .m(&OIIO::ImageBuf::set_thumbnail)
       .m(&OIIO::ImageBuf::clear_thumbnail)
       .m(&OIIO::ImageBuf::name)
       .m(&OIIO::ImageBuf::file_format_name)
@@ -174,7 +174,6 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageBuf::zmin)
       .m(&OIIO::ImageBuf::zmax)
       .m(&OIIO::ImageBuf::orientation)
-      .m(&OIIO::ImageBuf::set_orientation)
       .m(&OIIO::ImageBuf::oriented_width)
       .m(&OIIO::ImageBuf::oriented_height)
       .m(&OIIO::ImageBuf::oriented_x)
@@ -183,11 +182,8 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageBuf::oriented_full_height)
       .m(&OIIO::ImageBuf::oriented_full_x)
       .m(&OIIO::ImageBuf::oriented_full_y)
-      .m(&OIIO::ImageBuf::set_origin)
-      .m(&OIIO::ImageBuf::set_full)
       .m(&OIIO::ImageBuf::roi)
       .m(&OIIO::ImageBuf::roi_full)
-      .m(&OIIO::ImageBuf::set_roi_full)
       .m(&OIIO::ImageBuf::contains_roi)
       .m(&OIIO::ImageBuf::pixels_valid)
       .m(&OIIO::ImageBuf::pixeltype)
@@ -210,9 +206,8 @@ BBL_MODULE(oiio) {
          "pixeladdr_01")
       .m(&OIIO::ImageBuf::pixelindex)
       .m((void(OIIO::ImageBuf::*)(int) const) & OIIO::ImageBuf::threads,
-         "threads_00")
-      .m((int(OIIO::ImageBuf::*)() const) & OIIO::ImageBuf::threads,
-         "threads_01")
+         "set_threads")
+      .m((int(OIIO::ImageBuf::*)() const) & OIIO::ImageBuf::threads, "threads")
       .m(&OIIO::ImageBuf::has_error)
       .m(&OIIO::ImageBuf::geterror)
       .m(&OIIO::ImageBuf::deep)
@@ -220,15 +215,8 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageBuf::deep_pixel_ptr)
       .m(&OIIO::ImageBuf::deep_value)
       .m(&OIIO::ImageBuf::deep_value_uint)
-      .m(&OIIO::ImageBuf::set_deep_samples)
       .m(&OIIO::ImageBuf::deep_insert_samples)
       .m(&OIIO::ImageBuf::deep_erase_samples)
-      .m((void(OIIO::ImageBuf::*)(int, int, int, int, int, float)) &
-             OIIO::ImageBuf::set_deep_value,
-         "set_deep_value_00")
-      .m((void(OIIO::ImageBuf::*)(int, int, int, int, int, uint32_t)) &
-             OIIO::ImageBuf::set_deep_value,
-         "set_deep_value_01")
       .m(&OIIO::ImageBuf::copy_deep_pixel)
       .m((OIIO::DeepData * (OIIO::ImageBuf::*)()) & OIIO::ImageBuf::deepdata,
          "deepdata")
@@ -238,13 +226,30 @@ BBL_MODULE(oiio) {
       .m(bbl::Wrap(&OIIO::ImageBuf::WrapMode_from_string,
                    [](char const *name) -> OIIO::ImageBuf::WrapMode {
                      return OIIO::ImageBuf::WrapMode_from_string(name);
-                   }));
+                   }))
+      .m((void(OIIO::ImageBuf::*)(int, int, int, const float *, int)) &
+             OIIO::ImageBuf::setpixel,
+         "setpixel")
+      .m(&OIIO::ImageBuf::set_deep_samples)
+      .m(&OIIO::ImageBuf::set_thumbnail)
+      .m(&OIIO::ImageBuf::set_orientation)
+      .m(&OIIO::ImageBuf::set_roi_full)
+      .m(&OIIO::ImageBuf::set_origin)
+      .m(&OIIO::ImageBuf::set_full)
+      .m(&OIIO::ImageBuf::set_pixels)
+      .m((void(OIIO::ImageBuf::*)(int, int, int, int, int, float)) &
+             OIIO::ImageBuf::set_deep_value,
+         "set_deep_value_00")
+      .m((void(OIIO::ImageBuf::*)(int, int, int, int, int, uint32_t)) &
+             OIIO::ImageBuf::set_deep_value,
+         "set_deep_value_01");
 
   // bbl::fn(&bblext::ImageBuf_name);
   // bbl::fn(&bblext::ImageBuf_file_format_name);
   bbl::fn(&bblext::ImageBuf_write);
   bbl::fn(&bblext::ImageBuf_write_with_spec);
-  bbl::fn(&bblext::get_pixels);
+  bbl::fn(&bblext::ImageBuf_get_pixels);
+  bbl::fn(&bblext::ImageBuf_expand_roi_full);
 
   bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
       .smartptr_to<OIIO::ImageBuf>();

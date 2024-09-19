@@ -4,6 +4,10 @@ use core::ptr;
 /// # Transform
 ///
 /// Transform the image using the supplied 3×3 transformation matrix.
+///
+/// ## For C++ Developers
+///
+/// The C++ version of this is called `warp()`.
 impl ImageBuffer {
     #[named]
     pub fn from_transform<'a>(
@@ -162,6 +166,8 @@ mod tests {
                 ..Default::default()
             },
         )?;
+
+        image_buf.expand_region_of_interest_full();
 
         image_buf.write(Path::new("transformed.exr"))?;
 
