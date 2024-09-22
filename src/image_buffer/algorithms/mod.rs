@@ -122,6 +122,7 @@ pub mod compare;
 pub mod fill;
 pub mod over;
 pub mod render_text;
+pub use render_text::*;
 pub mod resize;
 pub mod rotate;
 pub use rotate::*;

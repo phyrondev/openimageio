@@ -9,8 +9,8 @@ use core::ptr;
 /// coordinate in the source image, which is then sampled at that position using
 /// the given reconstruction filter to produce an output pixel.
 ///
-/// The transform is only defined over the area of the `stbuf` image, and thus
-/// the given `roi` argument will be intersected with its geometry.
+/// The transform is only defined over the area of the `warp` image, and thus
+/// a given `region_of_interest` argument will be intersected with its geometry.
 ///
 /// > The current behavior of this transform is modeled to match Nuke's
 /// **STMap** node.
@@ -108,21 +108,19 @@ mod tests {
 
     #[test]
     fn warp() -> Result<()> {
-        use camino::Utf8Path as Path;
-
-        let mut image_buf = ImageBuffer::from_file(Path::new(
+        let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
             "assets/wooden_lounge_2k__F32_RGBA.exr",
         ))?;
 
         let warp =
-            ImageBuffer::from_file(Path::new("assets/warp__U8_RGB.png"))?;
+            ImageBuffer::from_file(Utf8Path::new("assets/warp__U8_RGB.png"))?;
 
         // Resize the source image to match the warp image.
         image_buf.resize(&warp.region_of_interest_full().region().unwrap())?;
 
         image_buf.warp(&warp)?;
 
-        image_buf.write(Path::new("warped.exr"))?;
+        image_buf.write(Utf8Path::new("target/warped.exr"))?;
 
         Ok(())
     }

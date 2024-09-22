@@ -227,7 +227,7 @@ mod tests {
 
         image_buf.expand_region_of_interest_full();
 
-        image_buf.write(Utf8Path::new("rotated.exr"))?;
+        image_buf.write(Utf8Path::new("target/rotated.exr"))?;
 
         Ok(())
     }

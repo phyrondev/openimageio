@@ -2,7 +2,7 @@ use crate::*;
 use core::{marker::PhantomData, mem::MaybeUninit};
 
 pub struct CspanF32<'a> {
-    pub(crate) ptr: *const oiio_CspanF32_t,
+    ptr: *const oiio_CspanF32_t,
     marker: PhantomData<*const &'a ()>,
 }
 
@@ -30,5 +30,12 @@ impl Drop for CspanF32<'_> {
         unsafe {
             oiio_CspanF32_dtor(self.ptr as _);
         }
+    }
+}
+
+impl<'a> CspanF32<'a> {
+    #[inline(always)]
+    pub fn as_raw_ptr(&self) -> *const oiio_CspanF32_t {
+        self.ptr
     }
 }

@@ -25,13 +25,10 @@ impl ImageBuffer {
     #[named]
     pub fn from_fill(values: &[f32], region: &Region) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_ffi(
-            values,
-            &Options {
-                region_of_interest: RegionOfInterest::Region(region.clone()),
-                ..Default::default()
-            },
-        );
+        let is_ok = image_buffer.fill_ffi(values, &Options {
+            region_of_interest: RegionOfInterest::Region(region.clone()),
+            ..Default::default()
+        });
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -43,13 +40,10 @@ impl ImageBuffer {
         thread_count: Option<u16>,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_ffi(
-            values,
-            &Options {
-                region_of_interest: RegionOfInterest::Region(region.clone()),
-                thread_count: thread_count.unwrap_or(0),
-            },
-        );
+        let is_ok = image_buffer.fill_ffi(values, &Options {
+            region_of_interest: RegionOfInterest::Region(region.clone()),
+            thread_count: thread_count.unwrap_or(0),
+        });
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -85,14 +79,10 @@ impl ImageBuffer {
         region: &Region,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_vertical_ffi(
-            start,
-            end,
-            &Options {
-                region_of_interest: RegionOfInterest::Region(region.clone()),
-                ..Default::default()
-            },
-        );
+        let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
+            region_of_interest: RegionOfInterest::Region(region.clone()),
+            ..Default::default()
+        });
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -105,14 +95,10 @@ impl ImageBuffer {
         thread_count: Option<u16>,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_vertical_ffi(
-            start,
-            end,
-            &Options {
-                region_of_interest: RegionOfInterest::Region(region.clone()),
-                thread_count: thread_count.unwrap_or(0),
-            },
-        );
+        let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
+            region_of_interest: RegionOfInterest::Region(region.clone()),
+            thread_count: thread_count.unwrap_or(0),
+        });
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -241,7 +227,7 @@ impl ImageBuffer {
         unsafe {
             oiio_ImageBufAlgo_fill(
                 self.ptr,
-                CspanF32::new(values).ptr as _,
+                CspanF32::new(values).as_raw_ptr() as _,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
@@ -263,8 +249,8 @@ impl ImageBuffer {
         unsafe {
             oiio_ImageBufAlgo_fill_vertical(
                 self.ptr,
-                CspanF32::new(start).ptr as _,
-                CspanF32::new(end).ptr as _,
+                CspanF32::new(start).as_raw_ptr() as _,
+                CspanF32::new(end).as_raw_ptr() as _,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
@@ -288,10 +274,10 @@ impl ImageBuffer {
         unsafe {
             oiio_ImageBufAlgo_fill_corners(
                 self.ptr,
-                CspanF32::new(top_left).ptr as _,
-                CspanF32::new(top_right).ptr as _,
-                CspanF32::new(bottom_left).ptr as _,
-                CspanF32::new(bottom_right).ptr as _,
+                CspanF32::new(top_left).as_raw_ptr() as _,
+                CspanF32::new(top_right).as_raw_ptr() as _,
+                CspanF32::new(bottom_left).as_raw_ptr() as _,
+                CspanF32::new(bottom_right).as_raw_ptr() as _,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
@@ -323,7 +309,7 @@ mod tests {
             &Region::new(0..640, 0..480, 0..1, Some(0..4)),
         )?;
 
-        image_buf.write(Utf8Path::new("test_fill.tif"))?;
+        image_buf.write(Utf8Path::new("target/fill.exr"))?;
 
         /*
         // Draw a filled red rectangle overtop existing image A.

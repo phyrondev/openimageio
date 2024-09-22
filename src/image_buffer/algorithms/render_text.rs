@@ -1,5 +1,5 @@
 use crate::*;
-use core::{mem::MaybeUninit, ptr};
+use core::mem::MaybeUninit;
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
 pub enum TextAlignX {
@@ -41,7 +41,7 @@ pub struct RenderTextOptions<'a> {
     ///
     /// 4. In fonts directories one level up from the place where the currently
     ///    running binary lives.
-    pub font_name: Option<Ustr>,
+    pub font_name: Option<&'a str>,
     /// Color for drawing the text, defaulting to opaque white `[1.0, 1.0, …]`
     /// in all channels if `None`. If provided, it is expected to point to an
     /// `[f32]` slice of length at least equal to
@@ -51,10 +51,10 @@ pub struct RenderTextOptions<'a> {
     pub text_align_x: TextAlignX,
     /// Text alignment in the vertical direction.
     pub text_align_y: TextAlignY,
-    /// If nonzero, a 'drop shadow' of this radius will be used to make the
+    /// If nonzero, a 'outline' of this radius will be used to make the
     /// text look more clear by dilating the alpha channel of the composite
     /// (makes a black halo around the characters).
-    pub shadow_size: u16,
+    pub outline: u16,
     /// See the [Region of Interest](#region-of-interest) section on
     /// [`ImageBuffer`].
     pub region_of_interest: RegionOfInterest,
@@ -70,7 +70,7 @@ impl Default for RenderTextOptions<'_> {
             color: None,
             text_align_x: TextAlignX::default(),
             text_align_y: TextAlignY::default(),
-            shadow_size: 0,
+            outline: 0,
             region_of_interest: RegionOfInterest::default(),
             thread_count: 0,
         }
@@ -209,17 +209,15 @@ impl ImageBuffer {
                 options.font_size as _,
                 options
                     .font_name
-                    .as_ref()
-                    .map(|s| StringView::from(s).ptr)
-                    .unwrap_or(ptr::null_mut()),
+                    .map_or(StringView::default(), StringView::from)
+                    .as_raw_ptr() as _,
                 options
                     .color
-                    .as_ref()
-                    .map(|c| CspanF32::new(c).ptr)
-                    .unwrap_or(CspanF32::new(&[1.0]).ptr) as _,
+                    .map_or(CspanF32::new(&[1.0]), CspanF32::new)
+                    .as_raw_ptr() as _,
                 options.text_align_x.into(),
                 options.text_align_y.into(),
-                options.shadow_size as _,
+                options.outline as _,
                 options.region_of_interest.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
@@ -227,5 +225,35 @@ impl ImageBuffer {
 
             is_ok.assume_init()
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{algorithms::*, *};
+
+    #[test]
+    fn render_text() -> Result<()> {
+        let mut image_buffer = ImageBuffer::from_file(Utf8Path::new(
+            "assets/wooden_lounge_2k__F32_RGBA.exr",
+        ))?;
+
+        image_buffer.render_text_with(
+            512,
+            256,
+            "Kringers Fossed!",
+            &RenderTextOptions {
+                font_size: 128,
+                font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
+                text_align_x: TextAlignX::Center,
+                text_align_y: TextAlignY::Center,
+                color: Some(&[1.0, 0.0, 0.0, 0.25]),
+                ..Default::default()
+            },
+        )?;
+
+        image_buffer.write(Utf8Path::new("target/render_text.exr"))?;
+
+        Ok(())
     }
 }

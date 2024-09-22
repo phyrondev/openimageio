@@ -159,17 +159,14 @@ mod tests {
             1.0,
         ];
 
-        image_buf.transform_with(
-            matrix,
-            &TransformOptions {
-                recompute_region_of_interest: true,
-                ..Default::default()
-            },
-        )?;
+        image_buf.transform_with(matrix, &TransformOptions {
+            recompute_region_of_interest: true,
+            ..Default::default()
+        })?;
 
         image_buf.expand_region_of_interest_full();
 
-        image_buf.write(Path::new("transformed.exr"))?;
+        image_buf.write(Path::new("target/transformed.exr"))?;
 
         Ok(())
     }
