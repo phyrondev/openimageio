@@ -119,6 +119,7 @@ use std::sync::LazyLock;
 pub mod color_convert;
 pub use color_convert::*;
 pub mod compare;
+pub mod cut;
 pub mod fill;
 pub mod over;
 pub mod render_text;

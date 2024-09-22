@@ -143,4 +143,10 @@ BBL_MODULE(oiio) {
                     bool, bool, OIIO::ROI, int)) &
               OIIO::ImageBufAlgo::st_warp,
           "ImageBufAlgo_st_warp");
+
+  // cut()
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &,
+                    OIIO::ROI, int)) &
+              OIIO::ImageBufAlgo::cut,
+          "ImageBufAlgo_cut");
 }

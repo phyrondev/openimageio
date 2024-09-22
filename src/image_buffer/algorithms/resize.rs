@@ -73,7 +73,7 @@ pub struct ResizeOptions {
 
 impl ImageBuffer {
     #[inline(always)]
-    pub fn resize_ffi(
+    fn resize_ffi(
         &mut self,
         src: &ImageBuffer,
         region: &Region,
@@ -117,14 +117,11 @@ mod tests {
         {
             let image: image::DynamicImage = image_buffer.try_into()?;
 
-            viuer::print(
-                &image,
-                &viuer::Config {
-                    width: Some(80),
-                    height: Some(40),
-                    ..Default::default()
-                },
-            )?;
+            viuer::print(&image, &viuer::Config {
+                width: Some(80),
+                height: Some(40),
+                ..Default::default()
+            })?;
         }
 
         Ok(())
