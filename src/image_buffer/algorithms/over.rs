@@ -6,7 +6,8 @@ use crate::{algorithms::*, *};
 impl ImageBuffer {
     #[named]
     pub fn from_over(a: &ImageBuffer, b: &ImageBuffer) -> Result<Self> {
-        let image_buffer = ImageBuffer::from_over_ffi(a, b, Options::default());
+        let image_buffer =
+            ImageBuffer::from_over_ffi(a, b, &Options::default());
 
         image_buffer.self_or_error(true, function_name!())
     }
@@ -15,7 +16,7 @@ impl ImageBuffer {
     pub fn from_over_with(
         a: &ImageBuffer,
         b: &ImageBuffer,
-        options: Options,
+        options: &Options,
     ) -> Result<Self> {
         let image_buffer = ImageBuffer::from_over_ffi(a, b, options);
 
@@ -24,7 +25,7 @@ impl ImageBuffer {
 
     #[named]
     pub fn over(&mut self, other: &ImageBuffer) -> Result<&mut Self> {
-        let is_ok = self.over_ffi(other, Options::default());
+        let is_ok = self.over_ffi(other, &Options::default());
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -33,7 +34,7 @@ impl ImageBuffer {
     pub fn over_with(
         &mut self,
         other: &ImageBuffer,
-        options: Options,
+        options: &Options,
     ) -> Result<&mut Self> {
         let is_ok = self.over_ffi(other, options);
 
@@ -42,7 +43,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    fn over_ffi(&mut self, other: &ImageBuffer, options: Options) -> bool {
+    fn over_ffi(&mut self, other: &ImageBuffer, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
@@ -62,7 +63,7 @@ impl ImageBuffer {
     fn from_over_ffi(
         a: &ImageBuffer,
         b: &ImageBuffer,
-        options: Options,
+        options: &Options,
     ) -> ImageBuffer {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
