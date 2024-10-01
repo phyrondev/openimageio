@@ -1,6 +1,6 @@
 use crate::*;
 use core::mem::MaybeUninit;
-use num_enum::{IntoPrimitive, TryFromPrimitive};
+use num_enum::IntoPrimitive;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, IntoPrimitive)]
 #[repr(u32)]

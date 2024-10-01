@@ -113,11 +113,11 @@ impl ImageBuffer {
                 options.unpremultiply,
                 options
                     .context
-                    .map_or(|c| StringView::default(), StringView::from(c.0))
+                    .map_or(StringView::default(), |c| StringView::from(c.0))
                     .as_raw_ptr() as _,
                 options
                     .context
-                    .map_or(StringView::default(), StringView::from)
+                    .map_or(StringView::default(), |c| StringView::from(c.1))
                     .as_raw_ptr() as _,
                 options
                     .config
