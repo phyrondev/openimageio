@@ -153,7 +153,7 @@ pub struct ImageSpecification {
 pub type ImageSpec = ImageSpecification;
 
 pub(crate) struct ImageSpecInternal {
-    pub(crate) ptr: *mut oiio_ImageSpec_t,
+    ptr: *mut oiio_ImageSpec_t,
 }
 
 /*impl From<ImageSpec> for oiio_ImageSpec_t {
@@ -199,50 +199,32 @@ impl From<&ImageSpecification> for ImageSpecInternal {
 
             match &i.channel_format {
                 ChannelFormat::Uniform(format) => {
-                    oiio_ImageSpec_set_format(
-                        ptr,
-                        oiio_TypeDesc_t {
-                            basetype: (*format).into(),
-                            ..Default::default()
-                        },
-                    );
+                    oiio_ImageSpec_set_format(ptr, oiio_TypeDesc_t {
+                        basetype: (*format).into(),
+                        ..Default::default()
+                    });
                 }
                 ChannelFormat::PerChannel(formats) => {
-                    oiio_ImageSpec_clear_and_reserve_channelformats(
-                        ptr,
-                        formats.len(),
-                    );
+                    oiio_ImageSpec_clear_and_reserve_channelformats(ptr, formats.len());
                     for format in formats.iter() {
-                        oiio_ImageSpec_push_channelformat(
-                            ptr,
-                            oiio_TypeDesc_t {
-                                basetype: (*format).into(),
-                                ..Default::default()
-                            },
-                        );
+                        oiio_ImageSpec_push_channelformat(ptr, oiio_TypeDesc_t {
+                            basetype: (*format).into(),
+                            ..Default::default()
+                        });
                     }
                 }
             }
 
-            oiio_ImageSpec_clear_and_reserve_channelnames(
-                ptr,
-                i.channel_name.len(),
-            );
+            oiio_ImageSpec_clear_and_reserve_channelnames(ptr, i.channel_name.len());
             for name in i.channel_name.iter() {
-                oiio_ImageSpec_push_channelname(
-                    ptr,
-                    OiioString::new(name).as_raw_ptr(),
-                );
+                oiio_ImageSpec_push_channelname(ptr, OiioString::new(name).as_raw_ptr());
             }
 
             oiio_ImageSpec_set_alpha_channel(
                 ptr,
                 i.alpha_channel_index.map(|i| i as _).unwrap_or(-1),
             );
-            oiio_ImageSpec_set_z_channel(
-                ptr,
-                i.z_channel_index.map(|i| i as _).unwrap_or(-1),
-            );
+            oiio_ImageSpec_set_z_channel(ptr, i.z_channel_index.map(|i| i as _).unwrap_or(-1));
             oiio_ImageSpec_set_deep(ptr, i.deep);
 
             // TODO: set `extra_attribs`
@@ -294,7 +276,6 @@ impl ImageSpecInternal {
     }*/
 }
 
-#[cfg(feature = "ffi")]
 impl ImageSpecInternal {
     pub fn as_raw_ptr(&self) -> *const oiio_ImageSpec_t {
         self.ptr

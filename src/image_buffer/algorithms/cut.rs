@@ -1,6 +1,6 @@
-use crate::{algorithms::*, *};
+use crate::*;
 use anyhow::Result;
-use core::{mem::MaybeUninit, ptr};
+use core::mem::MaybeUninit;
 
 /// # Cut
 ///
@@ -12,23 +12,22 @@ use core::{mem::MaybeUninit, ptr};
 /// [`ImageBuffer`].
 impl ImageBuffer {
     #[named]
-    pub fn from_cut(src: &ImageBuffer, region: &Region) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.cut_ffi(src, region, None);
+    pub fn replace_by_cut(&mut self, src: &ImageBuffer, region: &Region) -> Result<&mut Self> {
+        let is_ok = self.cut_ffi(src, region, None);
 
-        image_buffer.self_or_error(is_ok, function_name!())
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn from_cut_with(
+    pub fn replace_by_cut_with(
+        &mut self,
         src: &ImageBuffer,
         region: &Region,
         thread_count: Option<u16>,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.cut_ffi(src, region, thread_count);
+    ) -> Result<&mut Self> {
+        let is_ok = self.cut_ffi(src, region, thread_count);
 
-        image_buffer.self_or_error(is_ok, function_name!())
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
@@ -41,11 +40,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn cut_with(
-        &mut self,
-        region: &Region,
-        thread_count: Option<u16>,
-    ) -> Result<&mut Self> {
+    pub fn cut_with(&mut self, region: &Region, thread_count: Option<u16>) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.cut_ffi(self, region, thread_count);
         *self = image_buffer;
@@ -56,12 +51,7 @@ impl ImageBuffer {
 
 impl ImageBuffer {
     #[inline(always)]
-    fn cut_ffi(
-        &mut self,
-        src: &ImageBuffer,
-        region: &Region,
-        thread_count: Option<u16>,
-    ) -> bool {
+    fn cut_ffi(&mut self, src: &ImageBuffer, region: &Region, thread_count: Option<u16>) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
@@ -84,9 +74,8 @@ mod tests {
 
     #[test]
     fn cut() -> Result<()> {
-        let mut image_buffer = ImageBuffer::from_file(Utf8Path::new(
-            "assets/j0.3toD__F16_RGBA.exr",
-        ))?;
+        let mut image_buffer =
+            ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
         let region = Region::new_2d(0..80, 0..80);
 

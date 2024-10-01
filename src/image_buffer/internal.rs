@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 static UNKNOWN_ERROR: &str = "Unknown error";
 
@@ -22,11 +22,7 @@ impl ImageBuffer {
     }
 
     #[inline(always)]
-    pub(crate) fn self_or_error(
-        self,
-        is_ok: bool,
-        function_name: &str,
-    ) -> Result<Self> {
+    pub(crate) fn self_or_error(self, is_ok: bool, function_name: &str) -> Result<Self> {
         if is_ok && self.is_ok() {
             Ok(self)
         } else {

@@ -10,42 +10,32 @@ use core::ptr;
 /// The C++ version of this is called `warp()`.
 impl ImageBuffer {
     #[named]
-    pub fn from_transform<'a>(
-        src: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32<'a>>,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.transform_ffi(
-            src,
-            matrix_2d,
-            &TransformOptions::default(),
-        );
-        image_buffer.self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn from_transform_with<'a>(
-        src: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32<'a>>,
-        options: &TransformOptions,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.transform_ffi(src, matrix_2d, options);
-
-        image_buffer.self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn transform<'a>(
+    pub fn replace_by_transform<'a>(
         &mut self,
+        source: &ImageBuffer,
         matrix_2d: impl Into<Matrix3F32<'a>>,
     ) -> Result<&mut Self> {
+        let is_ok = self.transform_ffi(source, matrix_2d, &TransformOptions::default());
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn replace_by_transform_with<'a>(
+        &mut self,
+        source: &ImageBuffer,
+        matrix_2d: impl Into<Matrix3F32<'a>>,
+        transform_options: &TransformOptions,
+    ) -> Result<&mut Self> {
+        let is_ok = self.transform_ffi(source, matrix_2d, transform_options);
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn transform<'a>(&mut self, matrix_2d: impl Into<Matrix3F32<'a>>) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.transform_ffi(
-            self,
-            matrix_2d,
-            &TransformOptions::default(),
-        );
+        let is_ok = image_buffer.transform_ffi(self, matrix_2d, &TransformOptions::default());
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -55,10 +45,10 @@ impl ImageBuffer {
     pub fn transform_with<'a>(
         &mut self,
         matrix_2d: impl Into<Matrix3F32<'a>>,
-        options: &TransformOptions,
+        transform_options: &TransformOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.transform_ffi(self, matrix_2d, options);
+        let is_ok = image_buffer.transform_ffi(self, matrix_2d, transform_options);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -81,8 +71,9 @@ pub struct TransformOptions {
     /// interest as the source image otherwise.
     ///
     /// If `true` and the modified `ImageBuffer` is uninitialized or if a new
-    /// ImageBuffer is created by the `from_transform_with()`, variant, the
-    /// buffer will be sized to be large enough to hold the transformed image.
+    /// ImageBuffer is created by the `replace_by_transform_with()`, variant,
+    /// the buffer will be sized to be large enough to hold the transformed
+    /// image.
     ///
     /// If `false` the image will have the same region_of_interest as the
     /// source image.
@@ -108,25 +99,27 @@ pub struct TransformOptions {
 impl ImageBuffer {
     fn transform_ffi<'a>(
         &mut self,
-        other: &ImageBuffer,
+        source: &ImageBuffer,
         matrix_2d: impl Into<Matrix3F32<'a>>,
-        options: &TransformOptions,
+        transform_options: &TransformOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         let matrix_2d = matrix_2d.into();
-        let matrix_2d = Matrix33fHelper(matrix_2d.0 as *const _ as _);
+        let matrix_2d: Matrix33fHelper = matrix_2d.0 as *const _ as _;
 
         unsafe {
             oiio_ImageBufAlgo_warp(
-                self.ptr,
-                other.ptr,
+                self.as_raw_ptr_mut(),
+                source.as_raw_ptr(),
                 &matrix_2d as *const _ as _,
-                options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
-                options.recompute_region_of_interest,
-                options.wrap_mode.clone().into(),
-                options.region_of_interest.clone().into(),
-                options.thread_count as _,
+                transform_options
+                    .filter
+                    .map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
+                transform_options.recompute_region_of_interest,
+                transform_options.wrap_mode.clone().into(),
+                transform_options.region_of_interest.clone().into(),
+                transform_options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
 
@@ -143,9 +136,8 @@ mod tests {
     fn transform() -> Result<()> {
         use camino::Utf8Path as Path;
 
-        let mut image_buf = ImageBuffer::from_file(Path::new(
-            "assets/wooden_lounge_2k__F32_RGBA.exr",
-        ))?;
+        let mut image_buf =
+            ImageBuffer::from_file(Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
         let matrix = &[
             0.7071068f32,
@@ -158,6 +150,8 @@ mod tests {
             -8.284271,
             1.0,
         ];
+
+        let matrix = &[1., 0., 0.5, 0., 1., 0., 0., 0., 1.];
 
         image_buf.transform_with(matrix, &TransformOptions {
             recompute_region_of_interest: true,

@@ -4,17 +4,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 /// Describes the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.
-#[derive(
-    Clone,
-    Copy,
-    Default,
-    Debug,
-    Eq,
-    PartialEq,
-    Hash,
-    IntoPrimitive,
-    TryFromPrimitive,
-)]
+#[derive(Clone, Copy, Default, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum BaseType {
     //Unknown = oiio_BASETYPE::oiio_BASETYPE_UNKNOWN.0 as _,
@@ -112,17 +102,7 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
 ///       ..Default::default()
 ///   }
 ///   ```
-#[derive(
-    Clone,
-    Copy,
-    Default,
-    Debug,
-    Eq,
-    PartialEq,
-    Hash,
-    IntoPrimitive,
-    TryFromPrimitive,
-)]
+#[derive(Clone, Copy, Default, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum Aggregate {
     #[default]
@@ -143,17 +123,7 @@ pub enum Aggregate {
 ///
 /// For example, if a spatial vector quantity should transform as a point,
 /// direction vector, or surface normal.
-#[derive(
-    Copy,
-    Clone,
-    Default,
-    Debug,
-    Eq,
-    PartialEq,
-    Hash,
-    IntoPrimitive,
-    TryFromPrimitive,
-)]
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VecSemantics {
     /// A color.
@@ -188,6 +158,8 @@ pub enum ArrayLen {
     Unspecific,
 }
 
+/// Describes the types of data that are handled by OpenImageIO.
+///
 /// There are two kinds of data that are important to OpenImageIO:
 ///
 /// * Internal data is in the memory of the computer, used by an application
@@ -202,12 +174,13 @@ pub enum ArrayLen {
 /// enumeration.
 ///
 /// A `TypeDescription` describes a base data format type, aggregation into
-/// simple vector and matrix types, and an array length (if it’s an array).
+/// simple vector and matrix types, and an array length (if it's an array).
 ///
-/// # C++
+/// # For C++ Developers
 ///
-/// The name was changed to not contain abbreviations. The original name,
-/// [`TypeDesc`] is available behind a `type` alias.
+/// The name was changed to not contain abbreviations (ergonomics). The original
+/// name, [`TypeDesc`], is available behind a `type` alias when the
+/// `cpp_api_names` feature is enabled.
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#data-type-descriptions-typedesc)
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
@@ -220,6 +193,11 @@ pub struct TypeDescription {
 }
 
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
+///
+/// # For C++ Developers
+///
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#data-type-descriptions-typedesc)
+#[cfg(feature = "cpp_api_names")]
 pub type TypeDesc = TypeDescription;
 
 impl TypeDescription {
@@ -231,10 +209,7 @@ impl TypeDescription {
         let mut result = std::mem::MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_TypeDesc_size(
-                &self.into() as *const _ as _,
-                &mut result as *mut _ as _,
-            );
+            oiio_TypeDesc_size(&self.into() as *const _ as _, &mut result as *mut _ as _);
             result.assume_init()
         }
     }
@@ -243,10 +218,7 @@ impl TypeDescription {
         let mut result = std::mem::MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_TypeDesc_elementsize(
-                &self.into() as *const _ as _,
-                &mut result as *mut _ as _,
-            );
+            oiio_TypeDesc_elementsize(&self.into() as *const _ as _, &mut result as *mut _ as _);
             result.assume_init()
         }
     }
@@ -320,11 +292,8 @@ impl From<&oiio_TypeDesc_t> for TypeDescription {
             },
             aggregate: t.aggregate.try_into().unwrap(),
             vec_semantics: match t.vecsemantics {
-                b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 as u8
-                    == b
-                    || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0
-                        as u8
-                        == b =>
+                b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 as u8 == b
+                    || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0 as u8 == b =>
                 {
                     None
                 }

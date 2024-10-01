@@ -1,5 +1,8 @@
+use crate::*;
+use core::mem::MaybeUninit;
+
 /// Optional parameters for [`ImageBuffer`]'s
-/// [`from_noise_with()`](ImageBuffer::from_noise_with) and
+/// [`replace_by_noise_with()`](ImageBuffer::replace_by_noise_with) and
 /// [`noise_with()`](ImageBuffer::noise_with) methods.
 #[derive(Clone, Default)]
 pub struct NoiseOptions {
@@ -54,12 +57,7 @@ pub enum NoiseType {
 impl ImageBuffer {
     /// Add noise.
     #[named]
-    pub fn noise(
-        &mut self,
-        noise_type: NoiseType,
-        a: f32,
-        b: f32,
-    ) -> Result<&mut Self> {
+    pub fn noise(&mut self, noise_type: NoiseType, a: f32, b: f32) -> Result<&mut Self> {
         let is_ok = self.noise_ffi(noise_type, a, b, &NoiseOptions::default());
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -95,19 +93,13 @@ impl From<NoiseType> for StringView<'static> {
 // Internal noise FFI call.
 impl ImageBuffer {
     #[inline(always)]
-    fn noise_ffi(
-        &mut self,
-        noise_type: NoiseType,
-        a: f32,
-        b: f32,
-        options: &NoiseOptions,
-    ) -> bool {
+    fn noise_ffi(&mut self, noise_type: NoiseType, a: f32, b: f32, options: &NoiseOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
             oiio_ImageBufAlgo_noise(
-                self.ptr,
-                StringView::from(noise_type).ptr,
+                self.as_raw_ptr_mut(),
+                StringView::from(noise_type).as_raw_ptr() as _,
                 a,
                 b,
                 options.monochromatic,

@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use core::mem::MaybeUninit;
 use parking_lot::{ArcRwLockReadGuard, ArcRwLockWriteGuard, RawRwLock, RwLock};
 use std::sync::Arc;
@@ -37,10 +37,7 @@ impl ColorConfig {
         let mut ptr = MaybeUninit::<*mut oiio_ColorConfig_t>::uninit();
 
         unsafe {
-            oiio_ColorConfig_ctor(
-                StringView::default().ptr,
-                &mut ptr as *mut _ as _,
-            );
+            oiio_ColorConfig_ctor(StringView::default().ptr, &mut ptr as *mut _ as _);
 
             Self {
                 ptr: Arc::new(RwLock::new(ptr.assume_init())),
@@ -53,10 +50,7 @@ impl ColorConfig {
         let mut ptr = MaybeUninit::<*mut oiio_ColorConfig_t>::uninit();
 
         let color_config = unsafe {
-            oiio_ColorConfig_ctor(
-                StringView::from(path).ptr,
-                &mut ptr as *mut _ as _,
-            );
+            oiio_ColorConfig_ctor(StringView::from(path).ptr, &mut ptr as *mut _ as _);
 
             Self {
                 ptr: Arc::new(RwLock::new(ptr.assume_init())),
@@ -79,10 +73,7 @@ impl ColorConfig {
         let mut is_error = MaybeUninit::<bool>::uninit();
 
         unsafe {
-            oiio_ColorConfig_has_error(
-                *self.ptr.read_arc(),
-                &mut is_error as *mut _ as _,
-            );
+            oiio_ColorConfig_has_error(*self.ptr.read_arc(), &mut is_error as *mut _ as _);
 
             !is_error.assume_init()
         }
@@ -92,11 +83,7 @@ impl ColorConfig {
         let mut error = MaybeUninit::<*mut oiio_String_t>::uninit();
 
         if unsafe {
-            0 != oiio_ColorConfig_geterror(
-                *self.ptr.read_arc(),
-                clear,
-                &mut error as *mut _ as _,
-            )
+            0 != oiio_ColorConfig_geterror(*self.ptr.read_arc(), clear, &mut error as *mut _ as _)
         } {
             // Something went wrong.
             None
@@ -116,16 +103,12 @@ impl ColorConfig {
 }
 
 impl ColorConfig {
-    pub(crate) fn read_arc(
-        &self,
-    ) -> ArcRwLockReadGuard<RawRwLock, *mut oiio_ColorConfig_t> {
+    pub(crate) fn read_arc(&self) -> ArcRwLockReadGuard<RawRwLock, *mut oiio_ColorConfig_t> {
         self.ptr.read_arc()
     }
 
     #[allow(dead_code)]
-    pub(crate) fn write_arc(
-        &self,
-    ) -> ArcRwLockWriteGuard<RawRwLock, *mut oiio_ColorConfig_t> {
+    pub(crate) fn write_arc(&self) -> ArcRwLockWriteGuard<RawRwLock, *mut oiio_ColorConfig_t> {
         self.ptr.write_arc()
     }
 }
@@ -134,8 +117,7 @@ impl Drop for ColorConfig {
     fn drop(&mut self) {
         let ptr_locked = self.ptr.write_arc();
 
-        if 1 == Arc::<RwLock<*mut oiio_ColorConfig_t>>::strong_count(&self.ptr)
-        {
+        if 1 == Arc::<RwLock<*mut oiio_ColorConfig_t>>::strong_count(&self.ptr) {
             // FIXME? Can we have a situation where the cache is dropped
             // while another thread copies some object that holds a reference
             // to the cache?.

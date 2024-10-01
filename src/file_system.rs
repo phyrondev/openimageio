@@ -2,9 +2,7 @@ use crate::*;
 use core::mem::MaybeUninit;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(
-    Debug, Hash, PartialEq, Eq, Clone, Copy, IntoPrimitive, TryFromPrimitive,
-)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, IntoPrimitive)]
 #[repr(u32)]
 pub enum IoProxyMode {
     Closed = oiio_Mode::oiio_Mode_Closed.0 as _,
@@ -18,14 +16,21 @@ impl From<IoProxyMode> for oiio_Mode {
     }
 }
 
+/// Proxy for I/O.
+///
+/// This provides a simplified interface for file I/O that can have custom
+/// overrides.
 pub enum IoProxy {
     File(IoFile),
     MemoryWriter,
     MemoryReader,
 }
 
+/// [`IoProxy`] variant for reading or writing (but not both).
+///
+/// This wraps a C `stdio` `FILE`.
 pub struct IoFile {
-    pub(crate) ptr: *mut oiio_IOFile_t,
+    ptr: *mut oiio_IOFile_t,
 }
 
 impl IoFile {
@@ -34,7 +39,7 @@ impl IoFile {
 
         unsafe {
             oiio_IOFile_ctor(
-                StringView::from(file_name).ptr,
+                StringView::from(file_name).as_raw_ptr() as _,
                 mode.into(),
                 &mut ptr as *mut _ as *mut _,
             );

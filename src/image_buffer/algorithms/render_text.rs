@@ -97,12 +97,7 @@ impl ImageBuffer {
     #[named]
     pub fn from_render_text(x: i32, y: i32, text: &str) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.render_text_ffi(
-            x,
-            y,
-            text,
-            &RenderTextOptions::default(),
-        );
+        let is_ok = image_buffer.render_text_ffi(x, y, text, &RenderTextOptions::default());
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -130,14 +125,8 @@ impl ImageBuffer {
     /// Text will be rendered into the existing image by essentially doing an
     /// 'over' of the characters onto the existing pixel data.
     #[named]
-    pub fn render_text(
-        &mut self,
-        x: i32,
-        y: i32,
-        text: &str,
-    ) -> Result<&mut Self> {
-        let is_ok =
-            self.render_text_ffi(x, y, text, &RenderTextOptions::default());
+    pub fn render_text(&mut self, x: i32, y: i32, text: &str) -> Result<&mut Self> {
+        let is_ok = self.render_text_ffi(x, y, text, &RenderTextOptions::default());
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -164,9 +153,7 @@ impl From<TextAlignX> for oiio_TextAlignX {
     fn from(text_align_x: TextAlignX) -> Self {
         Self(match text_align_x {
             TextAlignX::Left => oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
-            TextAlignX::Center => {
-                oiio_TextAlignX::oiio_TextAlignX_Center.0 as _
-            }
+            TextAlignX::Center => oiio_TextAlignX::oiio_TextAlignX_Center.0 as _,
             TextAlignX::Right => oiio_TextAlignX::oiio_TextAlignX_Right.0 as _,
         })
     }
@@ -175,29 +162,17 @@ impl From<TextAlignX> for oiio_TextAlignX {
 impl From<TextAlignY> for oiio_TextAlignY {
     fn from(text_align_y: TextAlignY) -> Self {
         Self(match text_align_y {
-            TextAlignY::Baseline => {
-                oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _
-            }
+            TextAlignY::Baseline => oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _,
             TextAlignY::Top => oiio_TextAlignY::oiio_TextAlignY_Top.0 as _,
-            TextAlignY::Bottom => {
-                oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _
-            }
-            TextAlignY::Center => {
-                oiio_TextAlignY::oiio_TextAlignY_Center.0 as _
-            }
+            TextAlignY::Bottom => oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _,
+            TextAlignY::Center => oiio_TextAlignY::oiio_TextAlignY_Center.0 as _,
         })
     }
 }
 
 impl ImageBuffer {
     #[inline(always)]
-    fn render_text_ffi(
-        &mut self,
-        x: i32,
-        y: i32,
-        text: &str,
-        options: &RenderTextOptions,
-    ) -> bool {
+    fn render_text_ffi(&mut self, x: i32, y: i32, text: &str, options: &RenderTextOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
@@ -234,23 +209,17 @@ mod test {
 
     #[test]
     fn render_text() -> Result<()> {
-        let mut image_buffer = ImageBuffer::from_file(Utf8Path::new(
-            "assets/wooden_lounge_2k__F32_RGBA.exr",
-        ))?;
+        let mut image_buffer =
+            ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
-        image_buffer.render_text_with(
-            512,
-            256,
-            "Kringers Fossed!",
-            &RenderTextOptions {
-                font_size: 128,
-                font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
-                text_align_x: TextAlignX::Center,
-                text_align_y: TextAlignY::Center,
-                color: Some(&[1.0, 0.0, 0.0, 0.25]),
-                ..Default::default()
-            },
-        )?;
+        image_buffer.render_text_with(512, 256, "Kringers Fossed!", &RenderTextOptions {
+            font_size: 128,
+            font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
+            text_align_x: TextAlignX::Center,
+            text_align_y: TextAlignY::Center,
+            color: Some(&[1.0, 0.0, 0.0, 0.25]),
+            ..Default::default()
+        })?;
 
         image_buffer.write(Utf8Path::new("target/render_text.exr"))?;
 

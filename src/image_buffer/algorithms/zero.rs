@@ -14,10 +14,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn from_zero_with(
-        region: &Region,
-        thread_count: Option<u16>,
-    ) -> Result<Self> {
+    pub fn from_zero_with(region: &Region, thread_count: Option<u16>) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.zero_ffi(&Options {
             region_of_interest: RegionOfInterest::Region(region.clone()),
@@ -35,7 +32,7 @@ impl ImageBuffer {
         self.mut_self_or_error(is_ok, function_name!())
     }
 
-    /// Set all channels to as described by the [`RegionOfInterest`] to
+    /// Set all channels as described by the [`RegionOfInterest`] to
     /// zero.
     #[named]
     pub fn zero_with(&mut self, options: &Options) -> Result<&mut Self> {

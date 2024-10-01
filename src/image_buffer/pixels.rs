@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 /*
 pub struct PixelsOptions {
@@ -66,10 +66,7 @@ macro_rules! pixels {
             /// Get a regio of pixels from the image buffer.
             // TODO: Add a Pixels trait that is generic over T (returns Vec<T>)
             // and implement for all base_types in TypeDescription.
-            fn pixels(
-                &self,
-                region_of_interest: &RegionOfInterest,
-            ) -> Result<Vec<$rust_type>> {
+            fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<$rust_type>> {
                 if ImageBufferStorage::Uninitialized == self.storage() {
                     // An uninitialized image buffer has no pixels but it's not
                     // an error to ask for them.
@@ -77,7 +74,7 @@ macro_rules! pixels {
                 }
 
                 let region = match region_of_interest {
-                    RegionOfInterest::All => match self.region_of_interest() {
+                    RegionOfInterest::All => match self.data_window() {
                         RegionOfInterest::All => {
                             // If this image buffer is uninitialized, we can't
                             // get here because
@@ -90,8 +87,7 @@ macro_rules! pixels {
                     RegionOfInterest::Region(roi) => roi.clone(),
                 };
 
-                let size =
-                    region.pixel_count() * region.channel_count() as usize;
+                let size = region.pixel_count() * region.channel_count() as usize;
                 let mut data = Vec::<$rust_type>::with_capacity(size);
                 let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -108,9 +104,10 @@ macro_rules! pixels {
                         data.set_len(size);
                         Ok(data)
                     } else {
-                        Err(anyhow!(self.error(true).unwrap_or(
-                            "ImageBuffer::pixels(): unknown error".into()
-                        )))
+                        Err(anyhow!(
+                            self.error(true)
+                                .unwrap_or("ImageBuffer::pixels(): unknown error".into())
+                        ))
                     }
                 }
             }

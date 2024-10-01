@@ -17,26 +17,30 @@ use core::ptr;
 ///
 /// ## For C++ Developers
 ///
-/// The C++ version of this is called `st_warp()`.
+/// [The C++ version](https://openimageio.readthedocs.io/en/latest/imagebufalgo.html)
+/// of this is called `st_warp()`.
 impl ImageBuffer {
     #[named]
-    pub fn from_warp(source: &ImageBuffer, warp: &ImageBuffer) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok =
-            image_buffer.warp_ffi(source, warp, &WarpOptions::default());
-        image_buffer.self_or_error(is_ok, function_name!())
+    pub fn replace_by_warp(
+        &mut self,
+        source: &ImageBuffer,
+        warp: &ImageBuffer,
+    ) -> Result<&mut Self> {
+        let is_ok = self.warp_ffi(source, warp, &WarpOptions::default());
+
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn from_warp_with(
+    pub fn replace_by_warp_with(
+        &mut self,
         source: &ImageBuffer,
         warp: &ImageBuffer,
-        options: &WarpOptions,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.warp_ffi(source, warp, options);
+        warp_options: &WarpOptions,
+    ) -> Result<&mut Self> {
+        let is_ok = self.warp_ffi(source, warp, warp_options);
 
-        image_buffer.self_or_error(is_ok, function_name!())
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
@@ -49,11 +53,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn warp_with(
-        &mut self,
-        warp: &ImageBuffer,
-        options: &WarpOptions,
-    ) -> Result<&mut Self> {
+    pub fn warp_with(&mut self, warp: &ImageBuffer, options: &WarpOptions) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.warp_ffi(self, warp, options);
         *self = image_buffer;
@@ -74,12 +74,7 @@ pub struct WarpOptions {
 }
 
 impl ImageBuffer {
-    fn warp_ffi(
-        &mut self,
-        other: &ImageBuffer,
-        warp: &ImageBuffer,
-        options: &WarpOptions,
-    ) -> bool {
+    fn warp_ffi(&mut self, other: &ImageBuffer, warp: &ImageBuffer, options: &WarpOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
@@ -108,12 +103,10 @@ mod tests {
 
     #[test]
     fn warp() -> Result<()> {
-        let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
-            "assets/wooden_lounge_2k__F32_RGBA.exr",
-        ))?;
+        let mut image_buf =
+            ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
-        let warp =
-            ImageBuffer::from_file(Utf8Path::new("assets/warp__U8_RGB.png"))?;
+        let warp = ImageBuffer::from_file(Utf8Path::new("assets/warp__U8_RGB.png"))?;
 
         // Resize the source image to match the warp image.
         image_buf.resize(&warp.region_of_interest_full().region().unwrap())?;

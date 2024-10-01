@@ -10,19 +10,25 @@ homepage = "https://openimageio.org/"
 
 [features]
 default = ["algorithms"]
-## Enable a bunch of composting- & generator methods on `ImageBuffer`.
+## Enable the [`algorithms`]-module methods on `ImageBuffer`.
 algorithms = []
-## Enable one-way conversion from `ImageBuffer` to `egui::ColorImage`.
+## Enable one-way conversion from `ImageBuffer` to
+## [`egui::ColorImage`](https://docs.rs/egui/latest/egui/struct.ColorImage.html).
 egui = ["dep:egui"]
 ## Enable support for `glam::f32::Mat3`.
 glam = ["dep:glam"]
 # Enable `f16` support.
 #half = ["dep:half"]
-## Enable one-way conversion from `ImageBuffer` to `image::DynamicImage`.
+## Enable one-way conversion from `ImageBuffer` to
+## [`image::DynamicImage`](https://docs.rs/image/latest/image/enum.DynamicImage.html).
 image = ["dep:image"]
 ## Enable support for `nalgebra::Matrix3<f32>`.
 nalgebra = ["dep:nalgebra"]
 #! ### Special Features
+#!
+## Add aliases that miror the original C++ type/method names as much as
+## possible (i.e. Rust naming conventions are still used on these).
+cpp_api_names = []
 ## Make the OpenImageIO FFI this crate uses public.
 ffi = []
 
@@ -59,4 +65,4 @@ viuer = "0.7"
 viuer = { git = "https://github.com/virtualritz/viuer" }
 
 [package.metadata.docs.rs]
-features = ["algorithms", "egui", "image"]
+features = ["algorithms", "egui", "glam", "image", "nalgebra", "cpp_api_names"]

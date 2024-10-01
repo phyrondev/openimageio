@@ -1,7 +1,7 @@
 use crate::*;
 use core::{
     marker::PhantomData,
-    mem::{transmute, MaybeUninit},
+    mem::{MaybeUninit, transmute},
     ptr,
 };
 use ustr::Ustr;
@@ -329,10 +329,7 @@ impl<'a> TextureSystem<'a> {
 
 impl<'a> TextureSystem<'a> {
     /// Retrieve a [`TextureHandle`] for a given file name.
-    pub fn texture_handle(
-        &self,
-        file_name: &Utf8Path,
-    ) -> TextureHandle<'_, 'a> {
+    pub fn texture_handle(&self, file_name: &Utf8Path) -> TextureHandle<'_, 'a> {
         let mut ptr = MaybeUninit::<*mut oiio_TextureHandle_t>::uninit();
 
         unsafe {

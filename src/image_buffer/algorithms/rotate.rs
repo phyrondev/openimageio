@@ -28,57 +28,51 @@ use core::ptr;
 /// filterwidth parameter may be ignored.)
 impl ImageBuffer {
     #[named]
-    pub fn from_rotate(source: &ImageBuffer, angle: f32) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
+    pub fn replace_by_rotate(&mut self, source: &ImageBuffer, angle: f32) -> Result<&mut Self> {
+        let is_ok = self.rotate_ffi(source, angle, &RotateOptions::default());
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn replace_by_rotate_with(
+        &mut self,
+        source: &ImageBuffer,
+        angle: f32,
+        options: &RotateOptions,
+    ) -> Result<&mut Self> {
+        let is_ok = self.rotate_ffi(source, angle, options);
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn replace_by_rotate_around(
+        &mut self,
+        source: &ImageBuffer,
+        angle: f32,
+        center_x: f32,
+        center_y: f32,
+    ) -> Result<&mut Self> {
         let is_ok =
-            image_buffer.rotate_ffi(source, angle, &RotateOptions::default());
-        image_buffer.self_or_error(is_ok, function_name!())
+            self.rotate_around_ffi(source, angle, center_x, center_y, &RotateOptions::default());
+
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn from_rotate_with(
-        source: &ImageBuffer,
-        angle: f32,
-        options: &RotateOptions,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.rotate_ffi(source, angle, options);
-
-        image_buffer.self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn from_rotate_around(
-        source: &ImageBuffer,
-        angle: f32,
-        center_x: f32,
-        center_y: f32,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.rotate_around_ffi(
-            source,
-            angle,
-            center_x,
-            center_y,
-            &RotateOptions::default(),
-        );
-
-        image_buffer.self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn from_rotate_around_with(
+    pub fn replace_by_rotate_around_with(
+        &mut self,
         source: &ImageBuffer,
         angle: f32,
         center_x: f32,
         center_y: f32,
         options: &RotateOptions,
-    ) -> Result<Self> {
+    ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer
-            .rotate_around_ffi(source, angle, center_x, center_y, options);
+        let is_ok = image_buffer.rotate_around_ffi(source, angle, center_x, center_y, options);
 
-        image_buffer.self_or_error(is_ok, function_name!())
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
@@ -91,11 +85,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn rotate_with(
-        &mut self,
-        angle: f32,
-        options: &RotateOptions,
-    ) -> Result<&mut Self> {
+    pub fn rotate_with(&mut self, angle: f32, options: &RotateOptions) -> Result<&mut Self> {
         let mut rotated = ImageBuffer::new();
         let is_ok = rotated.rotate_ffi(self, angle, options);
         *self = rotated;
@@ -104,20 +94,10 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn rotate_around(
-        &mut self,
-        angle: f32,
-        center_x: f32,
-        center_y: f32,
-    ) -> Result<&mut Self> {
+    pub fn rotate_around(&mut self, angle: f32, center_x: f32, center_y: f32) -> Result<&mut Self> {
         let mut rotated = ImageBuffer::new();
-        let is_ok = rotated.rotate_around_ffi(
-            self,
-            angle,
-            center_x,
-            center_y,
-            &RotateOptions::default(),
-        );
+        let is_ok =
+            rotated.rotate_around_ffi(self, angle, center_x, center_y, &RotateOptions::default());
         *self = rotated;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -132,8 +112,7 @@ impl ImageBuffer {
         options: &RotateOptions,
     ) -> Result<&mut Self> {
         let mut rotated = ImageBuffer::new();
-        let is_ok =
-            rotated.rotate_around_ffi(self, angle, center_x, center_y, options);
+        let is_ok = rotated.rotate_around_ffi(self, angle, center_x, center_y, options);
         *self = rotated;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -149,18 +128,13 @@ pub struct RotateOptions {
 }
 
 impl ImageBuffer {
-    fn rotate_ffi(
-        &mut self,
-        other: &ImageBuffer,
-        angle: f32,
-        options: &RotateOptions,
-    ) -> bool {
+    fn rotate_ffi(&mut self, other: &ImageBuffer, angle: f32, options: &RotateOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
             oiio_ImageBufAlgo_rotate(
-                self.ptr,
-                other.ptr,
+                self.as_raw_ptr_mut(),
+                other.as_raw_ptr(),
                 angle,
                 options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
                 options.recompute_region_of_interest,
@@ -185,8 +159,8 @@ impl ImageBuffer {
 
         unsafe {
             oiio_ImageBufAlgo_rotate_around(
-                self.ptr,
-                other.ptr,
+                self.as_raw_ptr_mut(),
+                other.as_raw_ptr(),
                 angle,
                 center_x,
                 center_y,
@@ -208,12 +182,13 @@ mod tests {
 
     #[test]
     fn rotate() -> Result<()> {
-        let image_buf = ImageBuffer::from_file(Utf8Path::new(
-            "assets/wooden_lounge_2k__F32_RGBA.exr",
-        ))?;
+        let image_buffer =
+            ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
-        let mut image_buf = ImageBuffer::from_rotate_with(
-            &image_buf,
+        let mut rotated_image_buffer = ImageBuffer::new();
+
+        rotated_image_buffer.replace_by_rotate_with(
+            &image_buffer,
             42.0 * std::f32::consts::TAU / 360.0,
             &RotateOptions {
                 // Use a Blackmann-Harris filter to avoid halos easily
@@ -225,9 +200,9 @@ mod tests {
             },
         )?;
 
-        image_buf.expand_region_of_interest_full();
+        rotated_image_buffer.expand_region_of_interest_full();
 
-        image_buf.write(Utf8Path::new("target/rotated.exr"))?;
+        rotated_image_buffer.write(Utf8Path::new("target/rotated.exr"))?;
 
         Ok(())
     }

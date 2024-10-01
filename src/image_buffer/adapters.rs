@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 #[cfg(feature = "image")]
 impl TryFrom<ImageBuffer> for image::RgbImage {
@@ -7,7 +7,7 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
         let mut region = image_buffer
-            .region_of_interest()
+            .data_window()
             .region()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
@@ -34,7 +34,7 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
         let mut region = image_buffer
-            .region_of_interest()
+            .data_window()
             .region()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
@@ -61,7 +61,7 @@ impl TryFrom<ImageBuffer> for image::DynamicImage {
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
         let region = image_buffer
-            .region_of_interest()
+            .data_window()
             .region()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
@@ -83,7 +83,7 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
         let mut region = image_buffer
-            .region_of_interest()
+            .data_window()
             .region()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
@@ -103,15 +103,13 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
                 // We assume this is a grayscale image (alpha channel will be
                 // dropped, if present).
                 region.set_channel(0..1);
-                let pixels: Vec<u8> =
-                    image_buffer.pixels(&RegionOfInterest::Region(region))?;
+                let pixels: Vec<u8> = image_buffer.pixels(&RegionOfInterest::Region(region))?;
 
                 Ok(egui::ColorImage::from_gray(dimensions, &pixels))
             }
             // RGB image.
             3 => {
-                let pixels: Vec<u8> =
-                    image_buffer.pixels(&RegionOfInterest::All)?;
+                let pixels: Vec<u8> = image_buffer.pixels(&RegionOfInterest::All)?;
 
                 Ok(egui::ColorImage::from_rgb(dimensions, &pixels))
             }
@@ -119,8 +117,7 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
             _ => {
                 // Make sure `pixels()` returns a buffer with max. 4 channels.
                 region.set_channel(0..4);
-                let pixels: Vec<u8> =
-                    image_buffer.pixels(&RegionOfInterest::Region(region))?;
+                let pixels: Vec<u8> = image_buffer.pixels(&RegionOfInterest::Region(region))?;
 
                 Ok(egui::ColorImage::from_rgba_premultiplied(
                     dimensions, &pixels,
@@ -138,9 +135,7 @@ mod tests {
     #[cfg(feature = "image")]
     #[test]
     fn adapter() -> Result<()> {
-        let image_buf = ImageBuffer::from_file(Utf8Path::new(
-            "assets/j0.3toD__F16_RGBA.exr",
-        ))?;
+        let image_buf = ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
         // This will convert to either Rgb8 or Rgba8 and apply
         // a conversion to sRGB

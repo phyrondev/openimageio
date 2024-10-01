@@ -1,7 +1,7 @@
 use crate::*;
 use anyhow::Result;
 use core::{
-    mem::{transmute, MaybeUninit},
+    mem::{MaybeUninit, transmute},
     ops::Range,
 };
 
@@ -12,7 +12,16 @@ pub(crate) static ALL: Region = Region {
     channel: 0..0,
 };
 
-/// Describes a region of interest in an image.
+/// Describes a specific rectangular/cubic region of interest in an image or the
+/// region of the whole image.
+///
+/// # C++
+///
+/// The name was changed to not contain abbreviations. The original name,
+/// [`Roi`] (re-capitalized to conform with RFC 344), is available behind a
+/// `type` alias when the `cpp_api_names` feature is enabled.
+///
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#rectangular-region-of-interest-roi
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
 pub enum RegionOfInterest {
     /// 'All' of the image, or no region restriction.
@@ -22,6 +31,8 @@ pub enum RegionOfInterest {
     Region(Region),
 }
 
+/// Convenience type alias for developers familiar with the OpenImageIO C++ API.
+#[cfg(feature = "cpp_api_names")]
 pub type Roi = RegionOfInterest;
 
 impl RegionOfInterest {
@@ -114,12 +125,7 @@ pub struct Region {
 }
 
 impl Region {
-    pub fn new(
-        x: Range<i32>,
-        y: Range<i32>,
-        z: Range<i32>,
-        channel: Option<Range<u32>>,
-    ) -> Self {
+    pub fn new(x: Range<i32>, y: Range<i32>, z: Range<i32>, channel: Option<Range<u32>>) -> Self {
         let channel = channel.unwrap_or(0..4);
 
         assert!(x.start <= x.end);
@@ -308,10 +314,8 @@ impl Region {
     }
 
     pub fn uniform_scale(&mut self, scale: f32) -> &mut Self {
-        self.x = (self.x.start as f32 * scale) as _
-            ..(self.x.end as f32 * scale) as _;
-        self.y = (self.y.start as f32 * scale) as _
-            ..(self.y.end as f32 * scale) as _;
+        self.x = (self.x.start as f32 * scale) as _..(self.x.end as f32 * scale) as _;
+        self.y = (self.y.start as f32 * scale) as _..(self.y.end as f32 * scale) as _;
 
         self
     }
@@ -319,14 +323,14 @@ impl Region {
 
 /// # Predicates
 impl Region {
+    /// Returns `true` if the given point is contained in the region.
+    ///
+    /// # For C++ Developers
+    ///
+    /// [The (overloaded) C++ version](https://openimageio.readthedocs.io/en/latest/imageioapi.html#_CPPv4NK4OIIO3ROI8containsEiiii)
+    /// of this is called `contains()`.
     #[inline]
-    pub fn contains_point(
-        &self,
-        x: i32,
-        y: i32,
-        z: Option<i32>,
-        channel: Option<u32>,
-    ) -> bool {
+    pub fn contains_point(&self, x: i32, y: i32, z: Option<i32>, channel: Option<u32>) -> bool {
         let z = z.unwrap_or(0);
         let channel = channel.unwrap_or(0);
 
@@ -336,6 +340,12 @@ impl Region {
             && self.channel.contains(&channel)
     }
 
+    /// Returns `true` if the given `Region` is contained in this region.
+    ///
+    /// # For C++ Developers
+    ///
+    /// [The (overloaded) C++ version](https://openimageio.readthedocs.io/en/latest/imageioapi.html#_CPPv4NK4OIIO3ROI8containsERK3ROI)
+    /// of this is called `contains()`.
     #[inline]
     pub fn contains(&self, other: &Self) -> bool {
         other.x.start >= self.x.start
@@ -348,8 +358,24 @@ impl Region {
             && other.channel.end <= self.channel.end
     }
 
+    /// Returns `true` if the region is empty.
+    ///
+    /// For C++ Developers
+    ///
+    /// [The C++ version](https://openimageio.readthedocs.io/en/latest/imageioapi.html#_CPPv4NK4OIIO3ROI7definedEv)
+    /// of this is called [`defined()`](Region::defined).
     pub fn is_empty(&self) -> bool {
         0 == self.width() || 0 == self.height() || 0 == self.depth()
+    }
+}
+
+#[cfg(feature = "cpp_api_names")]
+impl Region {
+    /// Returns `true` if the region is defined.
+    ///
+    /// This is equivalent to [`!is_empty()`](Region::is_empty).
+    pub fn defined(&self) -> bool {
+        !self.is_empty()
     }
 }
 
@@ -364,8 +390,8 @@ impl Region {
                 self.x = self.x.start.min(b.x.start)..self.x.end.max(b.x.end);
                 self.y = self.y.start.min(b.y.start)..self.y.end.max(b.y.end);
                 self.z = self.z.start.min(b.z.start)..self.z.end.max(b.z.end);
-                self.channel = self.channel.start.min(b.channel.start)
-                    ..self.channel.end.max(b.channel.end);
+                self.channel =
+                    self.channel.start.min(b.channel.start)..self.channel.end.max(b.channel.end);
             }
         } else {
             *self = b.clone();
@@ -381,8 +407,8 @@ impl Region {
                 self.x = self.x.start.max(b.x.start)..self.x.end.min(b.x.end);
                 self.y = self.y.start.max(b.y.start)..self.y.end.min(b.y.end);
                 self.z = self.z.start.max(b.z.start)..self.z.end.min(b.z.end);
-                self.channel = self.channel.start.max(b.channel.start)
-                    ..self.channel.end.min(b.channel.end);
+                self.channel =
+                    self.channel.start.max(b.channel.start)..self.channel.end.min(b.channel.end);
             }
         } else {
             *self = b.clone();
@@ -460,9 +486,7 @@ mod internal {
         fn from(src: RegionOfInterest) -> oiio_ROI_t {
             match src {
                 RegionOfInterest::All => unsafe {
-                    transmute::<region_of_interest::Region, oiio_ROI_t>(
-                        ALL.clone(),
-                    )
+                    transmute::<region_of_interest::Region, oiio_ROI_t>(ALL.clone())
                 },
                 RegionOfInterest::Region(r) => unsafe {
                     transmute::<region_of_interest::Region, oiio_ROI_t>(r)
@@ -478,8 +502,7 @@ mod tests {
 
     #[test]
     fn region_of_interest() {
-        let region =
-            RegionOfInterest::Region(Region::new_3d(3..42, 5..16, -33..9));
+        let region = RegionOfInterest::Region(Region::new_3d(3..42, 5..16, -33..9));
 
         assert_eq!(
             oiio_ROI_t {

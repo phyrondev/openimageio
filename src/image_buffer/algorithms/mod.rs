@@ -6,40 +6,61 @@
 //! functions. Only exceptions to these rules will be explained in the
 //! subsequent listings of all the individual ImageBufAlgo functions.
 //!
-//! ## Return Values and Error Messages
+//! ## Return Values
 //!
 //! Most functions that produce image data come in two forms:
 //!
-//! 1. Return an `ImageBuffer`.
+//! 1. Overwrite an `ImageBuffer` with the result of the operation.
 //!
-//!    The return value is a new `ImageBuffer` containing the result image. In
-//!    this case, an entirely new image will be created to hold the result.
+//!    When the ImageBuffer that gets overwritten is uninitialized, it will be
+//!    resized to be an ImageBuf large enough to hold the result.
+//!
+//!    If the `ImageBuffer` is already initialized, the operation will be
+//!    performed on the pixels in the destination that overlap the
+//!    `RegionOfInterest`, leaving pixels in the destination which are outside
+//!    unaltered.
 //!
 //!    In case of error, the result image returned can have any error conditions
 //!    checked with [`is_ok()`](ImageBuffer::is_ok) and
 //!    [`error()`](ImageBuffer::error).
 //!
+//!     Method 1: overwrite an empty buffer with a new image of the required
+//!    dimensions.
+//!
+//!    After the operation the `dest.region_of_interest()` is of size
+//!    `fg.region_of_interest().union(bg.region_of_interest())`
+//!
 //!    ```ignore
-//!    // Method 1: Return an image result
-//!    let dest = ImageBuffer::from_over(fg, bg)?;
+//!    let mut empty_destination = ImageBuffer::new();
+//!    empty_destination.replace_by_over(fg, bg)?;
+//!    ```
+//!
+//!    Method 2: overwrite an existing buffer with the result of the operation.
+//!    The difference is that fg over bg will be fit inside the
+//!    `RegionOfInterest` of `dest`.
+//!
+//!    ```ignore
+//!    destination.replace_by_over(fg, bg)?;
 //!    ```
 //!
 //! 2. Modify an existing `ImageBuffer`.
 //!
 //!    The function is called on a destination `ImageBuffer` where the results
-//!    will be stored. These variants return `Result<&mut Self>` which allows
-//!    chaining calls together and checking for errors at the same time (see
-//!    next section).
+//!    will be stored.
 //!
 //!    ```ignore
-//!    // Method 2: Write into an existing image
-//!    fg.over(&bg)?;
+//!    // Note that for the `over` operation the order is reversed for as the
+//!    // common case is to keep the dimensions of the background image.
+//!    bg.over(&fg)?;
 //!    ```
 //!
 //! ## Chaining
 //!
-//! Most functions that take &mut self as an argument will return this from
-//! the function call. This allows you to chain calls together.
+//! Most functions that take `&mut self` as an argument will return this from
+//! the function call wrapped in a `Result`.
+//!
+//! This allows to chain calls together and handle errors or break the chain if
+//! one occurs.
 //!
 //! ```ignore
 //! // Chaining methods
@@ -52,25 +73,25 @@
 //! )?;
 //! ```
 //!
-//! For a small minority of functions, there are only input images, and no image
-//! outputs (e.g., `is_monochrome()`). In such cases, the error message should
-//! be retrieved from the first input image.
+//! For a small set of functions, there are only input images, and no image
+//! outputs (e.g., `is_monochrome()`).
 //!
 //! ## Region of Interest
 //!
 //! Most functions take an optional [`Options::region_of_interest`] parameter
 //! that restricts the operation to a range in x, y, z, and channels.
+//!
 //! [`RegionOfInterest::default()`] (also known as [`RegionOfInterest::All`])
 //! means no region restriction -- the whole image will be copied or altered.
 //!
-//! For functions with that modify an exisiting destination `ImageBuffer` that
+//! For functions that modify an exisiting destination `ImageBuffer` that
 //! is already initialized (i.e. allocated with a particular size and
 //! data type), the operation will be performed on the pixels in the destination
 //! that overlap the `RegionOfInterest`, leaving pixels in the destination which
 //! are outside the `RegionOfInterest` unaltered.
 //!
 //! The the [`RegionOfInterest`] (if set) determines the size of the result
-//! image. If the ROI is the default All, the result image size will be the
+//! image. If the ROI is the default, `All`, the result image size will be the
 //! union of the pixel data windows of the input images and have a data type
 //! determined by the data types of the input images.
 //!
@@ -82,12 +103,12 @@
 //!
 //! ## Constant And Per-Channel Values
 //!
-//! Many ImageBuffer methods take per-channel constant-valued arguments (for
+//! Many `ImageBuffer` methods take per-channel constant-valued arguments (for
 //! example, a fill color). These parameters are passed as `[f32]` slices.
 //! These are generally expected to have length equal to the number of channels.
-//! But you may also pass a slice containing only single `f32` which will be
-//! used as the value for allchannels. More generally, what is happening is that
-//! the last value supplied is replicated for any missing channel.
+//! But you may also pass a slice containing only a single `f32` which will be
+//! used as the value for all channels. More generally, what is happening is
+//! that the last value supplied is replicated for any missing channel.
 //!
 //! Some functions have parameters of type `ImageOrConst`, which may take either
 //! an `ImageBuffer` reference, or a per-channel constant, or a single constant
@@ -121,7 +142,9 @@ pub use color_convert::*;
 pub mod compare;
 pub mod cut;
 pub mod fill;
+pub mod noise;
 pub mod over;
+pub use noise::*;
 pub mod render_text;
 pub use render_text::*;
 pub mod resize;

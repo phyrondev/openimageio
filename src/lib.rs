@@ -137,7 +137,8 @@
 //!
 //!   That said --, for all types where names were changed, the crate ships with
 //!   `type` aliases that mirror the original C++ names as much as possible
-//!   within the constraints referenced in the previous paragraph.
+//!   within the constraints referenced in the previous paragraph. These are
+//!   gated behind the `cpp_api_names` [feature](#special-features).
 //!
 //!   * Abbreviations were removed to make naming more stringent across the API.
 //!     For example `ImageBuf` (C++) became `ImageBuffer` (Rust) (an `ImageBuf`
@@ -214,19 +215,15 @@
 //! #     PixelFilter, RotateOptions
 //! # }, Utf8Path};
 //! # use std::f32::consts::TAU;
-//! let mut image_buf = ImageBuffer::from_file(Utf8Path::new(
-//!     "assets/wooden_lounge_2k__F32_RGBA.exr",
-//! ))?;
+//! let mut image_buf =
+//!     ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 //!
-//! image_buf.rotate_with(
-//!     42.0 * TAU / 360.0,
-//!     &RotateOptions {
-//!         // Use a Blackmann-Harris filter to avoid halos easily introduced
-//!         // when operating on HDRs using the default filter (Lanczos3).
-//!         pixel_filter: PixelFilter::BlackmanHarris,
-//!         ..Default::default()
-//!     },
-//! );
+//! image_buf.rotate_with(42.0 * TAU / 360.0, &RotateOptions {
+//!     // Use a Blackmann-Harris filter to avoid halos easily introduced
+//!     // when operating on HDRs using the default filter (Lanczos3).
+//!     pixel_filter: PixelFilter::BlackmanHarris,
+//!     ..Default::default()
+//! });
 //!
 //! # Ok::<(), anyhow::Error>(())
 //! ```
@@ -235,7 +232,7 @@
 #![doc = document_features::document_features!()]
 pub use anyhow::Result;
 pub use camino::{Utf8Path, Utf8PathBuf};
-pub use ustr::*;
+pub use ustr::{Ustr, ustr};
 
 #[cfg(feature = "ffi")]
 pub use openimageio_sys::*;
@@ -285,7 +282,7 @@ pub use ustring::*;
 
 use num_traits::{Bounded, Num, NumCast};
 
-struct Matrix33fHelper(*const [f32; 9]);
+type Matrix33fHelper = *const [f32; 9];
 
 #[derive(Clone, Copy)]
 pub struct Matrix3F32<'a>(&'a [f32; 9]);
@@ -316,9 +313,7 @@ impl<'a> From<&'a nalgebra::Matrix3<f32>> for Matrix3F32<'a> {
 
 /// The type of each channel in a pixel. For example, this can be `u8`, `u16`,
 /// `f32`.
-pub trait Primitive:
-    Copy + NumCast + Num + PartialOrd<Self> + Clone + Bounded
-{
+pub trait Primitive: Copy + NumCast + Num + PartialOrd<Self> + Clone + Bounded {
     /// The maximum value for this type of primitive within the context of
     /// color. For floats, the maximum is `1.0`, whereas the integer types
     /// inherit their usual maximum values.

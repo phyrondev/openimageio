@@ -4,39 +4,40 @@ use core::{mem::MaybeUninit, ptr};
 
 /// # Resize
 ///
-/// Set the image over the `region_of_interest`, to be a resized version of the
-/// corresponding portion of src (mapping such that the 'full' image window of
-/// each correspond to each other, regardless of resolution).
+/// Set the image over the `region`, to be a resized version of the
+/// corresponding portion of `source` (mapping such that the 'full' image window
+/// of each correspond to each other, regardless of resolution).
 ///
 /// Also see the [Region of Interest](#region-of-interest) section on
 /// [`ImageBuffer`].
 impl ImageBuffer {
     #[named]
-    pub fn from_resize(src: &ImageBuffer, region: &Region) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok =
-            image_buffer.resize_ffi(src, region, &ResizeOptions::default());
+    pub fn replace_by_resize(
+        &mut self,
+        source: &ImageBuffer,
+        region: &Region,
+    ) -> Result<&mut Self> {
+        let is_ok = self.resize_ffi(source, region, &ResizeOptions::default());
 
-        image_buffer.self_or_error(is_ok, function_name!())
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn from_resize_with(
-        src: &ImageBuffer,
+    pub fn replace_by_resize_with(
+        &mut self,
+        source: &ImageBuffer,
         region: &Region,
-        options: &ResizeOptions,
-    ) -> Result<Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.resize_ffi(src, region, options);
+        resize_options: &ResizeOptions,
+    ) -> Result<&mut Self> {
+        let is_ok = self.resize_ffi(source, region, &resize_options);
 
-        image_buffer.self_or_error(is_ok, function_name!())
+        self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
     pub fn resize(&mut self, region: &Region) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok =
-            image_buffer.resize_ffi(self, region, &ResizeOptions::default());
+        let is_ok = image_buffer.resize_ffi(self, region, &ResizeOptions::default());
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -46,10 +47,10 @@ impl ImageBuffer {
     pub fn resize_with(
         &mut self,
         region: &Region,
-        options: &ResizeOptions,
+        resize_options: &ResizeOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.resize_ffi(self, region, options);
+        let is_ok = image_buffer.resize_ffi(self, region, resize_options);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -75,19 +76,21 @@ impl ImageBuffer {
     #[inline(always)]
     fn resize_ffi(
         &mut self,
-        src: &ImageBuffer,
+        source: &ImageBuffer,
         region: &Region,
-        options: &ResizeOptions,
+        resize_options: &ResizeOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
             oiio_ImageBufAlgo_resize(
                 self.as_raw_ptr_mut(),
-                src.as_raw_ptr(),
-                options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
+                source.as_raw_ptr(),
+                resize_options
+                    .filter
+                    .map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
                 region.clone().into(),
-                options.thread_count as _,
+                resize_options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
 
@@ -102,9 +105,8 @@ mod tests {
 
     #[test]
     fn resize() -> Result<()> {
-        let mut image_buffer = ImageBuffer::from_file(Utf8Path::new(
-            "assets/j0.3toD__F16_RGBA.exr",
-        ))?;
+        let mut image_buffer =
+            ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
         let region = Region::new_2d(0..80, 0..80);
 

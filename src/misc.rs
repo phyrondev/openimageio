@@ -6,8 +6,7 @@ use anyhow::Result;
 pub fn compare_images(image_buf: &ImageBuffer, name: &str) -> Result<()> {
     use camino::Utf8Path;
 
-    let other =
-        ImageBuffer::from_file(&Utf8Path::new("test_results").join(name))?;
+    let other = ImageBuffer::from_file(&Utf8Path::new("test_results").join(name))?;
 
     if image_buf.compare(&other, 1.0 / 255.0, 0.0).is_error {
         Err(anyhow::anyhow!("Image comparison for {name} failed."))
@@ -17,7 +16,7 @@ pub fn compare_images(image_buf: &ImageBuffer, name: &str) -> Result<()> {
 }
 
 macro_rules! gen_fn_error {
-    ($error_fn:expr) => {
+    ($error_fn:ident) => {
         /// Return the text of all pending error messages.
         ///
         /// If `clear` is `true`, any pending error message will be cleared.
@@ -26,9 +25,7 @@ macro_rules! gen_fn_error {
         pub fn error(&self, clear: bool) -> Option<String> {
             let mut error = MaybeUninit::<*mut oiio_String_t>::uninit();
 
-            if unsafe {
-                0 != $error_fn(self.ptr, clear, &mut error as *mut _ as _)
-            } {
+            if unsafe { 0 != $error_fn(self.ptr, clear, &mut error as *mut _ as _) } {
                 // Something went wrong.
                 None
             } else {
@@ -47,7 +44,7 @@ macro_rules! gen_fn_error {
 pub(crate) use gen_fn_error;
 
 macro_rules! gen_fn_is_ok {
-    ($has_error_fn:expr) => {
+    ($has_error_fn:ident) => {
         /// Returns `false` if there was an error.
         ///
         /// The latter implies that an error message is ready to retrieve via

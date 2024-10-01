@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use core::{ffi::c_int, mem::MaybeUninit, ptr};
 use std::string::String;
 
@@ -104,6 +104,15 @@ enum InitializePixels {
     Yes = 1,
 }
 
+impl From<InitializePixels> for i32 {
+    fn from(initialize_pixels: InitializePixels) -> Self {
+        match initialize_pixels {
+            InitializePixels::No => oiio_InitializePixels::oiio_InitializePixels_No.0 as _,
+            InitializePixels::Yes => oiio_InitializePixels::oiio_InitializePixels_Yes.0 as _,
+        }
+    }
+}
+
 impl ImageBuffer {
     pub fn new() -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
@@ -118,7 +127,8 @@ impl ImageBuffer {
         }
     }
 
-    /*pub fn new_with(
+    /*
+    pub fn new_with(
         image_specificaiton: &ImageSpecification,
         initialize_pixels: Option<InitializePixels>,
     ) -> Self {
@@ -127,22 +137,20 @@ impl ImageBuffer {
         Self {
             ptr: unsafe {
                 oiio_ImageBuf_ctor_03(
-                    image_specificaiton.into(),
-                    initialize_pixels.unwrap_or_default() as _,
+                    ImageSpecInternal::from(image_specificaiton).as_raw_ptr(),
+                    initialize_pixels.unwrap_or_default() as i32 as _,
                     &mut ptr as *mut _ as _,
                 );
                 ptr.assume_init()
             },
-            _marker: PhantomData,
+            image_cache: None,
+            //_marker: PhantomData,
         }
     }*/
 }
 
 impl ImageBuffer {
-    pub fn from_file_ffi(
-        name: &Utf8Path,
-        options: &FromFileOptions<'_>,
-    ) -> Self {
+    pub fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         Self {
@@ -158,7 +166,7 @@ impl ImageBuffer {
                         .unwrap_or(ptr::null_mut()),
                     options
                         .image_spec
-                        .map(|s| ImageSpecInternal::from(s).ptr)
+                        .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
                     ptr::null_mut() as _,
                     &mut ptr as *mut _ as _,
@@ -188,18 +196,14 @@ impl ImageBuffer {
     /// image size and other factors.
     #[named]
     pub fn from_file(name: &Utf8Path) -> Result<Self> {
-        Self::from_file_ffi(name, &FromFileOptions::default())
-            .self_or_error(true, function_name!())
+        Self::from_file_ffi(name, &FromFileOptions::default()).self_or_error(true, function_name!())
     }
 
     /// Construct a read-only `ImageBuffer`.
     ///
     /// See [`from_file()`](ImageBuffer::from_file) for details.]
     #[named]
-    pub fn from_file_with(
-        name: &Utf8Path,
-        options: &FromFileOptions<'_>,
-    ) -> Result<Self> {
+    pub fn from_file_with(name: &Utf8Path, options: &FromFileOptions<'_>) -> Result<Self> {
         Self::from_file_ffi(name, options).self_or_error(true, function_name!())
     }
 
@@ -223,9 +227,10 @@ impl ImageBuffer {
             );
 
             if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(self
-                    .error(true)
-                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
+                Err(anyhow!(
+                    self.error(true)
+                        .unwrap_or("ImageBuffer::write(): unknown error".into())
+                ))
             } else {
                 Ok(())
             }
@@ -240,11 +245,7 @@ impl ImageBuffer {
     /// used to override this.
     ///
     /// Returns [`Ok`] upon success, or an error if the write failed.
-    pub fn write_with(
-        &self,
-        file_name: &Utf8Path,
-        options: &WriteOptions,
-    ) -> Result<()> {
+    pub fn write_with(&self, file_name: &Utf8Path, options: &WriteOptions) -> Result<()> {
         let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
         unsafe {
@@ -264,9 +265,10 @@ impl ImageBuffer {
             );
 
             if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(self
-                    .error(true)
-                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
+                Err(anyhow!(
+                    self.error(true)
+                        .unwrap_or("ImageBuffer::write(): unknown error".into())
+                ))
             } else {
                 Ok(())
             }
@@ -292,10 +294,7 @@ impl ImageBuffer {
     pub fn is_initialized(&self) -> bool {
         let mut is_initialized = MaybeUninit::<bool>::uninit();
         unsafe {
-            oiio_ImageBuf_initialized(
-                self.ptr,
-                &mut is_initialized as *mut _ as _,
-            );
+            oiio_ImageBuf_initialized(self.ptr, &mut is_initialized as *mut _ as _);
             is_initialized.assume_init()
         }
     }
@@ -330,10 +329,7 @@ impl ImageBuffer {
         let mut file_format_name = MaybeUninit::<StringView>::uninit();
 
         let file_format_name = unsafe {
-            oiio_ImageBuf_file_format_name(
-                self.ptr,
-                &mut file_format_name as *mut _ as _,
-            );
+            oiio_ImageBuf_file_format_name(self.ptr, &mut file_format_name as *mut _ as _);
 
             file_format_name.assume_init()
         };
@@ -361,58 +357,85 @@ impl ImageBuffer {
     }
 
     /// Return the number of subimages in the file this `ImageBuffer` refers to,
-    /// if it can be determined efficiently. This will always be `1` for an
-    /// `ImageBuffer` that was not constructed as a direct reference to a file,
-    /// or for an `ImageBuffer` that refers to a file type that is not capable
-    /// of containing multiple subimages.
+    /// if it can be determined efficiently.
     ///
-    /// Note that a return value of `0` indicates that the number of subimages
-    /// cannot easily be known without reading the entire image file to discover
-    /// the total. To compute this yourself, you would need check every subimage
+    /// This will always be `1` for an `ImageBuffer` that was not constructed as
+    /// a direct reference to a file, or for an `ImageBuffer` that refers to
+    /// a file type that is not capable of containing multiple subimages.
+    ///
+    /// A return value of `None` indicates that the number of subimages cannot
+    /// easily be known without reading the entire image file to discover
+    /// the total.
+    ///
+    /// To compute this yourself, you would need check every subimage
     /// successively until you get an error.
-    pub fn sub_image_count(&self) -> u32 {
-        let mut sub_image_count = MaybeUninit::<u32>::uninit();
-        unsafe {
-            oiio_ImageBuf_nsubimages(
-                self.ptr,
-                &mut sub_image_count as *mut _ as _,
-            );
+    pub fn sub_image_count(&self) -> Option<u32> {
+        let mut sub_image_count = MaybeUninit::<i32>::uninit();
+
+        let sub_image_count = unsafe {
+            oiio_ImageBuf_nsubimages(self.ptr, &mut sub_image_count as *mut _ as _);
             sub_image_count.assume_init()
+        };
+
+        // If this is zero return `None`.
+        if sub_image_count < 1 {
+            // If we get a negative number this also returns `None`.
+            // TODO: should the below `try_into()` be an `unwrap()`/panic instead?
+            None
+        } else {
+            sub_image_count.try_into().ok()
         }
     }
 
-    /// Return the index of the miplevel with a file’s subimage that the
+    /// Return the index of the miplevel with a file's subimage that the
     /// `ImageBuffer` is currently holding.
     ///
-    /// This will always be 0 for an `ImageBuffer` that was not constructed as a
-    /// direct reference to a file, or if the subimage within that file was
-    /// not mipmapped.
-    pub fn mip_level(&self) -> u32 {
-        let mut mip_level = MaybeUninit::<u32>::uninit();
-        unsafe {
+    /// This will always be `None` for an `ImageBuffer` that was not constructed
+    /// as a direct reference to a file, or if the subimage within that file
+    /// was not mipmapped.
+    pub fn mip_level(&self) -> Option<u32> {
+        let mut mip_level = MaybeUninit::<i32>::uninit();
+
+        let mip_level = unsafe {
             oiio_ImageBuf_miplevel(self.ptr, &mut mip_level as *mut _ as _);
             mip_level.assume_init()
+        };
+
+        // If this is zero return `None`.
+        if mip_level < 1 {
+            // If we get a negative number this also returns `None`.
+            // TODO: should the below `try_into()` be an `unwrap()`/panic instead?
+            None
+        } else {
+            mip_level.try_into().ok()
         }
     }
 
     /// Return the number of miplevels of the current subimage within the file
     /// this `ImageBuffer` refers to.
     ///
-    /// This will always be `1` for an `ImageBuffer` that was not constructed as
-    /// a direct reference to a file, or if this subimage within the file
+    /// This will always be `None` for an `ImageBuffer` that was not constructed
+    /// as a direct reference to a file, or if this subimage within the file
     /// was not mipmapped.
-    pub fn mip_level_count(&self) -> u32 {
-        let mut mip_level_count = MaybeUninit::<u32>::uninit();
-        unsafe {
-            oiio_ImageBuf_nmiplevels(
-                self.ptr,
-                &mut mip_level_count as *mut _ as _,
-            );
+    pub fn mip_level_count(&self) -> Option<u32> {
+        let mut mip_level_count = MaybeUninit::<i32>::uninit();
+
+        let mip_level_count = unsafe {
+            oiio_ImageBuf_nmiplevels(self.ptr, &mut mip_level_count as *mut _ as _);
             mip_level_count.assume_init()
+        };
+
+        // If this is zero return `None`.
+        if mip_level_count < 2 {
+            // If we get zero or a negative number this also returns `None`.
+            // TODO: should the below `try_into()` be an `unwrap()`/panic instead?
+            None
+        } else {
+            mip_level_count.try_into().ok()
         }
     }
 
-    /// Returns the [`ImageBufferStorage`] used.
+    /// Returns the storage/backing used bu this `ImageBuffer`.
     #[inline]
     pub fn storage(&self) -> ImageBufferStorage {
         let mut storage = MaybeUninit::<ImageBufferStorage>::uninit();
@@ -432,10 +455,14 @@ impl ImageBuffer {
         }
     }
 
-    /// Return pixel data window for this `ImageBuffer` as a
-    /// [`RegionOfInterest`].
+    /// Return pixel *data window* for this `ImageBuffer`.
+    ///
+    /// For C++ Developers
+    ///
+    /// [The C++ version](https://openimageio.readthedocs.io/en/latest/imagebuf.html#_CPPv4NK4OIIO8ImageBuf3roiEv)
+    /// of this is called [`roi()`](Self::roi).
     #[inline]
-    pub fn region_of_interest(&self) -> RegionOfInterest {
+    pub fn data_window(&self) -> RegionOfInterest {
         let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
@@ -446,16 +473,14 @@ impl ImageBuffer {
         .into()
     }
 
-    /// Alias for [`region_of_interest()`](Self::region_of_interest).
-    #[inline(always)]
-    pub fn roi(&self) -> RegionOfInterest {
-        self.region_of_interest()
-    }
-
-    /// Return full/display window for this `ImageBuffer` as a
-    /// [`RegionOfInterest`].
+    /// Return full/*display window* for this `ImageBuffer`.
+    ///
+    /// For C++ Developers
+    ///
+    /// [The C++ version](https://openimageio.readthedocs.io/en/latest/imagebuf.html#_CPPv4NK4OIIO8ImageBuf8roi_fullEv)
+    /// of this is called [`roi_full()`](Self::roi_full).
     #[inline]
-    pub fn region_of_interest_full(&self) -> RegionOfInterest {
+    pub fn display_window(&self) -> RegionOfInterest {
         let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
@@ -464,12 +489,6 @@ impl ImageBuffer {
             dst.assume_init()
         }
         .into()
-    }
-
-    /// Alias for [`region_of_interest_full()`](Self::region_of_interest_full).
-    #[inline(always)]
-    pub fn roi_full(&self) -> RegionOfInterest {
-        self.region_of_interest_full()
     }
 
     pub fn type_description(&self) -> TypeDescription {
@@ -495,6 +514,12 @@ impl ImageBuffer {
 
 /// # Setters
 impl ImageBuffer {
+    /// Set the pixel with given coordinates to have the resp. `value`.
+    ///
+    /// The number of channels copied is the minimum of the `value` slice's
+    /// length and the actual number of channels in the image.
+    ///
+    /// If `z` is `None` it is assumed to be zero (the default image plane)
     pub fn set_pixel(&mut self, x: i32, y: i32, z: Option<i32>, value: &[f32]) {
         unsafe {
             oiio_ImageBuf_setpixel(
@@ -508,22 +533,67 @@ impl ImageBuffer {
         }
     }
 
-    pub fn set_origin(&mut self, x: i32, y: i32, z: Option<i32>) {
+    /// Alters the metadata of the [`ImageSpcification`] in the `ImageBuffer` to
+    /// reset the 'origin' of the pixel *data window* to the specified
+    /// coordinates.
+    ///
+    /// This does not affect the size of the pixel *data window*, only its
+    /// position.
+    pub fn set_data_window_origin(&mut self, x: i32, y: i32, z: Option<i32>) {
         unsafe {
             oiio_ImageBuf_set_origin(self.ptr, x, y, z.unwrap_or(0));
         }
     }
 
-    pub fn set_region_of_interest_full(&mut self, roi: &Region) {
+    /// Alters the metadata of the [`ImageSpcification`] in the `ImageBuffer` to
+    /// set the display window to the specified dimensions.
+    ///
+    /// This does not affect the size of the pixel *data window*.
+    pub fn set_display_window(&mut self, roi: &Region) {
         unsafe {
             oiio_ImageBuf_set_roi_full(self.ptr, roi.into());
         }
     }
 
-    pub fn expand_region_of_interest_full(&mut self) {
+    /// Sets the *display window* to match the pixel *data window*.
+    ///
+    /// This does not alter the size of the pixel *data window*.
+    pub fn set_display_to_data_window(&mut self) {
         unsafe {
             oiio_ImageBuf_expand_roi_full(self.ptr);
         }
+    }
+}
+
+/// # C++ API Getter Aliases
+#[cfg(feature = "cpp_api_names")]
+impl ImageBuffer {
+    /// Alias for [`region_of_interest()`](Self::region_of_interest).
+    #[inline(always)]
+    pub fn roi(&self) -> RegionOfInterest {
+        self.data_window()
+    }
+}
+
+/// # C++ API Setter Aliases
+#[cfg(feature = "cpp_api_names")]
+impl ImageBuffer {
+    /// Alias for [`set_data_window_origin()`](Self::set_data_window_origin).
+    #[inline(always)]
+    pub fn set_origin(&mut self, x: i32, y: i32, z: Option<i32>) {
+        self.set_data_window_origin(x, y, z);
+    }
+
+    /// Alias for [`set_display_window()`](Self::set_display_window).
+    #[inline(always)]
+    pub fn set_full(&mut self, roi: &Region) {
+        self.set_display_window(roi);
+    }
+
+    /// Alias for [`display_window()`](Self::display_window).
+    #[inline(always)]
+    pub fn roi_full(&self) -> RegionOfInterest {
+        self.display_window()
     }
 }
 
@@ -554,11 +624,7 @@ impl ImageBuffer {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
-            oiio_ImageBuf_copy_01(
-                self.ptr,
-                type_description.into(),
-                &mut ptr as *mut _ as _,
-            );
+            oiio_ImageBuf_copy_01(self.ptr, type_description.into(), &mut ptr as *mut _ as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -599,14 +665,10 @@ pub enum WrapMode {
 impl From<WrapMode> for oiio_WrapMode {
     fn from(wrap_mode: WrapMode) -> Self {
         Self(match wrap_mode {
-            WrapMode::Default => {
-                oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _
-            }
+            WrapMode::Default => oiio_WrapMode::oiio_WrapMode_WrapDefault.0 as _,
             WrapMode::Black => oiio_WrapMode::oiio_WrapMode_WrapBlack.0 as _,
             WrapMode::Clamp => oiio_WrapMode::oiio_WrapMode_WrapClamp.0 as _,
-            WrapMode::Periodic => {
-                oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _
-            }
+            WrapMode::Periodic => oiio_WrapMode::oiio_WrapMode_WrapPeriodic.0 as _,
             WrapMode::Mirror => oiio_WrapMode::oiio_WrapMode_WrapMirror.0 as _,
         })
     }
@@ -773,16 +835,19 @@ mod tests {
     fn image_buffer() -> Result<()> {
         //let image_cache = ImageCache::shared(false);
 
-        let image_buf = ImageBuffer::from_file(Utf8Path::new(
-            "assets/j0.3toD__F16_RGBA.exr",
+        let image_buffer = ImageBuffer::from_file(Utf8Path::new(
+            //"assets/j0.3toD__F16_RGBA.exr",
+            "assets/13_shadow_catcher.png",
         ))?;
 
         println!(
             "Name:          {}",
-            image_buf.name().unwrap_or("No name".into())
+            image_buffer.name().unwrap_or("No name".into())
         );
-        println!("Storage:       {:?}", image_buf.storage());
-        println!("Channel Count: {:?}", image_buf.channel_count());
+        println!("Storage:       {:?}", image_buffer.storage());
+        println!("Channel Count: {:?}", image_buffer.channel_count());
+
+        image_buffer.write(Utf8Path::new("target/test_out.png"))?;
 
         Ok(())
     }

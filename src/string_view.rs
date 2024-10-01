@@ -161,11 +161,8 @@ impl Display for StringView<'_> {
                 f,
                 "{}",
                 std::string::String::from_utf8(
-                    slice::from_raw_parts(
-                        data.assume_init() as _,
-                        size.assume_init() as _,
-                    )
-                    .to_vec(),
+                    slice::from_raw_parts(data.assume_init() as _, size.assume_init() as _,)
+                        .to_vec(),
                 )
                 .map_err(|_| std::fmt::Error)?
             )
