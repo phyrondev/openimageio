@@ -56,11 +56,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn fill_with(
-        &mut self,
-        values: &[f32],
-        options: &Options,
-    ) -> Result<&mut Self> {
+    pub fn fill_with(&mut self, values: &[f32], options: &Options) -> Result<&mut Self> {
         let is_ok = self.fill_ffi(values, options);
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -73,11 +69,7 @@ impl ImageBuffer {
 /// to bottom of the `RegionOfInterest`.
 impl ImageBuffer {
     #[named]
-    pub fn from_fill_vertical(
-        start: &[f32],
-        end: &[f32],
-        region: &Region,
-    ) -> Result<Self> {
+    pub fn from_fill_vertical(start: &[f32], end: &[f32], region: &Region) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
             region_of_interest: RegionOfInterest::Region(region.clone()),
@@ -104,11 +96,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn fill_vertical(
-        &mut self,
-        start: &[f32],
-        end: &[f32],
-    ) -> Result<&mut Self> {
+    pub fn fill_vertical(&mut self, start: &[f32], end: &[f32]) -> Result<&mut Self> {
         let is_ok = self.fill_vertical_ffi(start, end, &Options::default());
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -207,13 +195,7 @@ impl ImageBuffer {
         bottom_right: &[f32],
         options: &Options,
     ) -> Result<&mut Self> {
-        let is_ok = self.fill_corners_ffi(
-            top_left,
-            top_right,
-            bottom_left,
-            bottom_right,
-            options,
-        );
+        let is_ok = self.fill_corners_ffi(top_left, top_right, bottom_left, bottom_right, options);
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -238,12 +220,7 @@ impl ImageBuffer {
     }
 
     #[inline(always)]
-    fn fill_vertical_ffi(
-        &mut self,
-        start: &[f32],
-        end: &[f32],
-        options: &Options,
-    ) -> bool {
+    fn fill_vertical_ffi(&mut self, start: &[f32], end: &[f32], options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {

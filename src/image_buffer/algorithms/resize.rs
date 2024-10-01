@@ -29,7 +29,7 @@ impl ImageBuffer {
         region: &Region,
         resize_options: &ResizeOptions,
     ) -> Result<&mut Self> {
-        let is_ok = self.resize_ffi(source, region, &resize_options);
+        let is_ok = self.resize_ffi(source, region, resize_options);
 
         self.mut_self_or_error(is_ok, function_name!())
     }

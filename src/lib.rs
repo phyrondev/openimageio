@@ -28,12 +28,12 @@
 //! ## Overview
 //!
 //! OpenImageIO provides simple but powerful [`ImageInput`] and [`ImageOutput`]
-//! APIs that abstract the reading and writing of 2D image file formats. They
-//! don't support every possible way of encoding images in memory, but for a
-//! reasonable and common set of desired functionality, they provide an
-//! exceptionally easy way for an application using the APIs support a wide --
-//! and extensible -- selection of image formats without knowing the details of
-//! any of these formats.
+//! APIs that abstract the reading and writing of 2D (and limited 3D) image file
+//! formats. They don't support every possible way of encoding images in memory,
+//! but for a reasonable and common set of desired functionality, they provide
+//! an exceptionally easy way for an application using the APIs support a wide
+//! -- and extensible -- selection of image formats without knowing the details
+//! of any of these formats.
 //!
 //! Concrete instances of these APIs, each of which implements the ability to
 //! read and/or write a different image file format, are stored as plugins
@@ -252,6 +252,9 @@ pub use file_system::*;
 
 mod image_buffer;
 pub use image_buffer::*;
+
+mod image_io;
+pub use image_io::*;
 
 mod image_cache;
 pub use image_cache::*;

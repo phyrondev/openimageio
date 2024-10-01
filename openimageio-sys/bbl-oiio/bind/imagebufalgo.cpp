@@ -179,4 +179,16 @@ BBL_MODULE(oiio) {
                     float, float, float, OIIO::ROI,
                     int))&OIIO::ImageBufAlgo::unsharp_mask,
           "ImageBufAlgo_unsharp_mask");
+
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::premult,
+          "ImageBufAlgo_premult");
+
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::unpremult,
+          "ImageBufAlgo_unpremult");
+
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::repremult,
+          "ImageBufAlgo_repremult");
 }
