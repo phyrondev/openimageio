@@ -97,6 +97,7 @@ pub struct TransformOptions {
 }
 
 impl ImageBuffer {
+    #[inline]
     fn transform_ffi<'a>(
         &mut self,
         source: &ImageBuffer,

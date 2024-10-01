@@ -47,6 +47,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
+    #[inline]
     fn over_ffi(
         &mut self,
         foreground: &ImageBuffer,

@@ -128,6 +128,7 @@ pub struct RotateOptions {
 }
 
 impl ImageBuffer {
+    #[inline]
     fn rotate_ffi(&mut self, other: &ImageBuffer, angle: f32, options: &RotateOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -147,6 +148,7 @@ impl ImageBuffer {
         }
     }
 
+    #[inline]
     fn rotate_around_ffi(
         &mut self,
         other: &ImageBuffer,

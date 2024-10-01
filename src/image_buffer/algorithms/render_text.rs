@@ -171,7 +171,7 @@ impl From<TextAlignY> for oiio_TextAlignY {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn render_text_ffi(&mut self, x: i32, y: i32, text: &str, options: &RenderTextOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 

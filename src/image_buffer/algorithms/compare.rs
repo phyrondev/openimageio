@@ -70,6 +70,7 @@ impl From<oiio_CompareResults_t> for CompareResult {
 
 // Actual implementations.
 impl ImageBuffer {
+    #[inline]
     fn compare_ffi(
         &self,
         other: &ImageBuffer,

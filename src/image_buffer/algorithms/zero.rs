@@ -43,7 +43,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn zero_ffi(&mut self, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 

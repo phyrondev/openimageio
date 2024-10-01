@@ -92,7 +92,7 @@ impl From<NoiseType> for StringView<'static> {
 
 // Internal noise FFI call.
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn noise_ffi(&mut self, noise_type: NoiseType, a: f32, b: f32, options: &NoiseOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 

@@ -56,7 +56,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn invert_ffi(&mut self, source: &ImageBuffer, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 

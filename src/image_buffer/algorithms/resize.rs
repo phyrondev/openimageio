@@ -73,7 +73,7 @@ pub struct ResizeOptions {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn resize_ffi(
         &mut self,
         source: &ImageBuffer,

@@ -50,7 +50,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn cut_ffi(&mut self, src: &ImageBuffer, region: &Region, thread_count: Option<u16>) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 

@@ -202,7 +202,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn fill_ffi(&mut self, values: &[f32], options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -219,7 +219,7 @@ impl ImageBuffer {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn fill_vertical_ffi(&mut self, start: &[f32], end: &[f32], options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -237,7 +237,7 @@ impl ImageBuffer {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn fill_corners_ffi(
         &mut self,
         top_left: &[f32],

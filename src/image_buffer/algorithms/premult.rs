@@ -6,15 +6,15 @@ use core::mem::MaybeUninit;
 ///
 /// Premultiply or un-premultiply color by alpha.
 ///
-/// The `unpremultiply` operations returns (or copies into `self`) the pixels of
-/// `source` within the `region_of_interest`, and in the process divides all
-/// color `alpha` or `z`) by the `alpha` value, to 'un-premultiply' them. This
-/// presumes that the image starts of as “associated alpha” a.k.a.
-/// “premultipled,” and you are converting to “unassociated alpha.” For pixels
-/// with `alpha == 0`, the color values are not modified.
+/// The `unpremultiply` operations divides all color `alpha` or `z`) by the
+/// `alpha` value, to 'un-premultiply' them.
 ///
-/// If there is no identified alpha channel the operations are simply a copy or
-/// a no-op for the variants not taking a `source`.
+/// This presumes that the image starts of as *associated `alpha`* a.k.a.
+/// *premultipled*, and you are converting to *unassociated `alpha`*. For pixels
+/// with an `alpha` of `0`, the color values are not modified.
+///
+/// If there is no identified `alpha` channel the operations are simply a copy
+/// or a no-op for the variants not taking a `source`.
 impl ImageBuffer {
     #[named]
     pub fn replace_by_unpremultiply(&mut self, source: &ImageBuffer) -> Result<&mut Self> {
@@ -55,11 +55,11 @@ impl ImageBuffer {
 
 /// # Premultiplication
 ///
-/// The operation returns (or copies into `self`) the pixels of `source` within
-/// the `region_of_interest`, and in the process multiplies all color channels
-/// (those not `alpha` or `z`) by the `alpha` value, to 'premultiply' them. This
-/// presumes that the image starts of as 'unassociated alpha' a.k.a.
-/// 'non-premultipled' and converts it to 'associated alpha'/'premultipled'.
+/// The operation multiplies all color channels (those not `alpha` or `z`) by
+/// the `alpha` value, to 'premultiply' them.
+///
+/// This presumes that the image starts of as *unassociated `alpha`* a.k.a.
+/// *non-premultipled* and converts it to *associated `alpha`*/*premultipled*.
 impl ImageBuffer {
     #[named]
     pub fn replace_by_premultiply(&mut self, source: &ImageBuffer) -> Result<&mut Self> {
@@ -105,12 +105,13 @@ impl ImageBuffer {
 ///
 /// This is intended for cases where you
 /// [`unpremultiply()`](self::unpremultiply), do an operation (such as color
-/// transforms), then want to return to associated/premultiplied alpha. In that
-/// case, you want to make sure that 'glow' pixels (those with an `alpha` of `0`
-/// but RGB > `0`) are preserved for the round trip, and not crushed to black.
+/// transforms), then want to return to *associated*/*premultiplied `alpha`*. In
+/// that case, you want to make sure that 'glow' pixels (those with an `alpha`
+/// of `0` but RGB > `0`) are preserved for the round trip, and not crushed to
+/// black.
 ///
-/// This use case is distinct from a simple premult that is a one-time
-/// conversion from unassociated to associated alpha.
+/// This use case is distinct from a simple premultiplication that is a
+/// one-time conversion from *unassociated* to *associated `alpha`*.
 impl ImageBuffer {
     #[named]
     pub fn replace_by_repremultiply(&mut self, source: &ImageBuffer) -> Result<&mut Self> {
@@ -150,7 +151,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    #[inline(always)]
+    #[inline]
     fn unpremult_ffi(&mut self, source: &ImageBuffer, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -167,7 +168,7 @@ impl ImageBuffer {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn premult_ffi(&mut self, source: &ImageBuffer, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -184,7 +185,7 @@ impl ImageBuffer {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn repremult_ffi(&mut self, source: &ImageBuffer, options: &Options) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
@@ -213,6 +214,7 @@ mod tests {
 
         let region = Region::new_2d(0..80, 0..80);
 
+        image_buffer.resize(&region)?;
         image_buffer.unpremultiply()?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
 

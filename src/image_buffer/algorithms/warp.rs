@@ -74,6 +74,7 @@ pub struct WarpOptions {
 }
 
 impl ImageBuffer {
+    #[inline]
     fn warp_ffi(&mut self, other: &ImageBuffer, warp: &ImageBuffer, options: &WarpOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 

@@ -93,6 +93,7 @@ impl ImageBuffer {
 
 // Actual implementations.
 impl ImageBuffer {
+    #[inline]
     fn color_convert_ffi(
         &mut self,
         source: &ImageBuffer,
