@@ -24,6 +24,12 @@ glam = ["dep:glam"]
 image = ["dep:image"]
 ## Enable support for `nalgebra::Matrix3<f32>`.
 nalgebra = ["dep:nalgebra"]
+## Enable support for one-way conversion from
+## [`tiny-skia::Pixmap`](https://docs.rs/tiny-skia/latest/tiny_skia/struct.Pixmap.html) to `ImageBuffer`.
+##
+## This is useful to get data from a bunch of SVG-producing crates, that use `tiny-skia` as a rendering backend, into OIIO.
+## For example [`typst-render`](https://docs.rs/typst-render).
+tiny-skia = ["dep:tiny-skia"]
 #! ### Special Features
 #!
 ## Add aliases that miror the original C++ type/method names as much as
@@ -40,23 +46,27 @@ document-features = "0.2"
 egui = { version = "0.28", default-features = false, optional = true }
 float-derive = "0.1"
 function_name = "0.3"
+glam = { version = "0.24", optional = true }
+tiny-skia = { version = "0.11", default-features = false, features = [
+    "simd",
+    "std",
+], optional = true }
 #half = { version = "2.4", features = ["num-traits"], optional = true }
 image = { version = "0.25", default-features = false, features = [
     "png",
 ], optional = true }
 log = "0.4"
+nalgebra = { version = "0.33", optional = true }
 num-traits = "0.2"
 num_enum = "0.7"
-openimageio-sys = { version = "0.1", path = "openimageio-sys" }
 once_cell = { version = "1", features = ["parking_lot"] }
+openimageio-sys = { version = "0.1", path = "openimageio-sys" }
 parking_lot = { version = "0.12", features = [
     "arc_lock",
     "deadlock_detection",
     "nightly",
 ] }
 ustr = "1"
-glam = { version = "0.24", optional = true }
-nalgebra = { version = "0.33", optional = true }
 
 [dev-dependencies]
 viuer = "0.7"

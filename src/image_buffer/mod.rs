@@ -8,7 +8,6 @@ pub mod algorithms;
 //#[cfg(feature = "algorithms")]
 //pub use algorithms::*;
 
-#[cfg(any(feature = "image", feature = "egui"))]
 mod adapters;
 
 mod internal;
@@ -98,17 +97,17 @@ impl Drop for ImageBuffer {
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[repr(C)]
-enum InitializePixels {
+pub enum InitializePixels {
     No = 0,
     #[default]
     Yes = 1,
 }
 
-impl From<InitializePixels> for i32 {
+impl From<InitializePixels> for oiio_InitializePixels {
     fn from(initialize_pixels: InitializePixels) -> Self {
         match initialize_pixels {
-            InitializePixels::No => oiio_InitializePixels::oiio_InitializePixels_No.0 as _,
-            InitializePixels::Yes => oiio_InitializePixels::oiio_InitializePixels_Yes.0 as _,
+            InitializePixels::No => oiio_InitializePixels::oiio_InitializePixels_No,
+            InitializePixels::Yes => oiio_InitializePixels::oiio_InitializePixels_Yes,
         }
     }
 }
@@ -127,18 +126,29 @@ impl ImageBuffer {
         }
     }
 
-    /*
     pub fn new_with(
         image_specificaiton: &ImageSpecification,
-        initialize_pixels: Option<InitializePixels>,
+        initialize_pixels: InitializePixels,
+    ) -> Self {
+        Self::new_empty_ffi(
+            &ImageSpecInternal::from(image_specificaiton),
+            initialize_pixels,
+        )
+    }
+}
+
+impl ImageBuffer {
+    pub(crate) fn new_empty_ffi(
+        image_spec_internal: &ImageSpecInternal,
+        initialize_pixels: InitializePixels,
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         Self {
             ptr: unsafe {
                 oiio_ImageBuf_ctor_03(
-                    ImageSpecInternal::from(image_specificaiton).as_raw_ptr(),
-                    initialize_pixels.unwrap_or_default() as i32 as _,
+                    image_spec_internal.as_raw_ptr(),
+                    initialize_pixels.into(),
                     &mut ptr as *mut _ as _,
                 );
                 ptr.assume_init()
@@ -146,11 +156,9 @@ impl ImageBuffer {
             image_cache: None,
             //_marker: PhantomData,
         }
-    }*/
-}
+    }
 
-impl ImageBuffer {
-    pub fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
+    pub(crate) fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         Self {
@@ -533,8 +541,8 @@ impl ImageBuffer {
         }
     }
 
-    /// Alters the metadata of the [`ImageSpcification`] in the `ImageBuffer` to
-    /// reset the 'origin' of the pixel *data window* to the specified
+    /// Alters the metadata of the [`ImageSpecification`] in the `ImageBuffer`
+    /// to reset the 'origin' of the pixel *data window* to the specified
     /// coordinates.
     ///
     /// This does not affect the size of the pixel *data window*, only its
@@ -545,8 +553,8 @@ impl ImageBuffer {
         }
     }
 
-    /// Alters the metadata of the [`ImageSpcification`] in the `ImageBuffer` to
-    /// set the display window to the specified dimensions.
+    /// Alters the metadata of the [`ImageSpecification`] in the `ImageBuffer`
+    /// to set the display window to the specified dimensions.
     ///
     /// This does not affect the size of the pixel *data window*.
     pub fn set_display_window(&mut self, roi: &Region) {
@@ -642,7 +650,7 @@ impl ImageBuffer {
 }
 
 impl ImageBuffer {
-    pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageBuf_t {
+    pub(crate) fn as_raw_ptr_mut(&mut self) -> *mut oiio_ImageBuf_t {
         self.ptr
     }
 

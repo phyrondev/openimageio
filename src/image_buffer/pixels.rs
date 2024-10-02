@@ -63,9 +63,7 @@ pub trait Pixels<T: Primitive> {
 macro_rules! pixels {
     ($rust_type:ty, $base_type:expr) => {
         impl Pixels<$rust_type> for ImageBuffer {
-            /// Get a regio of pixels from the image buffer.
-            // TODO: Add a Pixels trait that is generic over T (returns Vec<T>)
-            // and implement for all base_types in TypeDescription.
+            /// Get a region of pixels from the image buffer.
             fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<$rust_type>> {
                 if ImageBufferStorage::Uninitialized == self.storage() {
                     // An uninitialized image buffer has no pixels but it's not

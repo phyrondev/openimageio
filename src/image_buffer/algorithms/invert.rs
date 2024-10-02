@@ -14,8 +14,8 @@ use core::mem::MaybeUninit;
 ///    others.
 ///
 /// 2. There may be situations where you want to
-///    [`unpremultiply()`](self::unpremultiply) invert, then
-///    [`premultiply()`](self::premultiply) the result, so that you are
+///    [`unpremultiply()`](ImageBuffer::unpremultiply) invert, then
+///    [`premultiply()`](ImageBuffer::premultiply) the result, so that you are
 ///    computing the inverse of the unmasked color.
 impl ImageBuffer {
     #[named]
@@ -83,8 +83,7 @@ mod tests {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        let region = Region::new_2d(0..80, 0..80);
-
+        image_buffer.resize(&Region::new_2d(0..80, 0..80))?;
         image_buffer.invert()?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
 

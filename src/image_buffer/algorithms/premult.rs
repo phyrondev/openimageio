@@ -100,15 +100,15 @@ impl ImageBuffer {
 
 /// # Re-Premultiplication
 ///
-/// The operation is like [`premultiply()`](self::premultiply), but preserves
-/// the color values of pixels whose `alpha` is `0`.
+/// The operation is like [`premultiply()`](ImageBuffer::premultiply), but
+/// preserves the color values of pixels whose `alpha` is `0`.
 ///
 /// This is intended for cases where you
-/// [`unpremultiply()`](self::unpremultiply), do an operation (such as color
-/// transforms), then want to return to *associated*/*premultiplied `alpha`*. In
-/// that case, you want to make sure that 'glow' pixels (those with an `alpha`
-/// of `0` but RGB > `0`) are preserved for the round trip, and not crushed to
-/// black.
+/// [`unpremultiply()`](ImageBuffer::unpremultiply), do an operation (such as
+/// color transforms), then want to return to *associated*/*premultiplied
+/// `alpha`*. In that case, you want to make sure that 'glow' pixels (those with
+/// an `alpha` of `0` but RGB > `0`) are preserved for the round trip, and not
+/// crushed to black.
 ///
 /// This use case is distinct from a simple premultiplication that is a
 /// one-time conversion from *unassociated* to *associated `alpha`*.

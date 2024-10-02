@@ -74,13 +74,20 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
     }
 }
 
-/// Describes whether a [`TypeDesc`] is a simple scalar of one of the
+/// Describes whether a [`TypeDescription`] is a simple scalar of one of the
 /// [`BaseType`]s, or one of several simple aggregates.
 ///
 /// Note that *aggregates* and *arrays* are different.
 ///
-/// * An array of three `f32`s: ```ignore TypeDescription { base_type:
-///   Some(BaseType::F32), array_len: Some(3), ..Default::default() } ```
+/// * An array of three `f32`s:
+///
+///   ```ignore
+///   TypeDescription {
+///       base_type: Some(BaseType::F32),
+///       array_len: Some(3),
+///       ..Default::default()
+///   }
+///   ```
 ///
 /// * A single three-component vector comprised of `f32`s.
 ///

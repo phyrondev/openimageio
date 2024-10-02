@@ -226,16 +226,15 @@ BBL_MODULE(oiio) {
                    }),
          "set_format_with_typename")
       .m(&OIIO::ImageSpec::default_channel_names)
-      .m((size_t(OIIO::ImageSpec::*)() const) & OIIO::ImageSpec::channel_bytes,
+      .m((size_t(OIIO::ImageSpec::*)() const)&OIIO::ImageSpec::channel_bytes,
          "channel_bytes_00")
-      .m((size_t(OIIO::ImageSpec::*)(int, bool) const) &
-             OIIO::ImageSpec::channel_bytes,
+      .m((size_t(OIIO::ImageSpec::*)(int, bool)
+              const)&OIIO::ImageSpec::channel_bytes,
          "channel_bytes_01")
-      .m((size_t(OIIO::ImageSpec::*)(bool) const) &
-             OIIO::ImageSpec::pixel_bytes,
+      .m((size_t(OIIO::ImageSpec::*)(bool) const)&OIIO::ImageSpec::pixel_bytes,
          "pixel_bytes_00")
-      .m((size_t(OIIO::ImageSpec::*)(int, int, bool) const) &
-             OIIO::ImageSpec::pixel_bytes,
+      .m((size_t(OIIO::ImageSpec::*)(int, int, bool)
+              const)&OIIO::ImageSpec::pixel_bytes,
          "pixel_bytes_01")
       .m(&OIIO::ImageSpec::scanline_bytes)
       .m(&OIIO::ImageSpec::tile_pixels)
@@ -244,15 +243,13 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageSpec::image_bytes)
       .m(&OIIO::ImageSpec::size_t_safe)
       .m((void (*)(OIIO::stride_t &, OIIO::stride_t &, OIIO::stride_t &,
-                   OIIO::stride_t, int, int, int)) &
-             OIIO::ImageSpec::auto_stride,
+                   OIIO::stride_t, int, int, int))&OIIO::ImageSpec::auto_stride,
          "auto_stride_00")
       .m((void (*)(OIIO::stride_t &, OIIO::stride_t &, OIIO::stride_t &,
-                   OIIO::TypeDesc, int, int, int)) &
-             OIIO::ImageSpec::auto_stride,
+                   OIIO::TypeDesc, int, int, int))&OIIO::ImageSpec::auto_stride,
          "auto_stride_01")
-      .m((void (*)(OIIO::stride_t &, OIIO::TypeDesc, int)) &
-             OIIO::ImageSpec::auto_stride,
+      .m((void (*)(OIIO::stride_t &, OIIO::TypeDesc,
+                   int))&OIIO::ImageSpec::auto_stride,
          "auto_stride_02")
       .m(bbl::Wrap((void(OIIO::ImageSpec::*)(OIIO::string_view, OIIO::TypeDesc,
                                              const void *)) &
@@ -329,6 +326,7 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageSpec::roi_full)
       .m(&OIIO::ImageSpec::set_roi)
       .m(&OIIO::ImageSpec::set_roi_full)
+      .m(&OIIO::ImageSpec::set_colorspace)
       .m(&OIIO::ImageSpec::copy_dimensions)
       .m(&OIIO::ImageSpec::undefined);
 
@@ -390,8 +388,7 @@ BBL_MODULE(oiio) {
   bbl::Class<OIIO::ImageInput>()
       .m(bbl::Wrap((OIIO::ImageInput::unique_ptr(*)(
                        const std::string &, const OIIO::ImageSpec *,
-                       OIIO::Filesystem::IOProxy *)) &
-                       OIIO::ImageInput::open,
+                       OIIO::Filesystem::IOProxy *))&OIIO::ImageInput::open,
                    [](char const *filename, OIIO::ImageSpec const *spec,
                       OIIO::Filesystem::IOProxy *ioproxy)
                        -> OIIO::ImageInput::unique_ptr {
@@ -418,8 +415,8 @@ BBL_MODULE(oiio) {
       .m(bbl::Wrap(
              (OIIO::ImageInput::unique_ptr(*)(
                  OIIO::string_view, bool, const OIIO::ImageSpec *,
-                 OIIO::Filesystem::IOProxy *, OIIO::string_view)) &
-                 OIIO::ImageInput::create,
+                 OIIO::Filesystem::IOProxy *,
+                 OIIO::string_view))&OIIO::ImageInput::create,
              [](char const *filename, bool doopen,
                 OIIO::ImageSpec const *config,
                 OIIO::Filesystem::IOProxy *ioproxy,
@@ -441,8 +438,8 @@ BBL_MODULE(oiio) {
       .m((const OIIO::ImageSpec &(OIIO::ImageInput::*)() const) &
              OIIO::ImageInput::spec,
          "spec")
-      .m((OIIO::ImageSpec(OIIO::ImageInput::*)(int, int)) &
-             OIIO::ImageInput::spec,
+      .m((OIIO::ImageSpec(OIIO::ImageInput::*)(int,
+                                               int))&OIIO::ImageInput::spec,
          "spec_from_subimage")
       .m(&OIIO::ImageInput::spec_dimensions)
       .m(&OIIO::ImageInput::get_thumbnail)
@@ -539,8 +536,7 @@ BBL_MODULE(oiio) {
   bbl::Class<OIIO::ImageOutput>()
       .m(bbl::Wrap((OIIO::ImageOutput::unique_ptr(*)(
                        OIIO::string_view, OIIO::Filesystem::IOProxy *,
-                       OIIO::string_view)) &
-                       OIIO::ImageOutput::create,
+                       OIIO::string_view))&OIIO::ImageOutput::create,
                    [](char const *filename, OIIO::Filesystem::IOProxy *ioproxy,
                       char const *plugin_searchpath)
                        -> OIIO::ImageOutput::unique_ptr {

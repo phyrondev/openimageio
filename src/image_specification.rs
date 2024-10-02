@@ -251,6 +251,15 @@ impl ImageSpecInternal {
         }
     }
 
+    pub fn set_color_space(&mut self, color_space: &str) {
+        unsafe {
+            oiio_ImageSpec_set_colorspace(
+                self.ptr,
+                StringView::from(color_space).as_raw_ptr() as _,
+            );
+        }
+    }
+
     /*
     pub fn new_with_dimensions(
         x_res: u32,

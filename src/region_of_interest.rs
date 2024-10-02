@@ -21,7 +21,7 @@ pub(crate) static ALL: Region = Region {
 /// [`Roi`] (re-capitalized to conform with RFC 344), is available behind a
 /// `type` alias when the `cpp_api_names` feature is enabled.
 ///
-/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#rectangular-region-of-interest-roi
+/// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#rectangular-region-of-interest-roi).
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
 pub enum RegionOfInterest {
     /// 'All' of the image, or no region restriction.
@@ -344,7 +344,7 @@ impl Region {
     ///
     /// # For C++ Developers
     ///
-    /// [The (overloaded) C++ version](https://openimageio.readthedocs.io/en/latest/imageioapi.html#_CPPv4NK4OIIO3ROI8containsERK3ROI)
+    /// [C++ version](https://openimageio.readthedocs.io/en/latest/imageioapi.html#_CPPv4NK4OIIO3ROI8containsERK3ROI)
     /// of this is called `contains()`.
     #[inline]
     pub fn contains(&self, other: &Self) -> bool {
