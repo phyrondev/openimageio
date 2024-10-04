@@ -8,6 +8,11 @@ license = "Apache-2.0"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Anders Langlands"]
 homepage = "https://openimageio.org/"
 
+[features]
+default = []
+builtin_bindings = []
+
 [build-dependencies]
-bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
+#bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
+bbl-build = { path = "../../bbl-build-rs" }
 log = "0.4"
