@@ -13,6 +13,6 @@ default = []
 builtin_bindings = []
 
 [build-dependencies]
-#bbl-build = { git = "https://github.com/anderslanglands/bbl-build-rs.git" }
-bbl-build = { path = "../../bbl-build-rs" }
+bbl-build = { git = "https://github.com/virtualritz/bbl-build-rs.git" }
+#bbl-build = { path = "../../bbl-build-rs" }
 log = "0.4"

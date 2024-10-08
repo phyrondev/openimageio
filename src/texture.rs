@@ -82,10 +82,13 @@ impl From<InterpolationMode> for oiio_InterpMode {
 /// texture lookup call takes a reference to a `TextureOptions`.
 #[derive(Debug, PartialEq)]
 pub struct TextureOptions<'a> {
+    // We use u16 for some only-ever-positive `i32` values in the FFI struct that can reasonably
+    // never even be close to `u16::MAX` in practice to avoid any chance of overflow (and using
+    // `try_into()` at the FFI boundary).
     /// First channel of the lookup.
-    pub first_channel: u32,
+    pub first_channel: u16,
     /// Sub-image or `Ptex` face ID.
-    pub sub_image: u32,
+    pub sub_image: u16,
     /// Sub-image name.
     pub sub_image_name: Ustr,
     /// Wrap mode in the `s` direction.
@@ -115,9 +118,9 @@ pub struct TextureOptions<'a> {
     /// Time (for time-dependent texture lookups).
     pub time: f32,
     /// Stratified sample value.
-    pub random: f32,
-    /// Number of samples for shadows.
-    pub samples: u32,
+    pub random: Option<f32>,
+    /// Number of samples for certain map lookups (e.g. shadow maps).
+    pub samples: Option<u16>,
     /// Wrap mode in the `r` direction for 3D volume texture lookups only.
     pub r_wrap: Wrap,
     /// Blur amount in the `r` direction
@@ -132,8 +135,8 @@ impl From<&TextureOptions<'_>> for oiio_TextureOpt_t {
 
         unsafe {
             oiio_TextureSystem_make_texture_options(
-                t.first_channel.try_into().unwrap(),
-                t.sub_image.try_into().unwrap(),
+                t.first_channel as _,
+                t.sub_image as _,
                 t.sub_image_name.as_char_ptr(),
                 t.s_wrap.into(),
                 t.t_wrap.into(),
@@ -151,8 +154,8 @@ impl From<&TextureOptions<'_>> for oiio_TextureOpt_t {
                     .map(|c| c as *const _ as *const _)
                     .unwrap_or(ptr::null()) as _,
                 t.time,
-                t.random,
-                t.samples.try_into().unwrap(),
+                t.random.unwrap_or(-1.0),
+                t.samples.unwrap_or(1) as _,
                 t.r_wrap.into(),
                 t.r_blur,
                 t.r_width,
@@ -182,8 +185,8 @@ impl Default for TextureOptions<'_> {
             fill: 0.0,
             missing_color: None,
             time: 0.0,
-            random: -1.0,
-            samples: 1,
+            random: None,
+            samples: None,
             r_wrap: Wrap::default(),
             r_blur: 0.0,
             r_width: 1.0,
