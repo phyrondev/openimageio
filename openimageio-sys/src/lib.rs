@@ -3,8 +3,8 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 
-//#[cfg(builtin_bindings)]
+//#[cfg(any(generated_bindings, doc))]
 include!("../bindings/oiio.rs");
 
-//#[cfg(not(builtin_bindings))]
+//#[cfg(not(any(generated_bindings, doc)))]
 //include!(concat!(env!("OUT_DIR"), "/build/oiio.rs"));

@@ -110,7 +110,7 @@ mod tests {
         let warp = ImageBuffer::from_file(Utf8Path::new("assets/warp__U8_RGB.png"))?;
 
         // Resize the source image to match the warp image.
-        image_buf.resize(&warp.region_of_interest_full().region().unwrap())?;
+        image_buf.resize(&warp.display_window().region().unwrap())?;
 
         image_buf.warp(&warp)?;
 

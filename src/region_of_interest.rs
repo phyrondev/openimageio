@@ -94,6 +94,22 @@ impl RegionOfInterest {
 
         self
     }
+
+    pub fn transform_2d<'a>(&mut self, transform: impl Into<Matrix3Ref<'a, f32>>) -> &mut Self {
+        if let RegionOfInterest::Region(r) = self {
+            r.transform_2d(transform);
+        }
+
+        self
+    }
+
+    pub fn transform_3d<'a>(&mut self, transform: impl Into<Matrix4Ref<'a, f32>>) -> &mut Self {
+        if let RegionOfInterest::Region(r) = self {
+            r.transform_3d(transform);
+        }
+
+        self
+    }
 }
 
 impl RegionOfInterest {
@@ -316,6 +332,85 @@ impl Region {
     pub fn uniform_scale(&mut self, scale: f32) -> &mut Self {
         self.x = (self.x.start as f32 * scale) as _..(self.x.end as f32 * scale) as _;
         self.y = (self.y.start as f32 * scale) as _..(self.y.end as f32 * scale) as _;
+
+        self
+    }
+
+    /// Transform the region by the given 3×3 matrix and return the bounding box
+    /// of the transformed region.
+    pub fn transform_2d<'a>(&mut self, transform: impl Into<Matrix3Ref<'a, f32>>) -> &mut Self {
+        use nalgebra::{Matrix3, Point2};
+
+        let transform: Matrix3Ref<'a, _> = transform.into();
+        let transform: &Matrix3<f32> = transform.into();
+
+        let start =
+            transform.transform_point(&Point2::<f32>::new(self.x.start as _, self.y.start as _));
+        let end = transform.transform_point(&Point2::<f32>::new(self.x.end as _, self.y.end as _));
+
+        // Get aligned bbox of the transformed points.
+        if start.x < end.x {
+            self.x.start = start.x as i32;
+            self.x.end = (end.x + 0.5) as i32;
+        } else {
+            self.x.start = end.x as i32;
+            self.x.end = (start.x + 0.5) as i32;
+        }
+
+        if start.y < end.y {
+            self.y.start = start.y as i32;
+            self.y.end = (end.y + 0.5) as i32;
+        } else {
+            self.y.start = end.y as i32;
+            self.y.end = (start.y + 0.5) as i32;
+        }
+
+        self
+    }
+
+    /// Transform the region by the given 3×3 matrix and return the bounding box
+    /// of the transformed region.
+    pub fn transform_3d<'a>(&mut self, transform: impl Into<Matrix4Ref<'a, f32>>) -> &mut Self {
+        use nalgebra::{Matrix4, Point3};
+
+        let transform: Matrix4Ref<'a, _> = transform.into();
+        let transform: &Matrix4<f32> = transform.into();
+
+        let start = transform.transform_point(&Point3::<f32>::new(
+            self.x.start as _,
+            self.y.start as _,
+            self.z.start as _,
+        ));
+        let end = transform.transform_point(&Point3::<f32>::new(
+            self.x.end as _,
+            self.y.end as _,
+            self.z.end as _,
+        ));
+
+        // Get aligned bbox of the transformed points.
+        if start.x < end.x {
+            self.x.start = start.x as i32;
+            self.x.end = (end.x + 0.5) as i32;
+        } else {
+            self.x.start = end.x as i32;
+            self.x.end = (start.x + 0.5) as i32;
+        }
+
+        if start.y < end.y {
+            self.y.start = start.y as i32;
+            self.y.end = (end.y + 0.5) as i32;
+        } else {
+            self.y.start = end.y as i32;
+            self.y.end = (start.y + 0.5) as i32;
+        }
+
+        if start.z < end.z {
+            self.z.start = start.z as i32;
+            self.z.end = (end.z + 0.5) as i32;
+        } else {
+            self.z.start = end.z as i32;
+            self.z.end = (start.z + 0.5) as i32;
+        }
 
         self
     }

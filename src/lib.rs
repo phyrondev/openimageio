@@ -1,3 +1,4 @@
+#![feature(const_option)]
 #![feature(c_size_t)]
 //#![feature(once_cell_get_mut)]
 #![feature(hash_extract_if)]
@@ -232,14 +233,14 @@
 #![doc = document_features::document_features!()]
 pub use anyhow::Result;
 pub use camino::{Utf8Path, Utf8PathBuf};
-pub use ustr::{Ustr, ustr};
-
+use core::mem::transmute;
+pub(crate) use function_name::named;
+use num_traits::{Bounded, Num, NumCast};
 #[cfg(feature = "ffi")]
 pub use openimageio_sys::*;
 #[cfg(not(feature = "ffi"))]
 pub(crate) use openimageio_sys::*;
-
-pub(crate) use function_name::named;
+pub use ustr::{Ustr, ustr};
 
 mod color;
 pub use color::*;
@@ -283,34 +284,81 @@ pub use type_description::*;
 mod ustring;
 pub use ustring::*;
 
-use num_traits::{Bounded, Num, NumCast};
-
-type Matrix33fHelper = *const [f32; 9];
-
+/// Holds a reference to a column-major 3×3 matrix of `T` values.
+///
+/// There are `From`-impls for `glam::f32::Mat3`, `mint::ColumnMatrix3<f32>`,
+/// and `nalgebra::Matrix3<f32>`.
 #[derive(Clone, Copy)]
-pub struct Matrix3F32<'a>(&'a [f32; 9]);
+pub struct Matrix3Ref<'a, T>(&'a [T; 9]);
 
-impl<'a> From<&'a [f32; 9]> for Matrix3F32<'a> {
+impl<'a> From<&'a [f32; 9]> for Matrix3Ref<'a, f32> {
     fn from(matrix: &'a [f32; 9]) -> Self {
         Self(matrix)
     }
 }
 
 #[cfg(feature = "glam")]
-impl<'a> From<&'a glam::f32::Mat3> for Matrix3F32<'a> {
+impl<'a> From<&'a glam::f32::Mat3> for Matrix3Ref<'a, f32> {
     fn from(matrix: &glam::f32::Mat3) -> Self {
-        use core::mem::transmute;
-
         unsafe { Self(transmute(matrix)) }
     }
 }
 
-#[cfg(feature = "nalgebra")]
-impl<'a> From<&'a nalgebra::Matrix3<f32>> for Matrix3F32<'a> {
-    fn from(matrix: &nalgebra::Matrix3<f32>) -> Self {
-        use core::mem::transmute;
-
+#[cfg(feature = "mint")]
+impl<'a> From<&'a mint::ColumnMatrix3<f32>> for Matrix3Ref<'a, f32> {
+    fn from(matrix: &mint::ColumnMatrix3<f32>) -> Self {
         unsafe { Self(transmute(matrix)) }
+    }
+}
+
+impl<'a> From<&'a nalgebra::Matrix3<f32>> for Matrix3Ref<'a, f32> {
+    fn from(matrix: &nalgebra::Matrix3<f32>) -> Self {
+        unsafe { Self(transmute(matrix)) }
+    }
+}
+
+impl<'a> From<Matrix3Ref<'a, f32>> for &'a nalgebra::Matrix3<f32> {
+    fn from(matrix: Matrix3Ref<'a, f32>) -> Self {
+        unsafe { transmute(matrix) }
+    }
+}
+
+/// Holds a reference to a column-major 4×4 matrix of `T` values.
+///
+/// There are `From`-impls for `glam::f32::Mat4`, `mint::ColumnMatrix4<f32>`,
+/// and `nalgebra::Matrix4<f32>`.
+#[derive(Clone, Copy)]
+pub struct Matrix4Ref<'a, T>(&'a [T; 16]);
+
+impl<'a> From<&'a [f32; 16]> for Matrix4Ref<'a, f32> {
+    fn from(matrix: &'a [f32; 16]) -> Self {
+        Self(matrix)
+    }
+}
+
+#[cfg(feature = "glam")]
+impl<'a> From<&'a glam::f32::Mat4> for Matrix4Ref<'a, f32> {
+    fn from(matrix: &glam::f32::Mat4) -> Self {
+        unsafe { Self(transmute(matrix)) }
+    }
+}
+
+#[cfg(feature = "mint")]
+impl<'a> From<&'a mint::ColumnMatrix4<f32>> for Matrix4Ref<'a, f32> {
+    fn from(matrix: &mint::ColumnMatrix4<f32>) -> Self {
+        unsafe { Self(transmute(matrix)) }
+    }
+}
+
+impl<'a> From<&'a nalgebra::Matrix4<f32>> for Matrix4Ref<'a, f32> {
+    fn from(matrix: &nalgebra::Matrix4<f32>) -> Self {
+        unsafe { Self(transmute(matrix)) }
+    }
+}
+
+impl<'a> From<Matrix4Ref<'a, f32>> for &'a nalgebra::Matrix4<f32> {
+    fn from(matrix: Matrix4Ref<'a, f32>) -> Self {
+        unsafe { transmute(matrix) }
     }
 }
 
@@ -337,12 +385,14 @@ macro_rules! declare_primitive {
     };
 }
 
+// Unsigned primitive types.
 declare_primitive!(usize: (0)..Self::MAX);
 declare_primitive!(u8: (0)..Self::MAX);
 declare_primitive!(u16: (0)..Self::MAX);
 declare_primitive!(u32: (0)..Self::MAX);
 declare_primitive!(u64: (0)..Self::MAX);
 
+// Unsigned primitive types.
 declare_primitive!(isize: (Self::MIN)..Self::MAX);
 declare_primitive!(i8: (Self::MIN)..Self::MAX);
 declare_primitive!(i16: (Self::MIN)..Self::MAX);

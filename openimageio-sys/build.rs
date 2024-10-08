@@ -6,13 +6,14 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=bbl-oiio/*");
 
-    let regenerate_bindings = env::var("OIIO_REGENERATE").is_ok();
-
     // We only re-generate the bindings if the environment variable
     // OIIO_REGENERATE is set.
-    //println!("cargo::rustc-check-cfg=cfg(builtin_bindings)");
-    if !regenerate_bindings {
-        //println!("cargo:rustc-cfg=builtin_bindings");
+    //println!("cargo::rustc-check-cfg=cfg(generated_bindings)");
+
+    // Do not try to generate anything during a `doc` build or the user told us so.
+    if cfg!(doc) || env::var("OIIO_DO_NOT_GENERATE_CPP_API").is_ok() {
+        //println!("cargo:rustc-cfg=generated_bindings");
+
         return Ok(());
     }
 
@@ -32,13 +33,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?
         .join("build/oiio.rs");
 
-    if regenerate_bindings {
-        let destination = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("bindings");
+    let destination = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("bindings");
 
-        let _ = fs::create_dir_all(&destination);
+    let _ = fs::create_dir_all(&destination);
 
-        fs::copy(bindings_path, destination.join("oiio.rs"))?;
-    }
+    fs::copy(bindings_path, destination.join("oiio.rs"))?;
 
     Ok(())
 }

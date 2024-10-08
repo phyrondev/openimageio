@@ -34,7 +34,7 @@ pub struct PixelsOptions {
 /// ))?;
 ///
 /// let mut region = image_buffer
-///     .region_of_interest()
+///     .data_window()
 ///     .region()
 ///     .ok_or(anyhow!("Image is empty"))?
 ///     .clone();

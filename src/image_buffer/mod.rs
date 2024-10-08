@@ -576,7 +576,7 @@ impl ImageBuffer {
 /// # C++ API Getter Aliases
 #[cfg(feature = "cpp_api_names")]
 impl ImageBuffer {
-    /// Alias for [`region_of_interest()`](Self::region_of_interest).
+    /// Alias for [`data_window()`](Self::data_window).
     #[inline(always)]
     pub fn roi(&self) -> RegionOfInterest {
         self.data_window()

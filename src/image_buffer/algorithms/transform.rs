@@ -13,7 +13,7 @@ impl ImageBuffer {
     pub fn replace_by_transform<'a>(
         &mut self,
         source: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32<'a>>,
+        matrix_2d: impl Into<Matrix3Ref<'a, f32>>,
     ) -> Result<&mut Self> {
         let is_ok = self.transform_ffi(source, matrix_2d, &TransformOptions::default());
 
@@ -24,7 +24,7 @@ impl ImageBuffer {
     pub fn replace_by_transform_with<'a>(
         &mut self,
         source: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32<'a>>,
+        matrix_2d: impl Into<Matrix3Ref<'a, f32>>,
         transform_options: &TransformOptions,
     ) -> Result<&mut Self> {
         let is_ok = self.transform_ffi(source, matrix_2d, transform_options);
@@ -33,7 +33,10 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn transform<'a>(&mut self, matrix_2d: impl Into<Matrix3F32<'a>>) -> Result<&mut Self> {
+    pub fn transform<'a>(
+        &mut self,
+        matrix_2d: impl Into<Matrix3Ref<'a, f32>>,
+    ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.transform_ffi(self, matrix_2d, &TransformOptions::default());
         *self = image_buffer;
@@ -44,7 +47,7 @@ impl ImageBuffer {
     #[named]
     pub fn transform_with<'a>(
         &mut self,
-        matrix_2d: impl Into<Matrix3F32<'a>>,
+        matrix_2d: impl Into<Matrix3Ref<'a, f32>>,
         transform_options: &TransformOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
@@ -101,13 +104,13 @@ impl ImageBuffer {
     fn transform_ffi<'a>(
         &mut self,
         source: &ImageBuffer,
-        matrix_2d: impl Into<Matrix3F32<'a>>,
+        matrix_2d: impl Into<Matrix3Ref<'a, f32>>,
         transform_options: &TransformOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         let matrix_2d = matrix_2d.into();
-        let matrix_2d: Matrix33fHelper = matrix_2d.0 as *const _ as _;
+        let matrix_2d: *const [f32; 9] = matrix_2d.0 as *const _ as _;
 
         unsafe {
             oiio_ImageBufAlgo_warp(
@@ -159,7 +162,7 @@ mod tests {
             ..Default::default()
         })?;
 
-        image_buf.expand_region_of_interest_full();
+        image_buf.set_display_to_data_window();
 
         image_buf.write(Path::new("target/transformed.exr"))?;
 

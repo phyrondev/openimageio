@@ -1,6 +1,7 @@
 use crate::*;
 use core::num::NonZeroU32;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::num::NonZeroUsize;
 
 /// Describes the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.
@@ -199,6 +200,141 @@ pub struct TypeDescription {
     pub array_len: Option<ArrayLen>,
 }
 
+impl TypeDescription {
+    pub const COLOR_F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Vec3,
+        vec_semantics: Some(VecSemantics::Color),
+        array_len: None,
+    };
+    pub const F16: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F16),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const F64: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F64),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const I16: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::I16),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const I32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::I32),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const I64: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::I64),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const I8: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::I8),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const KEY_CODE: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::I32),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: Some(VecSemantics::KeyCode),
+        array_len: Some(ArrayLen::Specific(NonZeroU32::new(7).unwrap())),
+    };
+    pub const MATRIX3_F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Matrix3,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const MATRIX4_F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Matrix4,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const MATRIX4_F64: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F64),
+        aggregate: Aggregate::Matrix4,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const NORMAL_F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Vec3,
+        vec_semantics: Some(VecSemantics::Normal),
+        array_len: None,
+    };
+    pub const POINT_F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Vec3,
+        vec_semantics: Some(VecSemantics::Point),
+        array_len: None,
+    };
+    pub const STRING: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::String),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const TIMECODE: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::U32),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: Some(VecSemantics::TimeCode),
+        array_len: Some(ArrayLen::Specific(NonZeroU32::new(2).unwrap())),
+    };
+    pub const U16: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::U16),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const U32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::U32),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const U64: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::U64),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const U8: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::U8),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const UNKNOWN: TypeDescription = TypeDescription {
+        base_type: None,
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const VECTOR_F32: TypeDescription = TypeDescription {
+        base_type: Some(BaseType::F32),
+        aggregate: Aggregate::Vec3,
+        vec_semantics: Some(VecSemantics::Vector),
+        array_len: None,
+    };
+}
+
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
 ///
 /// # For C++ Developers
@@ -294,13 +430,13 @@ impl From<&oiio_TypeDesc_t> for TypeDescription {
     fn from(t: &oiio_TypeDesc_t) -> Self {
         Self {
             base_type: match t.basetype {
-                b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 as u8 == b => None,
+                b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 == b as _ => None,
                 b => b.try_into().ok(),
             },
             aggregate: t.aggregate.try_into().unwrap(),
             vec_semantics: match t.vecsemantics {
-                b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 as u8 == b
-                    || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0 as u8 == b =>
+                b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 == b as _
+                    || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0 == b as _ =>
                 {
                     None
                 }
