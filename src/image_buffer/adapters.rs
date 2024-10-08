@@ -40,7 +40,7 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
             oiio_ImageBuf_set_pixels(
                 image_buffer.as_raw_ptr_mut(),
                 ALL.clone().into(),
-                type_description.clone().into(),
+                (*type_description).into(),
                 slice.as_ptr() as *const _ as _,
                 0,
                 0,
@@ -203,8 +203,8 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use anyhow::Result;
+    
+    
 
     #[cfg(feature = "image")]
     #[test]

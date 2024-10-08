@@ -15,7 +15,7 @@ pub struct StringView<'a> {
     _marker: PhantomData<*mut &'a ()>,
 }
 
-impl<'a> StringView<'a> {
+impl StringView<'_> {
     pub fn is_empty(&self) -> bool {
         let mut is_empty = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -38,7 +38,7 @@ impl<'a> StringView<'a> {
     }
 }
 
-impl<'a> Default for StringView<'a> {
+impl Default for StringView<'_> {
     fn default() -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
@@ -70,7 +70,7 @@ impl<'a> From<&'a str> for StringView<'a> {
     }
 }
 
-impl<'a> From<Ustr> for StringView<'a> {
+impl From<Ustr> for StringView<'static> {
     fn from(string: Ustr) -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
@@ -88,8 +88,8 @@ impl<'a> From<Ustr> for StringView<'a> {
     }
 }
 
-impl<'a> From<&Ustr> for StringView<'a> {
-    fn from(string: &Ustr) -> Self {
+impl<'a> From<&'a Ustr> for StringView<'a> {
+    fn from(string: &'a Ustr) -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
             oiio_StringView_ctor(
@@ -170,13 +170,13 @@ impl Display for StringView<'_> {
     }
 }
 
-impl<'a> Drop for StringView<'a> {
+impl Drop for StringView<'_> {
     fn drop(&mut self) {
         unsafe { oiio_StringView_dtor(self.ptr) };
     }
 }
 
-impl<'a> StringView<'a> {
+impl StringView<'_> {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_StringView_t {
         self.ptr as _
     }

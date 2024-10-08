@@ -18,7 +18,7 @@ pub struct ColorConvertOptions<'a> {
     pub thread_count: u16,
 }
 
-impl<'a> Default for ColorConvertOptions<'a> {
+impl Default for ColorConvertOptions<'_> {
     fn default() -> Self {
         Self {
             unpremultiply: true,

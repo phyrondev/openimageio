@@ -280,7 +280,7 @@ mod tests {
         // Create a new 640x480 RGB image, with a top-to-bottom gradient
         // from red to pink
 
-        let mut image_buf = ImageBuffer::from_fill_vertical(
+        let image_buf = ImageBuffer::from_fill_vertical(
             &pink,
             &red,
             &Region::new(0..640, 0..480, 0..1, Some(0..4)),

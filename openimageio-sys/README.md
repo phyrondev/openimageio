@@ -21,8 +21,7 @@ overridden by using a custom prefix, see next section.
 ### Using a Custom OpenImageIO Distribution
 
 If you have a custom OpenImageIO distribution, you can use the
-`CMAKE_INSTALL_PREFIX` environment variable to point to the root of the
-this:
+`CMAKE_INSTALL_PREFIX` environment variable to point to the root of it:
 
 ```sh
 CMAKE_INSTALL_PREFIX=/path/to/oiio cargo build
@@ -39,7 +38,7 @@ OIIO_DO_NOT_GENERATE_CPP_API=1 cargo build
 ```
 
 This can be useful if you just want to make sure whatever changes you did in
-your code depending on OIIO do build.
+your OIIO-dependent code do build.
 
 _But it does mean the build will **fail** at the linking stage._
 

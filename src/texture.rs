@@ -234,7 +234,7 @@ pub struct TextureHandle<'a, 'b> {
     system: &'a TextureSystem<'b>,
 }
 
-impl<'a, 'b> TextureHandle<'a, 'b> {
+impl TextureHandle<'_, '_> {
     pub fn texture(
         &self,
         s: f32,
@@ -349,7 +349,7 @@ impl<'a> TextureSystem<'a> {
     }
 }
 
-impl<'a> Drop for TextureSystem<'a> {
+impl Drop for TextureSystem<'_> {
     fn drop(&mut self) {
         unsafe { oiio_TextureSystem_destroy(self.ptr, false) };
     }

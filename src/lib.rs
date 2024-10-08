@@ -313,7 +313,7 @@ impl<'a> From<&'a mint::ColumnMatrix3<f32>> for Matrix3Ref<'a, f32> {
 
 impl<'a> From<&'a nalgebra::Matrix3<f32>> for Matrix3Ref<'a, f32> {
     fn from(matrix: &nalgebra::Matrix3<f32>) -> Self {
-        unsafe { Self(transmute(matrix)) }
+        unsafe { Self(transmute::<&nalgebra::Matrix3<f32>, &[f32; 9]>(matrix)) }
     }
 }
 
@@ -352,7 +352,7 @@ impl<'a> From<&'a mint::ColumnMatrix4<f32>> for Matrix4Ref<'a, f32> {
 
 impl<'a> From<&'a nalgebra::Matrix4<f32>> for Matrix4Ref<'a, f32> {
     fn from(matrix: &nalgebra::Matrix4<f32>) -> Self {
-        unsafe { Self(transmute(matrix)) }
+        unsafe { Self(transmute::<&nalgebra::Matrix4<f32>, &[f32; 16]>(matrix)) }
     }
 }
 

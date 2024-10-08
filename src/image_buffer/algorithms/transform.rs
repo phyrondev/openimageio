@@ -143,12 +143,13 @@ mod tests {
         let mut image_buf =
             ImageBuffer::from_file(Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
+        use core::f32::consts::FRAC_1_SQRT_2;
         let matrix = &[
-            0.7071068f32,
-            0.7071068,
+            FRAC_1_SQRT_2,
+            FRAC_1_SQRT_2,
             0.0,
-            -0.7071068,
-            0.7071068,
+            -FRAC_1_SQRT_2,
+            FRAC_1_SQRT_2,
             0.0,
             20.0,
             -8.284271,

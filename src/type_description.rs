@@ -1,7 +1,8 @@
 use crate::*;
+use anyhow::anyhow;
 use core::num::NonZeroU32;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use std::num::NonZeroUsize;
+//use std::num::NonZeroUsize;
 
 /// Describes the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.
@@ -415,12 +416,12 @@ impl TypeDescription {
 }
 
 impl TryFrom<*const oiio_TypeDesc_t> for TypeDescription {
-    type Error = ();
+    type Error = anyhow::Error;
 
-    //#[allow(clippy::not_unsafe_ptr_arg_deref)]
-    fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self, ()> {
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    fn try_from(t: *const oiio_TypeDesc_t) -> Result<Self> {
         match unsafe { t.as_ref() } {
-            None => Err(()),
+            None => Err(anyhow!("The oiio_TypeDesc_t was NULL")),
             Some(t) => Ok(t.into()),
         }
     }

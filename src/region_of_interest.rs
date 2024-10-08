@@ -543,6 +543,7 @@ mod internal {
     impl TryFrom<*const oiio_ROI_t> for RegionOfInterest {
         type Error = ();
 
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
         fn try_from(src: *const oiio_ROI_t) -> Result<Self, ()> {
             match unsafe { src.as_ref() } {
                 None => Err(()),

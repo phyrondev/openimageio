@@ -29,7 +29,7 @@ impl Drop for CspanF32<'_> {
     }
 }
 
-impl<'a> CspanF32<'a> {
+impl CspanF32<'_> {
     #[inline(always)]
     pub fn as_raw_ptr(&self) -> *const oiio_CspanF32_t {
         self.ptr
