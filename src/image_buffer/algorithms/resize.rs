@@ -108,24 +108,21 @@ mod tests {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        let region = Region::new_2d(0..80, 0..80);
-
-        image_buffer.resize(&region)?;
-        image_buffer.color_convert(None, ustr("sRGB"))?;
-
-        //image_buffer.write(Utf8Path::new("resized.png"))?;
+        image_buffer.resize(&Region::new_2d(0..80, 0..80))?;
 
         #[cfg(feature = "image")]
         {
+            image_buffer.color_convert(None, ustr("sRGB"))?;
             let image: image::DynamicImage = image_buffer.try_into()?;
 
             viuer::print(&image, &viuer::Config {
                 width: Some(80),
                 height: Some(40),
                 ..Default::default()
-            })?;
+            })
         }
 
-        Ok(())
+        #[cfg(not(feature = "image"))]
+        image_buffer.write(Utf8Path::new("target/resize.exr"))
     }
 }

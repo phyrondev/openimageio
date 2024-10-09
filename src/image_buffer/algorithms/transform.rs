@@ -138,10 +138,8 @@ mod tests {
 
     #[test]
     fn transform() -> Result<()> {
-        use camino::Utf8Path as Path;
-
         let mut image_buf =
-            ImageBuffer::from_file(Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
+            ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
         use core::f32::consts::FRAC_1_SQRT_2;
         let matrix = &[
@@ -156,16 +154,23 @@ mod tests {
             1.0,
         ];
 
-        let matrix = &[1., 0., 0.5, 0., 1., 0., 0., 0., 1.];
+        //let matrix = &[1., 0., 0., 0., 1., 0., 0., 0., 1.];
 
-        image_buf.transform_with(matrix, &TransformOptions {
+        let mut transformed = ImageBuf::new();
+
+        transformed.replace_by_transform_with(&image_buf, matrix, &TransformOptions {
             recompute_region_of_interest: true,
             ..Default::default()
         })?;
 
-        image_buf.set_display_to_data_window();
+        /*image_buf.transform_with(matrix, &TransformOptions {
+            recompute_region_of_interest: true,
+            ..Default::default()
+        })?;*/
 
-        image_buf.write(Path::new("target/transformed.exr"))?;
+        transformed.set_display_to_data_window();
+
+        transformed.write(Utf8Path::new("target/transform.exr"))?;
 
         Ok(())
     }

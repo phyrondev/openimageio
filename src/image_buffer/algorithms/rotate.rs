@@ -204,8 +204,6 @@ mod tests {
 
         rotated_image_buffer.set_display_to_data_window();
 
-        rotated_image_buffer.write(Utf8Path::new("target/rotated.exr"))?;
-
-        Ok(())
+        rotated_image_buffer.write(Utf8Path::new("target/rotate.exr"))
     }
 }

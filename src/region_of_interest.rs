@@ -344,26 +344,36 @@ impl Region {
         let transform: Matrix3Ref<'a, _> = transform.into();
         let transform: &Matrix3<f32> = transform.into();
 
-        let start =
-            transform.transform_point(&Point2::<f32>::new(self.x.start as _, self.y.start as _));
-        let end = transform.transform_point(&Point2::<f32>::new(self.x.end as _, self.y.end as _));
+        let corners = [
+            transform.transform_point(&Point2::<f32>::new(self.x.start as _, self.y.start as _)),
+            transform.transform_point(&Point2::<f32>::new(self.x.start as _, self.y.end as _)),
+            transform.transform_point(&Point2::<f32>::new(self.x.end as _, self.y.start as _)),
+            transform.transform_point(&Point2::<f32>::new(self.x.end as _, self.y.end as _)),
+        ];
 
-        // Get aligned bbox of the transformed points.
-        if start.x < end.x {
-            self.x.start = start.x as i32;
-            self.x.end = (end.x + 0.5) as i32;
-        } else {
-            self.x.start = end.x as i32;
-            self.x.end = (start.x + 0.5) as i32;
-        }
+        self.x.start =
+            corners.iter().fold(
+                i32::MAX,
+                |acc, p| if (p.x as i32) < acc { p.x as i32 } else { acc },
+            );
 
-        if start.y < end.y {
-            self.y.start = start.y as i32;
-            self.y.end = (end.y + 0.5) as i32;
-        } else {
-            self.y.start = end.y as i32;
-            self.y.end = (start.y + 0.5) as i32;
-        }
+        self.x.end =
+            corners.iter().fold(
+                i32::MIN,
+                |acc, p| if (p.x as i32) > acc { p.x as i32 } else { acc },
+            ) + 1;
+
+        self.y.start =
+            corners.iter().fold(
+                i32::MAX,
+                |acc, p| if (p.y as i32) < acc { p.y as i32 } else { acc },
+            );
+
+        self.y.end =
+            corners.iter().fold(
+                i32::MIN,
+                |acc, p| if (p.y as i32) > acc { p.y as i32 } else { acc },
+            ) + 1;
 
         self
     }
@@ -376,41 +386,74 @@ impl Region {
         let transform: Matrix4Ref<'a, _> = transform.into();
         let transform: &Matrix4<f32> = transform.into();
 
-        let start = transform.transform_point(&Point3::<f32>::new(
-            self.x.start as _,
-            self.y.start as _,
-            self.z.start as _,
-        ));
-        let end = transform.transform_point(&Point3::<f32>::new(
-            self.x.end as _,
-            self.y.end as _,
-            self.z.end as _,
-        ));
+        let corners = [
+            transform.transform_point(&Point3::<f32>::new(
+                self.x.start as _,
+                self.y.start as _,
+                self.z.start as _,
+            )),
+            transform.transform_point(&Point3::<f32>::new(
+                self.x.start as _,
+                self.y.start as _,
+                self.z.end as _,
+            )),
+            transform.transform_point(&Point3::<f32>::new(
+                self.x.start as _,
+                self.y.end as _,
+                self.z.end as _,
+            )),
+            transform.transform_point(&Point3::<f32>::new(
+                self.x.end as _,
+                self.y.end as _,
+                self.z.end as _,
+            )),
+            transform.transform_point(&Point3::<f32>::new(
+                self.x.end as _,
+                self.y.end as _,
+                self.z.start as _,
+            )),
+            transform.transform_point(&Point3::<f32>::new(
+                self.x.end as _,
+                self.y.start as _,
+                self.z.start as _,
+            )),
+        ];
 
-        // Get aligned bbox of the transformed points.
-        if start.x < end.x {
-            self.x.start = start.x as i32;
-            self.x.end = (end.x + 0.5) as i32;
-        } else {
-            self.x.start = end.x as i32;
-            self.x.end = (start.x + 0.5) as i32;
-        }
+        self.x.start =
+            corners.iter().fold(
+                i32::MAX,
+                |acc, p| if (p.x as i32) < acc { p.x as i32 } else { acc },
+            );
 
-        if start.y < end.y {
-            self.y.start = start.y as i32;
-            self.y.end = (end.y + 0.5) as i32;
-        } else {
-            self.y.start = end.y as i32;
-            self.y.end = (start.y + 0.5) as i32;
-        }
+        self.x.end =
+            corners.iter().fold(
+                i32::MIN,
+                |acc, p| if (p.x as i32) > acc { p.x as i32 } else { acc },
+            ) + 1;
 
-        if start.z < end.z {
-            self.z.start = start.z as i32;
-            self.z.end = (end.z + 0.5) as i32;
-        } else {
-            self.z.start = end.z as i32;
-            self.z.end = (start.z + 0.5) as i32;
-        }
+        self.y.start =
+            corners.iter().fold(
+                i32::MAX,
+                |acc, p| if (p.y as i32) < acc { p.y as i32 } else { acc },
+            );
+
+        self.y.end =
+            corners.iter().fold(
+                i32::MIN,
+                |acc, p| if (p.y as i32) > acc { p.y as i32 } else { acc },
+            ) + 1;
+
+        self.z.start =
+            corners.iter().fold(
+                i32::MAX,
+                |acc, p| if (p.z as i32) < acc { p.z as i32 } else { acc },
+            );
+
+        self.z.end =
+            corners.iter().fold(
+                i32::MIN,
+                |acc, p| if (p.z as i32) > acc { p.z as i32 } else { acc },
+            ) + 1;
 
         self
     }

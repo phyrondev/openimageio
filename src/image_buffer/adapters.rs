@@ -203,8 +203,6 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
 
 #[cfg(test)]
 mod tests {
-    
-    
 
     #[cfg(feature = "image")]
     #[test]

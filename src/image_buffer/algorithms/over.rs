@@ -90,7 +90,6 @@ mod tests {
         // 1024×1024.
         image_buf_a.over(&image_buf_b)?;
 
-        //println!("Over test done");
-        Ok(())
+        image_buf_a.write(Utf8Path::new("target/over.exr"))
     }
 }
