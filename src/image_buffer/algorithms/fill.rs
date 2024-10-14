@@ -5,9 +5,8 @@ use core::mem::MaybeUninit;
 ///
 /// Fill an image region with given channel values,
 ///
-///  Note that the value slices start with channel 0, even if the
-/// `RegionOfInterest` indicates that a later channel is the first to be
-/// changed.
+/// Note that the `values` slice starts with channel `0`, even if the [`Region`]
+/// indicates that a later channel is the first to be changed.
 ///
 /// Three varieties of `fill...()` exist:
 ///
@@ -23,10 +22,10 @@ use core::mem::MaybeUninit;
 /// `RegionOfInterest`.
 impl ImageBuffer {
     #[named]
-    pub fn from_fill(values: &[f32], region: &Region) -> Result<Self> {
+    pub fn from_fill(values: &[f32], region: &Bounds) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_ffi(values, &Options {
-            region_of_interest: RegionOfInterest::Region(region.clone()),
+            region: Region::Bounds(region.clone()),
             ..Default::default()
         });
 
@@ -34,15 +33,11 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn from_fill_with(
-        values: &[f32],
-        region: &Region,
-        thread_count: Option<u16>,
-    ) -> Result<Self> {
+    pub fn from_fill_with(values: &[f32], region: &Bounds, thread_count: u16) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_ffi(values, &Options {
-            region_of_interest: RegionOfInterest::Region(region.clone()),
-            thread_count: thread_count.unwrap_or(0),
+            region: Region::Bounds(region.clone()),
+            thread_count,
         });
 
         image_buffer.self_or_error(is_ok, function_name!())
@@ -69,10 +64,10 @@ impl ImageBuffer {
 /// to bottom of the `RegionOfInterest`.
 impl ImageBuffer {
     #[named]
-    pub fn from_fill_vertical(start: &[f32], end: &[f32], region: &Region) -> Result<Self> {
+    pub fn from_fill_vertical(start: &[f32], end: &[f32], region: &Bounds) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
-            region_of_interest: RegionOfInterest::Region(region.clone()),
+            region: Region::Bounds(region.clone()),
             ..Default::default()
         });
 
@@ -83,13 +78,13 @@ impl ImageBuffer {
     pub fn from_fill_vertical_with(
         start: &[f32],
         end: &[f32],
-        region: &Region,
-        thread_count: Option<u16>,
+        region: &Bounds,
+        thread_count: u16,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
-            region_of_interest: RegionOfInterest::Region(region.clone()),
-            thread_count: thread_count.unwrap_or(0),
+            region: Region::Bounds(region.clone()),
+            thread_count,
         });
 
         image_buffer.self_or_error(is_ok, function_name!())
@@ -126,7 +121,7 @@ impl ImageBuffer {
         top_right: &[f32],
         bottom_left: &[f32],
         bottom_right: &[f32],
-        region: &Region,
+        region: &Bounds,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_corners_ffi(
@@ -135,7 +130,7 @@ impl ImageBuffer {
             bottom_left,
             bottom_right,
             &Options {
-                region_of_interest: RegionOfInterest::Region(region.clone()),
+                region: Region::Bounds(region.clone()),
                 ..Default::default()
             },
         );
@@ -149,8 +144,8 @@ impl ImageBuffer {
         top_right: &[f32],
         bottom_left: &[f32],
         bottom_right: &[f32],
-        region: &Region,
-        thread_count: Option<u16>,
+        region: &Bounds,
+        thread_count: u16,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_corners_ffi(
@@ -159,8 +154,8 @@ impl ImageBuffer {
             bottom_left,
             bottom_right,
             &Options {
-                region_of_interest: RegionOfInterest::Region(region.clone()),
-                thread_count: thread_count.unwrap_or(0),
+                region: Region::Bounds(region.clone()),
+                thread_count,
             },
         );
 
@@ -210,7 +205,7 @@ impl ImageBuffer {
             oiio_ImageBufAlgo_fill(
                 self.ptr,
                 CspanF32::new(values).as_raw_ptr() as _,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -228,7 +223,7 @@ impl ImageBuffer {
                 self.ptr,
                 CspanF32::new(start).as_raw_ptr() as _,
                 CspanF32::new(end).as_raw_ptr() as _,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -255,7 +250,7 @@ impl ImageBuffer {
                 CspanF32::new(top_right).as_raw_ptr() as _,
                 CspanF32::new(bottom_left).as_raw_ptr() as _,
                 CspanF32::new(bottom_right).as_raw_ptr() as _,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -283,7 +278,7 @@ mod tests {
         let image_buf = ImageBuffer::from_fill_vertical(
             &pink,
             &red,
-            &Region::new(0..640, 0..480, 0..1, Some(0..4)),
+            &Bounds::new(0..640, 0..480, 0..1, Some(0..4)),
         )?;
 
         image_buf.write(Utf8Path::new("target/fill.exr"))?;
@@ -293,7 +288,7 @@ mod tests {
         image_buf.fill_with(
             &red,
             &Options {
-                region_of_interest: RegionOfInterest::Region(Region::new_2d(
+                region: RegionOfInterest::Region(Region::new_2d(
                     50..100,
                     75..175,
                 )),

@@ -159,7 +159,7 @@ impl ImageBuffer {
             oiio_ImageBufAlgo_unpremult(
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -176,7 +176,7 @@ impl ImageBuffer {
             oiio_ImageBufAlgo_premult(
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -193,7 +193,7 @@ impl ImageBuffer {
             oiio_ImageBufAlgo_repremult(
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -212,9 +212,9 @@ mod tests {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        let region = Region::new_2d(0..80, 0..80);
+        let b_box = Bounds::new_2d(0..80, 0..80);
 
-        image_buffer.resize(&region)?;
+        image_buffer.resize(&b_box)?;
         image_buffer.unpremultiply()?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
 

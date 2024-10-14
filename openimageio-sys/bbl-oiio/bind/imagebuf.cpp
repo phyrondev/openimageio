@@ -36,6 +36,13 @@ bool ImageBuf_get_pixels(OIIO::ImageBuf const &buf, OIIO::ROI roi,
   return buf.get_pixels(roi, type_desc, result);
 }
 
+bool ImageBuf_set_pixels_02(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                            OIIO::TypeDesc::BASETYPE base_type, void *pixels) {
+  OIIO::TypeDesc type_desc = OIIO::TypeDesc(base_type, 0);
+
+  return buf.set_pixels(roi, type_desc, pixels);
+}
+
 void ImageBuf_expand_roi_full(OIIO::ImageBuf &buf) {
   buf.set_roi_full(buf.roi());
 }
@@ -111,14 +118,12 @@ BBL_MODULE(oiio) {
       // .m((bool (OIIO::ImageBuf::*)(ImageOutput *, OIIO::ProgressCallback,
       // void *) const)
       //     &OIIO::ImageBuf::write, "write_02")
-      .m((void(OIIO::ImageBuf::*)(OIIO::TypeDesc)) &
+      .m((void(OIIO::ImageBuf::*)(OIIO::cspan<OIIO::TypeDesc>)) &
              OIIO::ImageBuf::set_write_format,
-         "set_write_format_00")
-      // .m((void (OIIO::ImageBuf::*)(cspan<OIIO::TypeDesc>))
-      //     &OIIO::ImageBuf::set_write_format, "set_write_format_01")
+         "set_write_format_01")
       .m(&OIIO::ImageBuf::set_write_tiles)
       /// TODO: rvalue reference
-      // .m(&OIIO::ImageBuf::set_write_ioproxy)
+      .m(&OIIO::ImageBuf::set_write_ioproxy)
       .m((const OIIO::ImageBuf &(OIIO::ImageBuf::*)(const OIIO::ImageBuf &)) &
              OIIO::ImageBuf::operator=,
          "op_assign_00")
@@ -130,8 +135,8 @@ BBL_MODULE(oiio) {
       .m((bool(OIIO::ImageBuf::*)(const OIIO::ImageBuf &, OIIO::TypeDesc)) &
              OIIO::ImageBuf::copy,
          "copy_00")
-      .m((OIIO::ImageBuf(OIIO::ImageBuf::*)(OIIO::TypeDesc) const) &
-             OIIO::ImageBuf::copy,
+      .m((OIIO::ImageBuf(OIIO::ImageBuf::*)(OIIO::TypeDesc)
+              const)&OIIO::ImageBuf::copy,
          "copy_01")
       .m(&OIIO::ImageBuf::swap)
       .m(&OIIO::ImageBuf::getchannel)
@@ -249,6 +254,7 @@ BBL_MODULE(oiio) {
   bbl::fn(&bblext::ImageBuf_write);
   bbl::fn(&bblext::ImageBuf_write_with_spec);
   bbl::fn(&bblext::ImageBuf_get_pixels);
+  bbl::fn(&bblext::ImageBuf_set_pixels_02);
   bbl::fn(&bblext::ImageBuf_expand_roi_full);
 
   bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")

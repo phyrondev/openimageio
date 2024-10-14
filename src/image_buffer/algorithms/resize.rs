@@ -15,7 +15,7 @@ impl ImageBuffer {
     pub fn replace_by_resize(
         &mut self,
         source: &ImageBuffer,
-        region: &Region,
+        region: &Bounds,
     ) -> Result<&mut Self> {
         let is_ok = self.resize_ffi(source, region, &ResizeOptions::default());
 
@@ -26,7 +26,7 @@ impl ImageBuffer {
     pub fn replace_by_resize_with(
         &mut self,
         source: &ImageBuffer,
-        region: &Region,
+        region: &Bounds,
         resize_options: &ResizeOptions,
     ) -> Result<&mut Self> {
         let is_ok = self.resize_ffi(source, region, resize_options);
@@ -35,7 +35,7 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn resize(&mut self, region: &Region) -> Result<&mut Self> {
+    pub fn resize(&mut self, region: &Bounds) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.resize_ffi(self, region, &ResizeOptions::default());
         *self = image_buffer;
@@ -46,7 +46,7 @@ impl ImageBuffer {
     #[named]
     pub fn resize_with(
         &mut self,
-        region: &Region,
+        region: &Bounds,
         resize_options: &ResizeOptions,
     ) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
@@ -77,7 +77,7 @@ impl ImageBuffer {
     fn resize_ffi(
         &mut self,
         source: &ImageBuffer,
-        region: &Region,
+        region: &Bounds,
         resize_options: &ResizeOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
@@ -108,7 +108,7 @@ mod tests {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        image_buffer.resize(&Region::new_2d(0..80, 0..80))?;
+        image_buffer.resize(&Bounds::new_2d(0..80, 0..80))?;
 
         #[cfg(feature = "image")]
         {
@@ -119,10 +119,12 @@ mod tests {
                 width: Some(80),
                 height: Some(40),
                 ..Default::default()
-            })
+            })?;
         }
 
         #[cfg(not(feature = "image"))]
-        image_buffer.write(Utf8Path::new("target/resize.exr"))
+        image_buffer.write(Utf8Path::new("target/resize.exr"))?;
+
+        Ok(())
     }
 }

@@ -122,8 +122,8 @@ impl ImageBuffer {
 #[derive(Clone, Default)]
 pub struct RotateOptions {
     pub filter: Option<Filter2D>,
-    pub recompute_region_of_interest: bool,
-    pub region_of_interest: RegionOfInterest,
+    pub recompute_region: bool,
+    pub region: Region,
     pub thread_count: u16,
 }
 
@@ -138,8 +138,8 @@ impl ImageBuffer {
                 other.as_raw_ptr(),
                 angle,
                 options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
-                options.recompute_region_of_interest,
-                options.region_of_interest.clone().into(),
+                options.recompute_region,
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -167,8 +167,8 @@ impl ImageBuffer {
                 center_x,
                 center_y,
                 options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
-                options.recompute_region_of_interest,
-                options.region_of_interest.clone().into(),
+                options.recompute_region,
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -197,7 +197,7 @@ mod tests {
                 // introduced when operating on HDRs with the default one,
                 // Lanczos3.
                 filter: Some(PixelFilter::BlackmanHarris.into()),
-                recompute_region_of_interest: true,
+                recompute_region: true,
                 ..Default::default()
             },
         )?;

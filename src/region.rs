@@ -5,41 +5,42 @@ use core::{
     ops::Range,
 };
 
-pub(crate) static ALL: Region = Region {
+pub(crate) static ALL: Bounds = Bounds {
     x: i32::MIN..0,
     y: 0..0,
     z: 0..0,
     channel: 0..0,
 };
 
-/// Describes a specific rectangular/cubic region of interest in an image or the
-/// region of the whole image.
+/// Describes a specific rectangular/cubic region in an image or the region of
+/// the whole image.
 ///
 /// # C++
 ///
-/// The name was changed to not contain abbreviations. The original name,
-/// [`Roi`] (re-capitalized to conform with RFC 344), is available behind a
-/// `type` alias when the `cpp_api_names` feature is enabled.
+/// The original name was changed to not contain abbreviations and the. The
+/// original name, [`Roi`], i.e. "region of interest"" (re-capitalized to
+/// conform with RFC 344), is available behind a `type` alias when the
+/// `cpp_api_names` feature is enabled.
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#rectangular-region-of-interest-roi).
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
-pub enum RegionOfInterest {
-    /// 'All' of the image, or no region restriction.
+pub enum Region {
+    /// All of the image, or no region restriction.
     #[default]
     All,
-    /// A specific region of interest.
-    Region(Region),
+    /// A specific region.
+    Bounds(Bounds),
 }
 
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
 #[cfg(feature = "cpp_api_names")]
-pub type Roi = RegionOfInterest;
+pub type Roi = Region;
 
-impl RegionOfInterest {
-    pub fn region(&self) -> Option<&Region> {
+impl Region {
+    pub fn bounds(&self) -> Option<&Bounds> {
         match self {
-            RegionOfInterest::All => None,
-            RegionOfInterest::Region(r) => Some(r),
+            Region::All => None,
+            Region::Bounds(r) => Some(r),
         }
     }
 
@@ -57,13 +58,13 @@ impl RegionOfInterest {
 
     pub fn union(&mut self, b: &Self) -> &mut Self {
         match self {
-            RegionOfInterest::All => {
+            Region::All => {
                 // Do nothing.
             }
-            RegionOfInterest::Region(a) => match b {
-                RegionOfInterest::All => *self = b.clone(),
-                RegionOfInterest::Region(b) => {
-                    *self = RegionOfInterest::Region(a.union(b).clone());
+            Region::Bounds(a) => match b {
+                Region::All => *self = b.clone(),
+                Region::Bounds(b) => {
+                    *self = Region::Bounds(a.union(b).clone());
                 }
             },
         }
@@ -73,13 +74,13 @@ impl RegionOfInterest {
 
     pub fn intersection(&mut self, b: &Self) -> &mut Self {
         match self {
-            RegionOfInterest::All => *self = b.clone(),
-            RegionOfInterest::Region(a) => match b {
-                RegionOfInterest::All => {
+            Region::All => *self = b.clone(),
+            Region::Bounds(a) => match b {
+                Region::All => {
                     // Do nothing.
                 }
-                RegionOfInterest::Region(b) => {
-                    *self = RegionOfInterest::Region(a.intersection(b).clone());
+                Region::Bounds(b) => {
+                    *self = Region::Bounds(a.intersection(b).clone());
                 }
             },
         }
@@ -87,24 +88,33 @@ impl RegionOfInterest {
         self
     }
 
+    /// Scale the region uniformly using the given value.
+    ///
+    /// This has no effect is the `Region` is of variant `All`.
     pub fn uniform_scale(&mut self, scale: f32) -> &mut Self {
-        if let RegionOfInterest::Region(r) = self {
+        if let Region::Bounds(r) = self {
             r.uniform_scale(scale);
         }
 
         self
     }
 
+    /// Transform the region using the given 2D matrix.
+    ///
+    /// This has no effect is the `Region` is of variant `All`.
     pub fn transform_2d<'a>(&mut self, transform: impl Into<Matrix3Ref<'a, f32>>) -> &mut Self {
-        if let RegionOfInterest::Region(r) = self {
+        if let Region::Bounds(r) = self {
             r.transform_2d(transform);
         }
 
         self
     }
 
+    /// Transform the region using the given 3D matrix.
+    ///
+    /// This has no effect is the `Region` is of variant `All`.
     pub fn transform_3d<'a>(&mut self, transform: impl Into<Matrix4Ref<'a, f32>>) -> &mut Self {
-        if let RegionOfInterest::Region(r) = self {
+        if let Region::Bounds(r) = self {
             r.transform_3d(transform);
         }
 
@@ -112,11 +122,11 @@ impl RegionOfInterest {
     }
 }
 
-impl RegionOfInterest {
+impl Region {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_ROI_t {
         match self {
-            RegionOfInterest::All => &ALL as *const Region as _,
-            RegionOfInterest::Region(r) => r as *const Region as _,
+            Region::All => &ALL as *const Bounds as _,
+            Region::Bounds(r) => r as *const Bounds as _,
         }
     }
 }
@@ -133,16 +143,16 @@ impl RegionOfInterest {
 /// * [Operations](#operations)
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
 #[repr(C)]
-pub struct Region {
+pub struct Bounds {
     x: Range<i32>,
     y: Range<i32>,
     z: Range<i32>,
     channel: Range<u32>,
 }
 
-impl Region {
+impl Bounds {
     pub fn new(x: Range<i32>, y: Range<i32>, z: Range<i32>, channel: Option<Range<u32>>) -> Self {
-        let channel = channel.unwrap_or(0..4);
+        let channel = channel.unwrap_or(0..10000);
 
         assert!(x.start <= x.end);
         assert!(y.start <= y.end);
@@ -174,7 +184,7 @@ impl Region {
 }
 
 /// # Getters
-impl Region {
+impl Bounds {
     /// The width of the region.
     pub fn width(&self) -> u32 {
         debug_assert!(self.x.start < self.x.end);
@@ -280,7 +290,7 @@ impl Region {
 }
 
 /// # Setters
-impl Region {
+impl Bounds {
     pub fn set_x(&mut self, x: Range<i32>) {
         self.x = x;
     }
@@ -336,7 +346,7 @@ impl Region {
         self
     }
 
-    /// Transform the region by the given 3×3 matrix and return the bounding box
+    /// Transform the region by the given 3×3 matrix and return the bounds
     /// of the transformed region.
     pub fn transform_2d<'a>(&mut self, transform: impl Into<Matrix3Ref<'a, f32>>) -> &mut Self {
         use nalgebra::{Matrix3, Point2};
@@ -378,8 +388,8 @@ impl Region {
         self
     }
 
-    /// Transform the region by the given 3×3 matrix and return the bounding box
-    /// of the transformed region.
+    /// Transform the region by the given 3×3 matrix and return the bounds of
+    /// the transformed region.
     pub fn transform_3d<'a>(&mut self, transform: impl Into<Matrix4Ref<'a, f32>>) -> &mut Self {
         use nalgebra::{Matrix4, Point3};
 
@@ -460,7 +470,7 @@ impl Region {
 }
 
 /// # Predicates
-impl Region {
+impl Bounds {
     /// Returns `true` if the given point is contained in the region.
     ///
     /// # For C++ Developers
@@ -508,7 +518,7 @@ impl Region {
 }
 
 #[cfg(feature = "cpp_api_names")]
-impl Region {
+impl Bounds {
     /// Returns `true` if the region is defined.
     ///
     /// This is equivalent to [`!is_empty()`](Region::is_empty).
@@ -518,7 +528,7 @@ impl Region {
 }
 
 /// # Operations
-impl Region {
+impl Bounds {
     /// Union of two regions.
     ///
     /// The smallest region containing both.
@@ -556,34 +566,34 @@ impl Region {
     }
 }
 
-impl From<Region> for RegionOfInterest {
-    fn from(src: Region) -> RegionOfInterest {
-        RegionOfInterest::Region(src)
+impl From<Bounds> for Region {
+    fn from(src: Bounds) -> Region {
+        Region::Bounds(src)
     }
 }
 
 mod internal {
     use super::*;
 
-    impl From<oiio_ROI_t> for Region {
-        fn from(src: oiio_ROI_t) -> Region {
+    impl From<oiio_ROI_t> for Bounds {
+        fn from(src: oiio_ROI_t) -> Bounds {
             unsafe { transmute(src) }
         }
     }
 
-    impl From<Region> for oiio_ROI_t {
-        fn from(src: Region) -> Self {
+    impl From<Bounds> for oiio_ROI_t {
+        fn from(src: Bounds) -> Self {
             unsafe { transmute(src) }
         }
     }
 
-    impl From<&Region> for *const oiio_ROI_t {
-        fn from(src: &Region) -> Self {
+    impl From<&Bounds> for *const oiio_ROI_t {
+        fn from(src: &Bounds) -> Self {
             src as *const _ as _
         }
     }
 
-    impl TryFrom<*const oiio_ROI_t> for RegionOfInterest {
+    impl TryFrom<*const oiio_ROI_t> for Region {
         type Error = ();
 
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -591,14 +601,14 @@ mod internal {
             match unsafe { src.as_ref() } {
                 None => Err(()),
                 Some(roi) => Ok(if i32::MIN == roi.xbegin {
-                    RegionOfInterest::All
+                    Region::All
                 } else {
-                    RegionOfInterest::Region({
-                        let mut dst = MaybeUninit::<Region>::uninit();
+                    Region::Bounds({
+                        let mut dst = MaybeUninit::<Bounds>::uninit();
 
                         unsafe {
                             std::ptr::copy_nonoverlapping(
-                                src as *const Region,
+                                src as *const Bounds,
                                 dst.as_mut_ptr(),
                                 1,
                             );
@@ -611,25 +621,21 @@ mod internal {
         }
     }
 
-    impl From<oiio_ROI_t> for RegionOfInterest {
-        fn from(src: oiio_ROI_t) -> RegionOfInterest {
+    impl From<oiio_ROI_t> for Region {
+        fn from(src: oiio_ROI_t) -> Region {
             if i32::MIN == src.xbegin {
-                RegionOfInterest::All
+                Region::All
             } else {
-                RegionOfInterest::Region(src.into())
+                Region::Bounds(src.into())
             }
         }
     }
 
-    impl From<RegionOfInterest> for oiio_ROI_t {
-        fn from(src: RegionOfInterest) -> oiio_ROI_t {
+    impl From<Region> for oiio_ROI_t {
+        fn from(src: Region) -> oiio_ROI_t {
             match src {
-                RegionOfInterest::All => unsafe {
-                    transmute::<region_of_interest::Region, oiio_ROI_t>(ALL.clone())
-                },
-                RegionOfInterest::Region(r) => unsafe {
-                    transmute::<region_of_interest::Region, oiio_ROI_t>(r)
-                },
+                Region::All => unsafe { transmute::<region::Bounds, oiio_ROI_t>(ALL.clone()) },
+                Region::Bounds(r) => unsafe { transmute::<region::Bounds, oiio_ROI_t>(r) },
             }
         }
     }
@@ -641,7 +647,7 @@ mod tests {
 
     #[test]
     fn region_of_interest() {
-        let region = RegionOfInterest::Region(Region::new_3d(3..42, 5..16, -33..9));
+        let region = Region::Bounds(Bounds::new_3d(3..42, 5..16, -33..9));
 
         assert_eq!(
             oiio_ROI_t {

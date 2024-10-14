@@ -55,9 +55,8 @@ pub struct RenderTextOptions<'a> {
     /// text look more clear by dilating the alpha channel of the composite
     /// (makes a black halo around the characters).
     pub outline: u16,
-    /// See the [Region of Interest](#region-of-interest) section on
-    /// [`ImageBuffer`].
-    pub region_of_interest: RegionOfInterest,
+    /// See the [Region](#region-of-interest) section on [`ImageBuffer`].
+    pub region: Region,
     /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
     pub thread_count: u16,
 }
@@ -71,7 +70,7 @@ impl Default for RenderTextOptions<'_> {
             text_align_x: TextAlignX::default(),
             text_align_y: TextAlignY::default(),
             outline: 0,
-            region_of_interest: RegionOfInterest::default(),
+            region: Region::default(),
             thread_count: 0,
         }
     }
@@ -193,7 +192,7 @@ impl ImageBuffer {
                 options.text_align_x.into(),
                 options.text_align_y.into(),
                 options.outline as _,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );

@@ -14,7 +14,7 @@ pub struct ColorConvertOptions<'a> {
     /// shot-specific transform).
     pub context: Option<(&'a str, &'a str)>,
     pub config: Option<ColorConfig>,
-    pub region_of_interest: RegionOfInterest,
+    pub region: Region,
     pub thread_count: u16,
 }
 
@@ -24,7 +24,7 @@ impl Default for ColorConvertOptions<'_> {
             unpremultiply: true,
             context: None,
             config: None,
-            region_of_interest: RegionOfInterest::default(),
+            region: Region::default(),
             thread_count: 0,
         }
     }
@@ -124,7 +124,7 @@ impl ImageBuffer {
                     .config
                     .as_ref()
                     .map_or(ptr::null_mut(), |s| *s.read_arc()),
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );

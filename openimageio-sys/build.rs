@@ -1,10 +1,27 @@
-use bbl_build::Config;
 use log::error;
 use std::{env, fs, path::PathBuf};
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=bbl-oiio/*");
+
+    // Build OIIO itself.
+
+    /*
+    let oiio_dist = cmake::Config::new("libopenimageio")
+        .cflag("-B target/cmake-build")
+        .cflag("-S OpenImageIO")
+        .cflag("-D OpenImageIO_BUILD_MISSING_DEPS=all")
+        .cflag("-D STOP_ON_WARNING=0")
+        .build();
+
+    let oiio_dist = cmake::Config::new("libopenimageio")
+        .cflag("--build target/cmake-build")
+        .cflag("--target install")
+        .cflag(format!("-j{}"))
+        .build();
+
+    println!("{}", oiio_dist.display());*/
 
     // We only re-generate the bindings if the environment variable
     // OIIO_REGENERATE is set.
@@ -28,7 +45,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("cargo:rustc-link-search={}/lib", cmake_install_prefix);
     }
 
-    let bindings_path = Config::new("oiio", "bbl-oiio")
+    let bindings_path = bbl_build::Config::new("oiio", "bbl-oiio")
         .define("BBL_LANGUAGES", "rust")
         .build()?
         .join("build/oiio.rs");

@@ -69,7 +69,7 @@ fn set_or_get_persist(persist: bool) -> bool {
 
 #[derive(Clone, Debug)]
 pub struct ImageCache {
-    pub(crate) ptr: Arc<RwLock<*mut oiio_ImageCache_t>>,
+    pub(crate) ptr: Arc<*mut oiio_ImageCache_t>,
 }
 
 unsafe impl Send for ImageCache {}
@@ -77,9 +77,35 @@ unsafe impl Sync for ImageCache {}
 
 impl PartialEq for ImageCache {
     fn eq(&self, other: &Self) -> bool {
-        *self.ptr.read() == *other.ptr.read()
+        *self.ptr == *other.ptr
     }
 }
+
+/*
+use core::{mem, ptr};
+
+pub trait CleanUp {
+    fn clean_up(&mut self);
+}
+
+pub struct CleanOnDrop<T: CleanUp>(T);
+
+impl<T: CleanUp> Drop for CleanOnDrop<T> {
+    fn drop(&mut self) {
+        self.0.clean_up();
+    }
+}
+
+impl<T: CleanUp> CleanOnDrop<T> {
+    /// Extracts the inner value, without triggering any clean_up
+    pub fn into_inner(mut self) -> T {
+        unsafe {
+            let inner = ptr::read(&mut self.0);
+            mem::forget(self);
+            inner
+        }
+    }
+}*/
 
 impl Eq for ImageCache {}
 
@@ -95,10 +121,10 @@ impl ImageCache {
         let mut ptr = MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
 
         Self {
-            ptr: Arc::new(RwLock::new(unsafe {
+            ptr: Arc::new(unsafe {
                 oiio_ImageCache_create(false, &mut ptr as *mut _ as _);
                 ptr.assume_init()
-            })),
+            }),
         }
     }
 
@@ -116,21 +142,21 @@ impl ImageCache {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
 
         Self {
-            ptr: Arc::new(RwLock::new(unsafe {
+            ptr: Arc::new(unsafe {
                 oiio_ImageCache_create(true, &mut ptr as *mut _ as _);
                 ptr.assume_init()
-            })),
+            }),
         }
     }
 }
 
 impl ImageCache {
     pub(crate) fn as_raw_ptr(&self) -> *const oiio_ImageCache_t {
-        *self.ptr.read()
+        *self.ptr
     }
 
     pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageCache_t {
-        *self.ptr.read()
+        *self.ptr
     }
 }
 
@@ -141,17 +167,15 @@ impl Drop for ImageCache {
     /// the implementation will only release its resources when the last shared
     /// instance goes out of scope.
     fn drop(&mut self) {
-        let ptr_locked = self.ptr.write_arc();
-
-        if 1 == Arc::<RwLock<*mut oiio_ImageCache_t>>::strong_count(&self.ptr) {
+        if 1 == Arc::<*mut oiio_ImageCache_t>::strong_count(&self.ptr) {
             // FIXME? Can we have a situation where the cache is dropped
             // while another thread copies some object that holds a reference
             // to the cache?
             // If that were the case try_unwrap() would return
-            // Result::Err and we wouldn't be able to the destructor.
+            // Result::Err and we wouldn't be able to run the destructor.
             unsafe {
                 oiio_ImageCache_destroy(
-                    *ptr_locked, //.deref_mut(),
+                    *self.ptr, //.deref_mut(),
                     !set_or_get_persist(false),
                 );
             }

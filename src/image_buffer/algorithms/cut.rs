@@ -4,16 +4,15 @@ use core::mem::MaybeUninit;
 
 /// # Cut
 ///
-/// Return the designated region but repositioned to the image origin and with
+/// Return the designated bounds but repositioned to the image origin and with
 /// the full/display window set to exactly cover the new pixel data window.
 /// (Note the difference compared to [`crop()`](ImageBuffer::crop)).
 ///
-/// Also see the [Region of Interest](#region-of-interest) section on
-/// [`ImageBuffer`].
+/// Also see the [bounds](#bounds-of-interest) section on [`ImageBuffer`].
 impl ImageBuffer {
     #[named]
-    pub fn replace_by_cut(&mut self, src: &ImageBuffer, region: &Region) -> Result<&mut Self> {
-        let is_ok = self.cut_ffi(src, region, None);
+    pub fn replace_by_cut(&mut self, src: &ImageBuffer, bounds: &Bounds) -> Result<&mut Self> {
+        let is_ok = self.cut_ffi(src, bounds, None);
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -22,27 +21,27 @@ impl ImageBuffer {
     pub fn replace_by_cut_with(
         &mut self,
         src: &ImageBuffer,
-        region: &Region,
+        bounds: &Bounds,
         thread_count: Option<u16>,
     ) -> Result<&mut Self> {
-        let is_ok = self.cut_ffi(src, region, thread_count);
+        let is_ok = self.cut_ffi(src, bounds, thread_count);
 
         self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn cut(&mut self, region: &Region) -> Result<&mut Self> {
+    pub fn cut(&mut self, bounds: &Bounds) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.cut_ffi(self, region, None);
+        let is_ok = image_buffer.cut_ffi(self, bounds, None);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn cut_with(&mut self, region: &Region, thread_count: Option<u16>) -> Result<&mut Self> {
+    pub fn cut_with(&mut self, bounds: &Bounds, thread_count: Option<u16>) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.cut_ffi(self, region, thread_count);
+        let is_ok = image_buffer.cut_ffi(self, bounds, thread_count);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
@@ -51,14 +50,14 @@ impl ImageBuffer {
 
 impl ImageBuffer {
     #[inline]
-    fn cut_ffi(&mut self, src: &ImageBuffer, region: &Region, thread_count: Option<u16>) -> bool {
+    fn cut_ffi(&mut self, src: &ImageBuffer, bounds: &Bounds, thread_count: Option<u16>) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
         unsafe {
             oiio_ImageBufAlgo_cut(
                 self.as_raw_ptr_mut(),
                 src.as_raw_ptr(),
-                region.clone().into(),
+                bounds.clone().into(),
                 thread_count.unwrap_or(0) as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -77,9 +76,9 @@ mod tests {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        let region = Region::new_2d(0..80, 0..80);
+        let bounds = Bounds::new_2d(0..80, 0..80);
 
-        image_buffer.cut(&region)?;
+        image_buffer.cut(&bounds)?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
 
         //image_buffer.write(Utf8Path::new("cutd.png"))?;

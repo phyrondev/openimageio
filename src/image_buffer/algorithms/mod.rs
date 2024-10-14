@@ -17,7 +17,7 @@
 //!
 //!    If the `ImageBuffer` is already initialized, the operation will be
 //!    performed on the pixels in the destination that overlap the
-//!    `RegionOfInterest`, leaving pixels in the destination which are outside
+//!    `Region`, leaving pixels in the destination which are outside
 //!    unaltered.
 //!
 //!    In case of error, the result image returned can have any error conditions
@@ -27,8 +27,8 @@
 //!     Method 1: overwrite an empty buffer with a new image of the required
 //!    dimensions.
 //!
-//!    After the operation the `dest.region_of_interest()` is of size
-//!    `fg.region_of_interest().union(bg.region_of_interest())`
+//!    After the operation the `dest.region()` is of size
+//!    `fg.region().union(bg.region())`
 //!
 //!    ```ignore
 //!    let mut empty_destination = ImageBuffer::new();
@@ -36,8 +36,8 @@
 //!    ```
 //!
 //!    Method 2: overwrite an existing buffer with the result of the operation.
-//!    The difference is that fg over bg will be fit inside the
-//!    `RegionOfInterest` of `dest`.
+//!    The difference is that fg over bg will be fit inside the `Region` of
+//! `dest`.
 //!
 //!    ```ignore
 //!    destination.replace_by_over(fg, bg)?;
@@ -76,30 +76,29 @@
 //! For a small set of functions, there are only input images, and no image
 //! outputs (e.g., `is_monochrome()`).
 //!
-//! ## Region of Interest
+//! ## Region (of Interest)
 //!
-//! Most functions take an optional [`Options::region_of_interest`] parameter
+//! Most functions take an optional [`Options::region`] parameter
 //! that restricts the operation to a range in x, y, z, and channels.
 //!
-//! [`RegionOfInterest::default()`] (also known as [`RegionOfInterest::All`])
-//! means no region restriction -- the whole image will be copied or altered.
+//! [`Region::default()`] (also known as [`Region::All`]) means no region
+//! restriction -- the whole image will be copied or altered.
 //!
 //! For functions that modify an exisiting destination `ImageBuffer` that
 //! is already initialized (i.e. allocated with a particular size and
 //! data type), the operation will be performed on the pixels in the destination
-//! that overlap the `RegionOfInterest`, leaving pixels in the destination which
-//! are outside the `RegionOfInterest` unaltered.
+//! that overlap the `Region`, leaving pixels in the destination which are
+//! outside the `Region` unaltered.
 //!
-//! The the [`RegionOfInterest`] (if set) determines the size of the result
-//! image. If the ROI is the default, `All`, the result image size will be the
-//! union of the pixel data windows of the input images and have a data type
+//! If the `Region` is set (not `None`) it determines the size of the result
+//! image. If the `Region` is the default, `All`, the result image size will be
+//! the union of the pixel data windows of the input images and have a data type
 //! determined by the data types of the input images.
 //!
-//! Most functions also respect the `channel` member of the `RegionOfInterest`,
-//! thus restricting the channel range on which the operation is performed. The
-//! `RegionOfInterest::default()` sets up the `RegionOfInterest` to specify
-//! that the operation should be performed on all channels of the input
-//! image(s).
+//! Most functions also respect the `channel` member of the `Region`, thus
+//! restricting the channel range on which the operation is performed. The
+//! `Region::default()` sets up the `Region` to specify that the operation
+//! should be performed on all channels of the input image(s).
 //!
 //! ## Constant And Per-Channel Values
 //!
@@ -164,7 +163,7 @@ pub mod zero;
 pub struct Options {
     /// See the [Region of Interest](module@algorithms#region-of-interest)
     /// section in the [module@algorithms] module. .
-    pub region_of_interest: RegionOfInterest,
+    pub region: Region,
     /// See the [Multithreading](module@algorithms#multithreading) section
     /// in the [module@algorithms] module.
     pub thread_count: u16,

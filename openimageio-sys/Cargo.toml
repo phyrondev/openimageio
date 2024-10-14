@@ -13,6 +13,7 @@ default = []
 builtin_bindings = []
 
 [build-dependencies]
+cmake = "0.1"
 bbl-build = { git = "https://github.com/virtualritz/bbl-build-rs.git" }
 #bbl-build = { path = "../../bbl-build-rs" }
 log = "0.4"

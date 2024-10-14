@@ -10,8 +10,8 @@ pub struct PixelsOptions {
 
 /// Retrieve a region of pixels.
 ///
-/// The region is the [`RegionOfInterest`] specified by the current subimage and
-/// MIP-map level, and converting into the data type implied by the requested
+/// The region is the [`Region`] specified by the current subimage and MIP-map
+/// level, and converting into the data type implied by the requested
 /// [`Primitive`] type.
 ///
 /// Returns a `Vec` of the chosen type if successful, or an error if the reading
@@ -49,7 +49,7 @@ pub struct PixelsOptions {
 /// let image_buffer: image::RgbImage = image::ImageBuffer::from_vec(
 ///     region.width(),
 ///     region.height(),
-///     image_buffer.pixels(&RegionOfInterest::Region(region))?,
+///     image_buffer.pixels(&Region::Bounds(region))?,
 /// )?;
 /// ```
 ///
@@ -57,32 +57,33 @@ pub struct PixelsOptions {
 ///
 /// The C++ version of this is called `get_pixels()`.
 pub trait Pixels<T: Primitive> {
-    fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<T>>;
+    fn pixels(&self, region: &Region) -> Result<Vec<T>>;
+    fn set_pixels(&self, pixels: &[T], region: &Region) -> Result<()>;
 }
 
 macro_rules! pixels {
     ($rust_type:ty, $base_type:expr) => {
         impl Pixels<$rust_type> for ImageBuffer {
             /// Get a region of pixels from the image buffer.
-            fn pixels(&self, region_of_interest: &RegionOfInterest) -> Result<Vec<$rust_type>> {
+            fn pixels(&self, region: &Region) -> Result<Vec<$rust_type>> {
                 if ImageBufferStorage::Uninitialized == self.storage() {
                     // An uninitialized image buffer has no pixels but it's not
                     // an error to ask for them.
                     return Ok(Vec::new());
                 }
 
-                let region = match region_of_interest {
-                    RegionOfInterest::All => match self.data_window() {
-                        RegionOfInterest::All => {
+                let region = match region {
+                    Region::All => match self.data_window() {
+                        Region::All => {
                             // If this image buffer is uninitialized, we can't
                             // get here because
                             // `self.storage()` will return
                             // `ImageBufferStorage::Uninitialized`.
                             unreachable!()
                         }
-                        RegionOfInterest::Region(roi) => roi,
+                        Region::Bounds(roi) => roi,
                     },
-                    RegionOfInterest::Region(roi) => roi.clone(),
+                    Region::Bounds(roi) => roi.clone(),
                 };
 
                 let size = region.pixel_count() * region.channel_count() as usize;
@@ -92,7 +93,7 @@ macro_rules! pixels {
                 unsafe {
                     oiio_ImageBuf_get_pixels(
                         self.ptr,
-                        region_of_interest.clone().into(),
+                        region.clone().into(),
                         $base_type,
                         data.as_mut_ptr() as _,
                         &mut is_ok as *mut _ as _,
@@ -106,6 +107,48 @@ macro_rules! pixels {
                             self.error(true)
                                 .unwrap_or("ImageBuffer::pixels(): unknown error".into())
                         ))
+                    }
+                }
+            }
+
+            fn set_pixels(&self, pixels: &[$rust_type], region: &Region) -> Result<()> {
+                let region = match region {
+                    Region::All => match self.data_window() {
+                        Region::All => {
+                            // If this image buffer is uninitialized, we can't
+                            // get here because
+                            // `self.storage()` will return
+                            // `ImageBufferStorage::Uninitialized`.
+                            unreachable!()
+                        }
+                        Region::Bounds(roi) => roi,
+                    },
+                    Region::Bounds(roi) => roi.clone(),
+                };
+
+                let size = region.pixel_count() * region.channel_count() as usize;
+
+                if size > pixels.len() {
+                    return Err(anyhow!("Pixel data is too small"));
+                }
+
+                let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+                unsafe {
+                    oiio_ImageBuf_set_pixels_02(
+                        self.ptr,
+                        region.into(),
+                        $base_type,
+                        pixels.as_ptr() as _,
+                        &mut is_ok as *mut _ as _,
+                    );
+
+                    if is_ok.assume_init() {
+                        Ok(())
+                    } else {
+                        Err(anyhow!(self.error(true).unwrap_or(
+                            "ImageBuffer::set_pixels(): unknown error".into()
+                        )))
                     }
                 }
             }

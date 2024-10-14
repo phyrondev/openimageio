@@ -59,7 +59,7 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
 impl TryFrom<tiny_skia::Pixmap> for ImageBuffer {
     type Error = anyhow::Error;
 
-    fn try_from(mut pix_map: tiny_skia::Pixmap) -> Result<Self> {
+    fn try_from(pix_map: tiny_skia::Pixmap) -> Result<Self> {
         let image_buffer = ImageBuffer::from_slice(
             pix_map.width(),
             pix_map.height(),
@@ -80,9 +80,9 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut region = image_buffer
+        let mut bounds = image_buffer
             .data_window()
-            .region()
+            .bounds()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
@@ -91,12 +91,12 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
 
         // Strip the alpha channel from the image and/or fill missing channels
         // with 0.
-        region.set_channel(0..3);
+        bounds.set_channel(0..3);
 
         image::ImageBuffer::from_vec(
-            region.width(),
-            region.height(),
-            image_buffer.pixels(&RegionOfInterest::Region(region))?,
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
         )
         .ok_or(anyhow!("Failed to convert to RgbImage"))
     }
@@ -107,9 +107,9 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut region = image_buffer
+        let mut bounds = image_buffer
             .data_window()
-            .region()
+            .bounds()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
@@ -118,12 +118,12 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
 
         // Strip superfluous channels from the image and/or fill missing
         // channels with 0.
-        region.set_channel(0..4);
+        bounds.set_channel(0..4);
 
         image::ImageBuffer::from_vec(
-            region.width(),
-            region.height(),
-            image_buffer.pixels(&RegionOfInterest::Region(region))?,
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
         )
         .ok_or(anyhow!("Failed to convert to RgbaImage"))
     }
@@ -134,16 +134,16 @@ impl TryFrom<ImageBuffer> for image::DynamicImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let region = image_buffer
+        let bounds = image_buffer
             .data_window()
-            .region()
+            .bounds()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
         // Make sure we're in the expected color space.
         image_buffer.color_convert(None, "sRGB".into())?;
 
-        if region.channel_count() < 4 {
+        if bounds.channel_count() < 4 {
             Ok(image::DynamicImage::ImageRgb8(image_buffer.try_into()?))
         } else {
             Ok(image::DynamicImage::ImageRgba8(image_buffer.try_into()?))
@@ -156,15 +156,15 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut region = image_buffer
+        let mut bounds = image_buffer
             .data_window()
-            .region()
+            .bounds()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
-        let dimensions = [region.width() as usize, region.height() as _];
+        let dimensions = [bounds.width() as usize, bounds.height() as _];
 
-        let channel_count = region.channel_count();
+        let channel_count = bounds.channel_count();
 
         if 2 < channel_count {
             // Make sure we're in the expected color space.
@@ -176,22 +176,22 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
             1 | 2 => {
                 // We assume this is a grayscale image (alpha channel will be
                 // dropped, if present).
-                region.set_channel(0..1);
-                let pixels: Vec<u8> = image_buffer.pixels(&RegionOfInterest::Region(region))?;
+                bounds.set_channel(0..1);
+                let pixels: Vec<u8> = image_buffer.pixels(&Region::Bounds(bounds))?;
 
                 Ok(egui::ColorImage::from_gray(dimensions, &pixels))
             }
             // RGB image.
             3 => {
-                let pixels: Vec<u8> = image_buffer.pixels(&RegionOfInterest::All)?;
+                let pixels: Vec<u8> = image_buffer.pixels(&Region::All)?;
 
                 Ok(egui::ColorImage::from_rgb(dimensions, &pixels))
             }
             // RGBA image.
             _ => {
                 // Make sure `pixels()` returns a buffer with max. 4 channels.
-                region.set_channel(0..4);
-                let pixels: Vec<u8> = image_buffer.pixels(&RegionOfInterest::Region(region))?;
+                bounds.set_channel(0..4);
+                let pixels: Vec<u8> = image_buffer.pixels(&Region::Bounds(bounds))?;
 
                 Ok(egui::ColorImage::from_rgba_premultiplied(
                     dimensions, &pixels,
@@ -203,6 +203,7 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
 
 #[cfg(test)]
 mod tests {
+    use crate::*;
 
     #[cfg(feature = "image")]
     #[test]

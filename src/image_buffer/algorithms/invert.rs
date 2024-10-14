@@ -64,7 +64,7 @@ impl ImageBuffer {
             oiio_ImageBufAlgo_invert(
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -83,7 +83,7 @@ mod tests {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        image_buffer.resize(&Region::new_2d(0..80, 0..80))?;
+        image_buffer.resize(&Bounds::new_2d(0..80, 0..80))?;
         image_buffer.invert()?;
         image_buffer.color_convert(None, ustr("sRGB"))?;
 

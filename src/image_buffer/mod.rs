@@ -1,6 +1,6 @@
 use crate::*;
 use anyhow::{Result, anyhow};
-use core::{ffi::c_int, mem::MaybeUninit, ptr};
+use core::{ffi::c_int, mem::MaybeUninit, num::NonZeroU16, ptr};
 use std::string::String;
 
 #[cfg(feature = "algorithms")]
@@ -39,7 +39,7 @@ pub type ImageBuf = ImageBuffer;
 pub struct ImageBuffer {
     ptr: *mut oiio_ImageBuf_t,
     // We keep a clone of an associated `ImageCache` here, if there is one
-    // associated. The latter is just a refernce-counted pointer, internally.
+    // associated. The latter is just an `Arc`-wrapped raw pointer, internally.
     // Thusly we can ensure it's not dropped before the owning `ImageBuffer`.
     //
     // Alternatively this could be modeled using `PhantomData<*mut &'a ()>` and
@@ -48,7 +48,7 @@ pub struct ImageBuffer {
     // time).
     //
     // But that would 'pollute' the `ImageBuffer` type with a lifetime
-    // parameter which IMHO could negatively impact ergonomics for end-users
+    // parameter which IMHO would negatively impact ergonomics for end-users
     // of this crate.
     image_cache: Option<ImageCache>,
 }
@@ -60,8 +60,9 @@ impl Default for ImageBuffer {
     /// Create an uninitialized/empty `ImageBuffer`.
     ///
     /// There isn't much you can do with an uninitialized buffer until you
-    /// call [`reset()`](ImageBuffer::reset). The storage type of a
-    /// default-constructed `ImageBuffer` is
+    /// call [`reset()`](ImageBuffer::reset).
+    ///
+    /// The storage type of a default-constructed `ImageBuffer` is
     /// [`ImageBufferStorage::Uninitialized`].
     fn default() -> Self {
         Self::new()
@@ -173,9 +174,13 @@ impl ImageBuffer {
                         .map(|c| c.as_raw_ptr_mut())
                         .unwrap_or(ptr::null_mut()),
                     options
-                        .image_spec
+                        .image_specification
                         .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
+                    /*options
+                    .io_proxy
+                    .map(|p| p.as_raw_ptr())
+                    .unwrap_or(ptr::null_mut()),*/
                     ptr::null_mut() as _,
                     &mut ptr as *mut _ as _,
                 );
@@ -246,9 +251,13 @@ impl ImageBuffer {
     }
 
     /// Write the image to the named file, converted to the specified pixel data
-    /// type (`base_type: None` signifies to use the data type of the buffer),
-    /// and file format (an empty fileformat means to infer the type from the
-    /// filename extension). By default, it will always try to write a
+    /// type.
+    ///
+    /// A `base_type` of `None` signifies to use the data type of the buffer),
+    /// `file_format -- `None` means to infer the type from the
+    /// `file_name`'s extension).
+    ///
+    /// By default, it will always try to write a
     /// scanline-oriented file, unless the `set_write_tiles()` method has been
     /// used to override this.
     ///
@@ -261,7 +270,7 @@ impl ImageBuffer {
                 self.ptr,
                 StringView::from(file_name).ptr,
                 options
-                    .type_desc
+                    .type_description
                     .map(|t| t.into())
                     .unwrap_or((&TypeDescription::default()).into()),
                 match options.file_format {
@@ -470,7 +479,7 @@ impl ImageBuffer {
     /// [The C++ version](https://openimageio.readthedocs.io/en/latest/imagebuf.html#_CPPv4NK4OIIO8ImageBuf3roiEv)
     /// of this is called [`roi()`](Self::roi).
     #[inline]
-    pub fn data_window(&self) -> RegionOfInterest {
+    pub fn data_window(&self) -> Region {
         let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
@@ -488,7 +497,7 @@ impl ImageBuffer {
     /// [The C++ version](https://openimageio.readthedocs.io/en/latest/imagebuf.html#_CPPv4NK4OIIO8ImageBuf8roi_fullEv)
     /// of this is called [`roi_full()`](Self::roi_full).
     #[inline]
-    pub fn display_window(&self) -> RegionOfInterest {
+    pub fn display_window(&self) -> Region {
         let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
@@ -557,9 +566,9 @@ impl ImageBuffer {
     /// to set the display window to the specified dimensions.
     ///
     /// This does not affect the size of the pixel *data window*.
-    pub fn set_display_window(&mut self, roi: &Region) {
+    pub fn set_display_window(&mut self, bounds: &Bounds) {
         unsafe {
-            oiio_ImageBuf_set_roi_full(self.ptr, roi.into());
+            oiio_ImageBuf_set_roi_full(self.ptr, bounds.into());
         }
     }
 
@@ -571,6 +580,26 @@ impl ImageBuffer {
             oiio_ImageBuf_expand_roi_full(self.ptr);
         }
     }
+
+    pub fn set_write_pixel_layout(&mut self, pixel_layout: PixelLayout) {
+        match pixel_layout {
+            PixelLayout::Scanline => unsafe {
+                oiio_ImageBuf_set_write_tiles(self.as_raw_ptr_mut(), 0, 0, 0);
+            },
+            PixelLayout::Tile(x, y, z) => unsafe {
+                oiio_ImageBuf_set_write_tiles(
+                    self.as_raw_ptr_mut(),
+                    x.get() as _,
+                    y.get() as _,
+                    z.get() as _,
+                );
+            },
+        }
+    }
+
+    pub fn set_write_format(&mut self) {}
+
+    pub fn set_write_per_channel_format(&mut self, channel_format: &[TypeDescription]) {}
 }
 
 /// # C++ API Getter Aliases
@@ -578,7 +607,7 @@ impl ImageBuffer {
 impl ImageBuffer {
     /// Alias for [`data_window()`](Self::data_window).
     #[inline(always)]
-    pub fn roi(&self) -> RegionOfInterest {
+    pub fn roi(&self) -> Region {
         self.data_window()
     }
 }
@@ -594,14 +623,20 @@ impl ImageBuffer {
 
     /// Alias for [`set_display_window()`](Self::set_display_window).
     #[inline(always)]
-    pub fn set_full(&mut self, roi: &Region) {
-        self.set_display_window(roi);
+    pub fn set_full(&mut self, bounds: &Bounds) {
+        self.set_display_window(bounds);
     }
 
     /// Alias for [`display_window()`](Self::display_window).
     #[inline(always)]
-    pub fn roi_full(&self) -> RegionOfInterest {
+    pub fn roi_full(&self) -> Region {
         self.display_window()
+    }
+
+    pub fn set_write_tiles(&mut self, x: u16, y: u16, z: u16) {
+        unsafe {
+            oiio_ImageBuf_set_write_tiles(self.as_raw_ptr_mut(), x as _, y as _, z as _);
+        }
     }
 }
 
@@ -696,29 +731,43 @@ pub struct FromFileOptions<'a> {
     /// Optionally, a pointer to an `ImageSpec` whose metadata contains
     /// configuration hints that set options related to the opening and reading
     /// of the file.
-    pub image_spec: Option<&'a ImageSpecification>,
-    // Optional pointer to an `IoProxy` to use when reading from the file.
-    // The lifetime of the proxy will be tied to the given `ImageBuffer`.
-    // TODO io_proxy:
-    // Option<&'a IoProxy>,
+    pub image_specification: Option<&'a ImageSpecification>,
 }
 
 pub trait FnProgress<'a>: Fn(f32) + 'a {}
+
+pub enum PixelLayout {
+    Scanline,
+    Tile(NonZeroU16, NonZeroU16, NonZeroU16),
+}
 
 #[derive(Default)]
 pub struct WriteOptions<'a> {
     /// Optional override of the pixel data format to use in the file being
     /// written. The default (UNKNOWN) means to try writing the same
-    /// data format that as pixels are stored within the ImageBuf memory (or
-    /// whatever type was specified by a prior call to set_write_format()). In
-    /// either case, if the file format does not support that data type,
-    /// another will be automatically chosen that is supported by the file type
-    /// and loses as little precision as possible.
-    pub type_desc: Option<&'a TypeDescription>,
+    /// data format that as pixels are stored within the `ImageBuffer`'s memory
+    /// (or whatever type was specified by a prior call to
+    /// set_write_format()). In either case, if the file format does not
+    /// support that data type, another will be automatically chosen that is
+    /// supported by the file type and loses as little precision as
+    /// possible.
+    pub type_description: Option<&'a TypeDescription>,
     /// Optional overriPde of the file format to write. The default (`None`)
     /// means to infer the file format from the extension of the
     /// filename (for example, `"foo.tif"`" will write a TIFF file).
     pub file_format: Option<Ustr>,
+    /// Override the tile sizing.
+    ///
+    /// This lets you write a tiled file from an `ImageBuffer` that may have
+    /// been read originally from a scanline file, or change the dimensions
+    /// of a tiled file, or to force the file written to be
+    /// [`Scanline`](PixelLayout::Scanline) even if it was originally read
+    /// from a tiled file.
+    ///
+    /// In all cases, if the file format ultimately written does not support
+    /// the requested `PixelLayout`, or the tile dimensions requested, a
+    /// suitable supported tiling choice will be made automatically.
+    pub tile_size: Option<PixelLayout>,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -867,7 +916,7 @@ mod tests {
             "assets/j0.3toD__F16_RGBA.exr",
         ))?;
 
-        let pixels: Vec<f32> = image_buf.pixels(&RegionOfInterest::All)?;
+        let pixels: Vec<f32> = image_buf.pixels(&Region::All)?;
 
         println!("Pixels: {:?}", pixels);
 

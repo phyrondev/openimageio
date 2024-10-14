@@ -78,24 +78,24 @@ pub struct TransformOptions {
     /// the buffer will be sized to be large enough to hold the transformed
     /// image.
     ///
-    /// If `false` the image will have the same region_of_interest as the
+    /// If `false` the image will have the same region as the
     /// source image.
     ///
     /// If the `tranform_with()` variant is used and the destination image is
     /// already is initialized, its size will not be changed and this
     /// option will be ignored.
-    pub recompute_region_of_interest: bool,
+    pub recompute_region: bool,
     /// The wrap mode controlling the value of pixel lookups that need to occur
     /// beyond the boundary of the source image.
     pub wrap_mode: WrapMode,
     /// If `true`, will enable special edge clamp behavior to reduce artifacts
-    /// at the image edges.
+    /// at the image edges (`false` by default).
     pub edge_clamp: bool,
     /// Only the pixels (and channels) of the resulting image that are
     /// specified by this will be copied from the transformed image.
     ///
     /// The default is to alter all the pixels in the image.
-    pub region_of_interest: RegionOfInterest,
+    pub region: Region,
     pub thread_count: u16,
 }
 
@@ -120,9 +120,9 @@ impl ImageBuffer {
                 transform_options
                     .filter
                     .map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
-                transform_options.recompute_region_of_interest,
+                transform_options.recompute_region,
                 transform_options.wrap_mode.clone().into(),
-                transform_options.region_of_interest.clone().into(),
+                transform_options.region.clone().into(),
                 transform_options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -138,7 +138,7 @@ mod tests {
 
     #[test]
     fn transform() -> Result<()> {
-        let mut image_buf =
+        let image_buf =
             ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
         use core::f32::consts::FRAC_1_SQRT_2;
@@ -159,12 +159,12 @@ mod tests {
         let mut transformed = ImageBuf::new();
 
         transformed.replace_by_transform_with(&image_buf, matrix, &TransformOptions {
-            recompute_region_of_interest: true,
+            recompute_region: true,
             ..Default::default()
         })?;
 
         /*image_buf.transform_with(matrix, &TransformOptions {
-            recompute_region_of_interest: true,
+            recompute_region: true,
             ..Default::default()
         })?;*/
 

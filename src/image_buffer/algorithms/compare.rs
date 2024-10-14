@@ -27,12 +27,12 @@ impl ImageBuffer {
         )
     }
 
-    /// If `options.region_of_interest` is supplied, pixels will be compared
-    /// for the pixel and channel range that is specified.
+    /// If `options.region` is supplied, pixels will be compared for the pixel
+    /// and channel range that is specified.
     ///
-    /// If `options.region_of_interest` is [`RegionOfInterest::All`] the
-    /// comparison will be for all channels, on the union of the defined
-    /// pixel windows of the two images.
+    /// If `options.region` is [`Region::All`] the comparison will be for all
+    /// channels, on the union of the defined pixel windows of the two
+    /// images.
     ///
     /// For either image, undefined pixels will be assumed to be black/zero.
     pub fn compare_with(
@@ -86,7 +86,7 @@ impl ImageBuffer {
                 other.ptr,
                 warning_threshold,
                 error_threshold,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut compare_result as *mut _ as _,
             );

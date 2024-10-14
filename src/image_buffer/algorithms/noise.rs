@@ -7,9 +7,8 @@ use core::mem::MaybeUninit;
 #[derive(Clone, Default)]
 pub struct NoiseOptions {
     /// If this flag is `true`, a single noise value will be applied to all
-    /// channels specified by `region_of_interest`, but if it is `false`, a
-    /// separate noise value will be computed for each channel in the
-    /// region.
+    /// channels specified by `region`, but if it is `false`, a separate noise
+    /// value will be computed for each channel in the region.
     pub monochromatic: bool,
     /// The random number generator is actually driven by a hash on the *image
     /// space* coordinates and channel, independently of the *pixel data
@@ -22,7 +21,7 @@ pub struct NoiseOptions {
     pub seed: i32,
     /// See the [Region of Interest](#region-of-interest) section on
     /// [`ImageBuffer`].
-    pub region_of_interest: RegionOfInterest,
+    pub region: Region,
     /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
     pub thread_count: u16,
 }
@@ -104,7 +103,7 @@ impl ImageBuffer {
                 b,
                 options.monochromatic,
                 options.seed,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );

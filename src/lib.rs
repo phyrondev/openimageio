@@ -1,4 +1,3 @@
-#![feature(const_option)]
 #![feature(c_size_t)]
 //#![feature(once_cell_get_mut)]
 #![feature(hash_extract_if)]
@@ -222,7 +221,7 @@
 //! image_buf.rotate_with(42.0 * TAU / 360.0, &RotateOptions {
 //!     // Use a Blackmann-Harris filter to avoid halos easily introduced
 //!     // when operating on HDRs using the default filter (Lanczos3).
-//!     pixel_filter: PixelFilter::BlackmanHarris,
+//!     filter: Some(PixelFilter::BlackmanHarris.into()),
 //!     ..Default::default()
 //! });
 //!
@@ -266,8 +265,8 @@ pub use image_specification::*;
 mod misc;
 pub(crate) use misc::*;
 
-mod region_of_interest;
-pub use region_of_interest::*;
+mod region;
+pub use region::*;
 
 mod string;
 pub(crate) use string::*;

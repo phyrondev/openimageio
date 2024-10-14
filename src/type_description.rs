@@ -12,7 +12,6 @@ pub enum BaseType {
     //Unknown = oiio_BASETYPE::oiio_BASETYPE_UNKNOWN.0 as _,
     #[default]
     U8 = oiio_BASETYPE::oiio_BASETYPE_UINT8.0 as _,
-
     I8 = oiio_BASETYPE::oiio_BASETYPE_INT8.0 as _,
     U16 = oiio_BASETYPE::oiio_BASETYPE_UINT16.0 as _,
     I16 = oiio_BASETYPE::oiio_BASETYPE_INT16.0 as _,
@@ -20,13 +19,10 @@ pub enum BaseType {
     I32 = oiio_BASETYPE::oiio_BASETYPE_INT32.0 as _,
     I64 = oiio_BASETYPE::oiio_BASETYPE_INT64.0 as _,
     U64 = oiio_BASETYPE::oiio_BASETYPE_UINT64.0 as _,
-
     F16 = oiio_BASETYPE::oiio_BASETYPE_HALF.0 as _,
     F32 = oiio_BASETYPE::oiio_BASETYPE_FLOAT.0 as _,
     F64 = oiio_BASETYPE::oiio_BASETYPE_DOUBLE.0 as _,
-
     String = oiio_BASETYPE::oiio_BASETYPE_STRING.0 as _,
-
     Ptr = oiio_BASETYPE::oiio_BASETYPE_PTR.0 as _,
 }
 
@@ -56,22 +52,22 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
     fn try_from(base_type: oiio_BASETYPE) -> Result<BaseType, Self::Error> {
         match base_type {
             oiio_BASETYPE::oiio_BASETYPE_NONE => Err(()),
-            _ => Ok(match base_type {
-                oiio_BASETYPE::oiio_BASETYPE_UINT8 => BaseType::U8,
-                oiio_BASETYPE::oiio_BASETYPE_INT8 => BaseType::I8,
-                oiio_BASETYPE::oiio_BASETYPE_UINT16 => BaseType::U16,
-                oiio_BASETYPE::oiio_BASETYPE_INT16 => BaseType::I16,
-                oiio_BASETYPE::oiio_BASETYPE_UINT32 => BaseType::U32,
-                oiio_BASETYPE::oiio_BASETYPE_INT32 => BaseType::I32,
-                oiio_BASETYPE::oiio_BASETYPE_INT64 => BaseType::I64,
-                oiio_BASETYPE::oiio_BASETYPE_UINT64 => BaseType::U64,
-                oiio_BASETYPE::oiio_BASETYPE_HALF => BaseType::F16,
-                oiio_BASETYPE::oiio_BASETYPE_FLOAT => BaseType::F32,
-                oiio_BASETYPE::oiio_BASETYPE_DOUBLE => BaseType::F64,
-                oiio_BASETYPE::oiio_BASETYPE_STRING => BaseType::String,
-                oiio_BASETYPE::oiio_BASETYPE_PTR => BaseType::Ptr,
-                _ => unreachable!(),
-            }),
+            _ => match base_type {
+                oiio_BASETYPE::oiio_BASETYPE_UINT8 => Ok(BaseType::U8),
+                oiio_BASETYPE::oiio_BASETYPE_INT8 => Ok(BaseType::I8),
+                oiio_BASETYPE::oiio_BASETYPE_UINT16 => Ok(BaseType::U16),
+                oiio_BASETYPE::oiio_BASETYPE_INT16 => Ok(BaseType::I16),
+                oiio_BASETYPE::oiio_BASETYPE_UINT32 => Ok(BaseType::U32),
+                oiio_BASETYPE::oiio_BASETYPE_INT32 => Ok(BaseType::I32),
+                oiio_BASETYPE::oiio_BASETYPE_INT64 => Ok(BaseType::I64),
+                oiio_BASETYPE::oiio_BASETYPE_UINT64 => Ok(BaseType::U64),
+                oiio_BASETYPE::oiio_BASETYPE_HALF => Ok(BaseType::F16),
+                oiio_BASETYPE::oiio_BASETYPE_FLOAT => Ok(BaseType::F32),
+                oiio_BASETYPE::oiio_BASETYPE_DOUBLE => Ok(BaseType::F64),
+                oiio_BASETYPE::oiio_BASETYPE_STRING => Ok(BaseType::String),
+                oiio_BASETYPE::oiio_BASETYPE_PTR => Ok(BaseType::Ptr),
+                _ => Err(()),
+            },
         }
     }
 }

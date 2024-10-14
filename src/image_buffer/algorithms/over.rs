@@ -61,7 +61,7 @@ impl ImageBuffer {
                 self.as_raw_ptr_mut(),
                 foreground.as_raw_ptr(),
                 background.as_raw_ptr(),
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );

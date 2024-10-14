@@ -1,6 +1,7 @@
 use crate::*;
 use core::mem::MaybeUninit;
 use num_enum::IntoPrimitive;
+use std::sync::Arc;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, IntoPrimitive)]
 #[repr(u32)]
@@ -20,6 +21,7 @@ impl From<IoProxyMode> for oiio_Mode {
 ///
 /// This provides a simplified interface for file I/O that can have custom
 /// overrides.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IoProxy {
     File(IoFile),
     MemoryWriter,
@@ -29,8 +31,9 @@ pub enum IoProxy {
 /// [`IoProxy`] variant for reading or writing (but not both).
 ///
 /// This wraps a C `stdio` `FILE`.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IoFile {
-    ptr: *mut oiio_IOFile_t,
+    ptr: Arc<*mut oiio_IOFile_t>,
 }
 
 impl IoFile {
@@ -45,7 +48,7 @@ impl IoFile {
             );
 
             Self {
-                ptr: ptr.assume_init(),
+                ptr: Arc::new(ptr.assume_init()),
             }
         }
     }
@@ -53,6 +56,8 @@ impl IoFile {
 
 impl Drop for IoFile {
     fn drop(&mut self) {
-        unsafe { oiio_IOFile_dtor(self.ptr) };
+        if 1 == Arc::<*mut oiio_IOFile_t>::strong_count(&self.ptr) {
+            unsafe { oiio_IOFile_dtor(*self.ptr) };
+        }
     }
 }

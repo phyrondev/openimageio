@@ -9,8 +9,8 @@ use core::ptr;
 /// coordinate in the source image, which is then sampled at that position using
 /// the given reconstruction filter to produce an output pixel.
 ///
-/// The transform is only defined over the area of the `warp` image, and thus
-/// a given `region_of_interest` argument will be intersected with its geometry.
+/// The transform is only defined over the area of the `warp` image, and thus a
+/// given `region` argument will be intersected with its geometry.
 ///
 /// > The current behavior of this transform is modeled to match Nuke's
 /// > **STMap** node.
@@ -69,7 +69,7 @@ pub struct WarpOptions {
     channel_t: Option<u32>,
     flip: bool,
     flop: bool,
-    pub region_of_interest: RegionOfInterest,
+    pub region: Region,
     pub thread_count: u16,
 }
 
@@ -88,7 +88,7 @@ impl ImageBuffer {
                 options.channel_t.unwrap_or(1).try_into().unwrap_or(1),
                 options.flip as _,
                 options.flop as _,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
@@ -110,7 +110,7 @@ mod tests {
         let warp = ImageBuffer::from_file(Utf8Path::new("assets/warp__U8_RGB.png"))?;
 
         // Resize the source image to match the warp image.
-        image_buf.resize(warp.display_window().region().unwrap())?;
+        image_buf.resize(warp.display_window().bounds().unwrap())?;
 
         image_buf.warp(&warp)?;
 

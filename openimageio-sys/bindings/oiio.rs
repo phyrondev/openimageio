@@ -545,9 +545,9 @@ pub fn oiio_ImageBuf_reset_05(_this: *mut oiio_ImageBuf_t, spec: *const oiio_Ima
 
 pub fn oiio_ImageBuf_make_writable(_this: *mut oiio_ImageBuf_t, keep_cache_type: bool, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageBuf_set_write_format_00(_this: *mut oiio_ImageBuf_t, format: oiio_TypeDesc_t) -> c_int;
-
 pub fn oiio_ImageBuf_set_write_tiles(_this: *mut oiio_ImageBuf_t, width: c_int, height: c_int, depth: c_int) -> c_int;
+
+pub fn oiio_ImageBuf_set_write_ioproxy(_this: *mut oiio_ImageBuf_t, ioproxy: *mut oiio_IOProxy_t) -> c_int;
 
 pub fn oiio_ImageBuf_op_assign_00(_this: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, _result: *mut *const oiio_ImageBuf_t) -> c_int;
 
@@ -753,9 +753,9 @@ pub fn oiio_ImageBufSharedPtr_reset_05(_this: *mut oiio_ImageBufSharedPtr_t, spe
 
 pub fn oiio_ImageBufSharedPtr_make_writable(_this: *mut oiio_ImageBufSharedPtr_t, keep_cache_type: bool, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageBufSharedPtr_set_write_format_00(_this: *mut oiio_ImageBufSharedPtr_t, format: oiio_TypeDesc_t) -> c_int;
-
 pub fn oiio_ImageBufSharedPtr_set_write_tiles(_this: *mut oiio_ImageBufSharedPtr_t, width: c_int, height: c_int, depth: c_int) -> c_int;
+
+pub fn oiio_ImageBufSharedPtr_set_write_ioproxy(_this: *mut oiio_ImageBufSharedPtr_t, ioproxy: *mut oiio_IOProxy_t) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_op_assign_00(_this: *mut oiio_ImageBufSharedPtr_t, src: *const oiio_ImageBuf_t, _result: *mut *const oiio_ImageBuf_t) -> c_int;
 
@@ -1598,6 +1598,8 @@ pub fn oiio_ImageBuf_write(buf: *const oiio_ImageBuf_t, file_name: *const oiio_S
 pub fn oiio_ImageBuf_write_with_spec(buf: *const oiio_ImageBuf_t, file_name: *const oiio_StringView_t, type_desc: oiio_TypeDesc_t, file_format: *const oiio_StringView_t, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBuf_get_pixels(buf: *const oiio_ImageBuf_t, roi: oiio_ROI_t, base_type: oiio_BASETYPE, result: *mut c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBuf_set_pixels_02(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, base_type: oiio_BASETYPE, pixels: *mut c_void, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBuf_expand_roi_full(buf: *mut oiio_ImageBuf_t) -> c_int;
 

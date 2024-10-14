@@ -3,10 +3,10 @@ use core::mem::MaybeUninit;
 
 impl ImageBuffer {
     #[named]
-    pub fn from_zero(region: &Region) -> Result<Self> {
+    pub fn from_zero(bounds: &Bounds) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.zero_ffi(&Options {
-            region_of_interest: RegionOfInterest::Region(region.clone()),
+            region: Region::Bounds(bounds.clone()),
             ..Default::default()
         });
 
@@ -14,10 +14,10 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn from_zero_with(region: &Region, thread_count: Option<u16>) -> Result<Self> {
+    pub fn from_zero_with(bounds: &Bounds, thread_count: Option<u16>) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.zero_ffi(&Options {
-            region_of_interest: RegionOfInterest::Region(region.clone()),
+            region: Region::Bounds(bounds.clone()),
             thread_count: thread_count.unwrap_or(0),
         });
 
@@ -32,7 +32,7 @@ impl ImageBuffer {
         self.mut_self_or_error(is_ok, function_name!())
     }
 
-    /// Set all channels as described by the [`RegionOfInterest`] to
+    /// Set all channels as described by the [`Region`] to
     /// zero.
     #[named]
     pub fn zero_with(&mut self, options: &Options) -> Result<&mut Self> {
@@ -50,7 +50,7 @@ impl ImageBuffer {
         unsafe {
             oiio_ImageBufAlgo_zero(
                 self.ptr,
-                options.region_of_interest.clone().into(),
+                options.region.clone().into(),
                 options.thread_count as _,
                 &mut is_ok as *mut _ as _,
             );
