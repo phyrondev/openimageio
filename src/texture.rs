@@ -219,7 +219,7 @@ impl TextureOpt {
         self.ptr as _
     }
 
-    fn as_raw_ptr_mut(&mut self) -> *mut oiio_TextureOpt_t {
+    fn _as_raw_ptr_mut(&mut self) -> *mut oiio_TextureOpt_t {
         self.ptr
     }
 }

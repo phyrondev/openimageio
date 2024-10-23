@@ -1,7 +1,6 @@
 use crate::*;
 use core::mem::MaybeUninit;
 use once_cell::sync::OnceCell;
-use parking_lot::RwLock;
 use std::sync::Arc;
 
 // The OIIO C++ API wants the user to decide on resource deallocation if this
@@ -151,7 +150,7 @@ impl ImageCache {
 }
 
 impl ImageCache {
-    pub(crate) fn as_raw_ptr(&self) -> *const oiio_ImageCache_t {
+    pub(crate) fn _as_raw_ptr(&self) -> *const oiio_ImageCache_t {
         *self.ptr
     }
 

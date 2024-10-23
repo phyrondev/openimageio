@@ -123,7 +123,7 @@ impl Region {
 }
 
 impl Region {
-    pub(crate) fn as_raw_ptr(&self) -> *const oiio_ROI_t {
+    pub(crate) fn _as_raw_ptr(&self) -> *const oiio_ROI_t {
         match self {
             Region::All => &ALL as *const Bounds as _,
             Region::Bounds(r) => r as *const Bounds as _,

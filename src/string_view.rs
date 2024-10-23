@@ -181,7 +181,7 @@ impl StringView<'_> {
         self.ptr as _
     }
 
-    pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_StringView_t {
+    pub(crate) fn _as_raw_ptr_mut(&self) -> *mut oiio_StringView_t {
         self.ptr
     }
 }

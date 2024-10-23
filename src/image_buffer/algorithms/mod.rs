@@ -299,7 +299,7 @@ impl Filter2D {
         self.ptr
     }
 
-    pub(crate) fn as_raw_ptr_mut(&mut self) -> *mut oiio_Filter2D_t {
+    pub(crate) fn _as_raw_ptr_mut(&mut self) -> *mut oiio_Filter2D_t {
         self.ptr
     }
 }

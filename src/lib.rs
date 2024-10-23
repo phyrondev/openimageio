@@ -335,6 +335,12 @@ impl<'a> From<&'a [f32; 16]> for Matrix4Ref<'a, f32> {
     }
 }
 
+impl<'a> From<Matrix4Ref<'a, f32>> for &'a [f32; 16] {
+    fn from(matrix: Matrix4Ref<'a, f32>) -> Self {
+        matrix.0
+    }
+}
+
 #[cfg(feature = "glam")]
 impl<'a> From<&'a glam::f32::Mat4> for Matrix4Ref<'a, f32> {
     fn from(matrix: &glam::f32::Mat4) -> Self {

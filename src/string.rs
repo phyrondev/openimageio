@@ -92,7 +92,7 @@ impl OiioString {
         self.ptr
     }
 
-    pub fn as_raw_ptr_mut(&mut self) -> *mut oiio_String_t {
+    pub fn _as_raw_ptr_mut(&mut self) -> *mut oiio_String_t {
         self.ptr
     }
 }

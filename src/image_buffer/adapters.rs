@@ -1,7 +1,7 @@
 use crate::*;
 use anyhow::{Result, anyhow};
 
-trait ImageBufferFromSlice<T> {
+pub trait ImageBufferFromSlice<T> {
     fn from_slice(
         width: u32,
         height: u32,

@@ -157,6 +157,7 @@ void ImageSpec_clear_and_reserve_channelformats(OIIO::ImageSpec &self,
 
 void ImageSpec_push_channelformat(OIIO::ImageSpec &self, OIIO::TypeDesc value) {
   self.channelformats.push_back(value);
+  self.nchannels = self.channelformats.size();
 }
 
 void ImageSpec_clear_and_reserve_channelnames(OIIO::ImageSpec &self,

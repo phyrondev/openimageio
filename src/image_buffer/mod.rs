@@ -9,6 +9,7 @@ pub mod algorithms;
 //pub use algorithms::*;
 
 mod adapters;
+pub use adapters::*;
 
 mod internal;
 mod pixels;
@@ -99,17 +100,14 @@ impl Drop for ImageBuffer {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub enum InitializePixels {
-    No = 0,
+    No = oiio_InitializePixels::oiio_InitializePixels_No.0 as _,
     #[default]
-    Yes = 1,
+    Yes = oiio_InitializePixels::oiio_InitializePixels_Yes.0 as _,
 }
 
 impl From<InitializePixels> for oiio_InitializePixels {
     fn from(initialize_pixels: InitializePixels) -> Self {
-        match initialize_pixels {
-            InitializePixels::No => oiio_InitializePixels::oiio_InitializePixels_No,
-            InitializePixels::Yes => oiio_InitializePixels::oiio_InitializePixels_Yes,
-        }
+        unsafe { std::mem::transmute(initialize_pixels) }
     }
 }
 
@@ -127,14 +125,8 @@ impl ImageBuffer {
         }
     }
 
-    pub fn new_with(
-        image_specificaiton: &ImageSpecification,
-        initialize_pixels: InitializePixels,
-    ) -> Self {
-        Self::new_empty_ffi(
-            &ImageSpecInternal::from(image_specificaiton),
-            initialize_pixels,
-        )
+    pub fn new_with(image_spec: &ImageSpec, initialize_pixels: InitializePixels) -> Self {
+        Self::new_empty_ffi(&ImageSpecInternal::from(image_spec), initialize_pixels)
     }
 }
 
@@ -174,7 +166,7 @@ impl ImageBuffer {
                         .map(|c| c.as_raw_ptr_mut())
                         .unwrap_or(ptr::null_mut()),
                     options
-                        .image_specification
+                        .image_spec
                         .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
                     /*options
@@ -597,9 +589,13 @@ impl ImageBuffer {
         }
     }
 
-    pub fn set_write_format(&mut self) {}
+    pub fn set_write_format(&mut self) {
+        unimplemented!()
+    }
 
-    pub fn set_write_per_channel_format(&mut self, channel_format: &[TypeDescription]) {}
+    pub fn set_write_per_channel_format(&mut self, _channel_format: &[TypeDescription]) {
+        unimplemented!()
+    }
 }
 
 /// # C++ API Getter Aliases
@@ -725,13 +721,12 @@ pub struct FromFileOptions<'a> {
     /// The miplevel to read (defaults to the highest-res miplevel of the
     /// file).
     pub mip_level: u32,
-    /// Optionally, an `ImageCache` to use, if possible, rather than reading
-    /// the entire image file into memory.
+    /// An `ImageCache` to use, if possible, rather than reading the entire
+    /// image file into memory.
     pub image_cache: Option<ImageCache>,
-    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
-    /// configuration hints that set options related to the opening and reading
-    /// of the file.
-    pub image_specification: Option<&'a ImageSpecification>,
+    /// An `ImageSpec` whose metadata contains configuration hints that set
+    /// options related to the opening and reading of the file.
+    pub image_spec: Option<&'a ImageSpec>,
 }
 
 pub trait FnProgress<'a>: Fn(f32) + 'a {}
@@ -743,18 +738,19 @@ pub enum PixelLayout {
 
 #[derive(Default)]
 pub struct WriteOptions<'a> {
-    /// Optional override of the pixel data format to use in the file being
-    /// written. The default (UNKNOWN) means to try writing the same
-    /// data format that as pixels are stored within the `ImageBuffer`'s memory
-    /// (or whatever type was specified by a prior call to
-    /// set_write_format()). In either case, if the file format does not
-    /// support that data type, another will be automatically chosen that is
-    /// supported by the file type and loses as little precision as
-    /// possible.
+    /// Override of the pixel data format to use in the file being written.
+    ///
+    /// The default (`None`) means to try writing the same data format that as
+    /// pixels are stored within the `ImageBuffer`'s memory (or whatever type
+    /// was specified by a prior call to [`set_write_format()`]). In either
+    /// case, if the file format does not support that data type, another will
+    /// be automatically chosen that is supported by the file type and loses
+    /// as little precision as possible.
     pub type_description: Option<&'a TypeDescription>,
-    /// Optional overriPde of the file format to write. The default (`None`)
-    /// means to infer the file format from the extension of the
-    /// filename (for example, `"foo.tif"`" will write a TIFF file).
+    /// Override of the file format to write.
+    ///
+    /// The default (`None`) means to infer the file format from the extension
+    /// of the filename (for example, `"foo.tif"` will write a TIFF file).
     pub file_format: Option<Ustr>,
     /// Override the tile sizing.
     ///
