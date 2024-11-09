@@ -191,4 +191,8 @@ BBL_MODULE(oiio) {
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
                     int))&OIIO::ImageBufAlgo::repremult,
           "ImageBufAlgo_repremult");
+
+  bbl::fn((std::string(*)(const OIIO::ImageBuf &, OIIO::string_view, OIIO::ROI,
+                          int, int))&OIIO::ImageBufAlgo::computePixelHashSHA1,
+          "ImageBufAlgo_computePixelHashSHA1");
 }

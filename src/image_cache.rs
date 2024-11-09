@@ -41,7 +41,7 @@ fn set_or_get_persist(persist: bool) -> bool {
 ///
 /// * Simpler interface -- the only supported operations are:
 ///
-///   * Asking for an [`ImageSpecification`] of a subimage.
+///   * Asking for an [`ImageSpec`] of a subimage.
 ///
 ///   * Retrieving a block of pixels.
 ///

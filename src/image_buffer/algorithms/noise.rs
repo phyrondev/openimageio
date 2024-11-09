@@ -1,4 +1,4 @@
-use crate::*;
+use crate::algorithms::*;
 use core::mem::MaybeUninit;
 
 /// Optional parameters for [`ImageBuffer`]'s
@@ -10,10 +10,10 @@ pub struct NoiseOptions {
     /// channels specified by `region`, but if it is `false`, a separate noise
     /// value will be computed for each channel in the region.
     pub monochromatic: bool,
-    /// The random number generator is actually driven by a hash on the *image
+    /// The random number generator is actually driven by a hash of the *image
     /// space* coordinates and channel, independently of the *pixel data
-    /// window* of of the resp. [`ImageBuffer`] or the
-    /// [`RegionOfInterest`].
+    /// window* of of the resp. [`ImageBuffer`] or the [`Region`].
+    ///
     /// Choosing different seed values will result in a different pattern, but
     /// for the same seed value, the noise at a given pixel coordinate
     /// `(x, y, z)` in channel `c` will be completely deterministic and
@@ -26,38 +26,46 @@ pub struct NoiseOptions {
     pub thread_count: u16,
 }
 
+/// The type of noise used by [`ImageBuffer`]'s
+/// [`noise_with()`](ImageBuffer::noise_with) method.
+#[derive(Debug, Clone)]
 pub enum NoiseType {
-    Gaussian,
-    White,
-    Uniform,
-    Blue,
-    Salt,
+    /// Gaussian (*normal* distribution) noise values with `standard_deviation`
+    /// around `mean`.
+    Gaussian { mean: f32, standard_deviation: f32 },
+    /// Independent (*uniform* distribution) noise values on range *[`min`,
+    /// `max`)*.
+    White { min: f32, max: f32 },
+    /// 'Blue noise' uniformly distributed on range *[`min`, `max`)* but not
+    /// independent; rather, they are chosen for good spectral properties
+    /// for sampling and dither.
+    Blue { min: f32, max: f32 },
+    /// Changes to value `salt` the portion of pixels given by
+    /// `percentage_salted`.
+    Salt { salt: f32, percentage_salted: f32 },
+}
+
+impl Default for NoiseType {
+    fn default() -> Self {
+        NoiseType::Gaussian {
+            mean: 0.0,
+            standard_deviation: 0.1,
+        }
+    }
 }
 
 /// # Noise
 ///
 /// Return an image of 'noise' in every pixel and channel.
 ///
-/// There are several `noise_type`s to choose from, and each behaves differently
-/// and has a different interpretation of the A and B parameters:
-///
-/// * `gaussian` -- adds Gaussian (normal distribution) noise values with mean
-///   value `a` and standard deviation `b`.
-///
-/// * `white` -- adds independent uniformly distributed values on range `[a,b)`.
-///
-/// * `uniform` -- synonym for `white`
-///
-/// * `blue` adds "blue noise" uniformly distributed on range `[a,b)` but not
-///   independent; rather, they are chosen for good spectral properties for
-///   sampling and dither.
-///
-/// * `salt` changes to value `a` the portion of pixels given by `b`.
+/// There are several [`NoiseType`]s to choose from, and each behaves
+/// differently and has a different interpretation of the `a` and `b`
+/// parameters:
 impl ImageBuffer {
     /// Add noise.
     #[named]
-    pub fn noise(&mut self, noise_type: NoiseType, a: f32, b: f32) -> Result<&mut Self> {
-        let is_ok = self.noise_ffi(noise_type, a, b, &NoiseOptions::default());
+    pub fn noise(&mut self, noise_type: NoiseType) -> Result<&mut Self> {
+        let is_ok = self.noise_ffi(noise_type, &NoiseOptions::default());
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -67,11 +75,9 @@ impl ImageBuffer {
     pub fn noise_with(
         &mut self,
         noise_type: NoiseType,
-        a: f32,
-        b: f32,
         options: &NoiseOptions,
     ) -> Result<&mut Self> {
-        let is_ok = self.noise_ffi(noise_type, a, b, options);
+        let is_ok = self.noise_ffi(noise_type, options);
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -80,11 +86,27 @@ impl ImageBuffer {
 impl From<NoiseType> for StringView<'static> {
     fn from(noise_type: NoiseType) -> Self {
         match noise_type {
-            NoiseType::Gaussian => StringView::from("gaussian"),
-            NoiseType::White => StringView::from("white"),
-            NoiseType::Uniform => StringView::from("uniform"),
-            NoiseType::Blue => StringView::from("blue"),
-            NoiseType::Salt => StringView::from("salt"),
+            NoiseType::Gaussian { .. } => StringView::from("gaussian"),
+            NoiseType::White { .. } => StringView::from("white"),
+            NoiseType::Blue { .. } => StringView::from("blue"),
+            NoiseType::Salt { .. } => StringView::from("salt"),
+        }
+    }
+}
+
+impl From<NoiseType> for (f32, f32) {
+    fn from(noise_type: NoiseType) -> Self {
+        match noise_type {
+            NoiseType::Gaussian {
+                mean,
+                standard_deviation,
+            } => (mean, standard_deviation),
+            NoiseType::White { min, max } => (min, max),
+            NoiseType::Blue { min, max } => (min, max),
+            NoiseType::Salt {
+                salt,
+                percentage_salted,
+            } => (salt, percentage_salted),
         }
     }
 }
@@ -92,8 +114,10 @@ impl From<NoiseType> for StringView<'static> {
 // Internal noise FFI call.
 impl ImageBuffer {
     #[inline]
-    fn noise_ffi(&mut self, noise_type: NoiseType, a: f32, b: f32, options: &NoiseOptions) -> bool {
+    fn noise_ffi(&mut self, noise_type: NoiseType, options: &NoiseOptions) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
+
+        let (a, b) = noise_type.clone().into();
 
         unsafe {
             oiio_ImageBufAlgo_noise(

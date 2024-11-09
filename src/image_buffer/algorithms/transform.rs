@@ -168,7 +168,7 @@ mod tests {
             ..Default::default()
         })?;*/
 
-        transformed.set_display_to_data_window();
+        //transformed.set_display_to_data_window();
 
         transformed.write(Utf8Path::new("target/transform.exr"))?;
 

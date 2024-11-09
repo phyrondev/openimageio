@@ -1,7 +1,7 @@
 use crate::*;
 use core::mem::MaybeUninit;
 
-#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum TextAlignX {
     #[default]
     Left = oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
@@ -9,7 +9,7 @@ pub enum TextAlignX {
     Right = oiio_TextAlignX::oiio_TextAlignX_Right.0 as _,
 }
 
-#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum TextAlignY {
     #[default]
     Baseline = oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _,
@@ -18,7 +18,7 @@ pub enum TextAlignY {
     Center = oiio_TextAlignY::oiio_TextAlignY_Center.0 as _,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RenderTextOptions<'a> {
     /// The nominal height of the font (in pixels).
     pub font_size: u16,

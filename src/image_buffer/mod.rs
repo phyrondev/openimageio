@@ -1,7 +1,11 @@
 use crate::*;
+use algorithms::pixel_hash::PixelHashOptions;
 use anyhow::{Result, anyhow};
 use core::{ffi::c_int, mem::MaybeUninit, num::NonZeroU16, ptr};
-use std::string::String;
+use std::{
+    hash::{Hash, Hasher},
+    string::String,
+};
 
 #[cfg(feature = "algorithms")]
 pub mod algorithms;
@@ -67,6 +71,23 @@ impl Default for ImageBuffer {
     /// [`ImageBufferStorage::Uninitialized`].
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Hash for ImageBuffer {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write(
+            &self
+                .pixel_hash_sha1_with(&PixelHashOptions {
+                    // Block size 8 should ensure a 1080p image being hashed on a 128 core machine
+                    // still maxes out all cores (1080/128 ≈ 8)
+                    block_size: 8,
+                    ..Default::default()
+                })
+                .as_bytes(),
+        )
+        // TODO: Add all of the `ImageBuffer`'s metadata to the hash too; once
+        // we implement accessors for it.
     }
 }
 
@@ -655,7 +676,7 @@ impl ImageBuffer {
 /// app buffer.
 ///
 /// Optionally request the pixel data type to be used. The default of
-/// `None` means to use whatever data type is used by the src. If *this is
+/// `None` means to use whatever data type is used by the source. If *this is
 /// already initialized and has [`AppBuffer`](ImageBufferStorage::AppBuffer)
 /// storage ('wrapping' an application buffer), this parameter is ignored.
 impl ImageBuffer {
@@ -713,7 +734,8 @@ impl From<WrapMode> for oiio_WrapMode {
     }
 }
 
-/// Optional parameters for the [`ImageBuffer::from_file_with()`] method.
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`from_file_with()`](ImageBuffer::from_file_with) method.
 #[derive(Default)]
 pub struct FromFileOptions<'a> {
     /// The subimage to read (defaults to the first subimage of the file).
@@ -736,16 +758,19 @@ pub enum PixelLayout {
     Tile(NonZeroU16, NonZeroU16, NonZeroU16),
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`write_with()`](ImageBuffer::write_with) method.
 #[derive(Default)]
 pub struct WriteOptions<'a> {
     /// Override of the pixel data format to use in the file being written.
     ///
     /// The default (`None`) means to try writing the same data format that as
     /// pixels are stored within the `ImageBuffer`'s memory (or whatever type
-    /// was specified by a prior call to [`set_write_format()`]). In either
-    /// case, if the file format does not support that data type, another will
-    /// be automatically chosen that is supported by the file type and loses
-    /// as little precision as possible.
+    /// was specified by a prior call to [`set_write_format()`]).
+    ///
+    /// In either case, if the file format does not support that data type,
+    /// another will be automatically chosen that is supported by the file
+    /// type and loses as little precision as possible.
     pub type_description: Option<&'a TypeDescription>,
     /// Override of the file format to write.
     ///

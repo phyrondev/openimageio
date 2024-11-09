@@ -126,14 +126,15 @@ pub struct ImageSpec {
     /// [`BaseType`]. Typical values would be [`BaseType::U8`] for 8-bit
     /// unsigned values, [`BaseType::F32`] for 32-bit floating-point
     /// values, etc.
+    ///
     /// If all channels of the image have the same data format, that will be
-    /// described by channel_format[0].
+    /// described by `ChannelFormat::Uniform`.
     ///
     /// If there are different data formats for each channel, they will be
-    /// described in the `channel_formats` `Vec`, and the `format` field
-    /// will indicate a single default data format for applications that
-    /// don't wish to support per-channel formats (usually this will be the
-    /// format of the channel that has the most precision).
+    /// described in the `ChannelFormat::PerChannel` field's `Vec`, and the
+    /// `format` will indicate a single default data format for applications
+    /// that don't wish to support per-channel formats (usually this will be
+    /// the format of the channel that has the most precision).
     pub channel_format: ChannelFormat,
     /// The names of each channel, in order. Typically this will be `"R"`,
     /// `"G"`, `"B"`, `"A"` (alpha), `"Z"` (depth), or other arbitrary names.

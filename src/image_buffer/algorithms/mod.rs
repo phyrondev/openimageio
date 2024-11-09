@@ -145,6 +145,7 @@ pub mod invert;
 pub mod noise;
 pub mod over;
 pub use noise::*;
+pub mod pixel_hash;
 pub mod premult;
 pub mod render_text;
 pub use render_text::*;

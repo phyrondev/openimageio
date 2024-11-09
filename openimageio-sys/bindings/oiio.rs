@@ -1663,6 +1663,8 @@ pub fn oiio_ImageBufAlgo_unpremult(dst: *mut oiio_ImageBuf_t, src: *const oiio_I
 
 pub fn oiio_ImageBufAlgo_repremult(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
+pub fn oiio_ImageBufAlgo_computePixelHashSHA1(src: *const oiio_ImageBuf_t, extrainfo: *mut oiio_StringView_t, roi: oiio_ROI_t, blocksize: c_int, nthreads: c_int, _result: *mut *mut oiio_String_t) -> c_int;
+
 pub fn oiio_ImageCache_attribute(_this: *mut oiio_ImageCache_t, name: *const c_char, type_: oiio_TypeDesc_t, data: *const c_void, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageCache_getattribute(_this: *const oiio_ImageCache_t, name: *const c_char, type_: oiio_TypeDesc_t, data: *mut c_void, _result: *mut bool) -> c_int;

@@ -2,9 +2,54 @@ use crate::{algorithms::*, *};
 use anyhow::Result;
 use core::mem::MaybeUninit;
 
+/// # Premultiplication
+///
+/// The operation multiplies all color channels (those not `alpha` or `z`) by
+/// the `alpha` value, to 'premultiply' them.
+///
+/// This presumes that the image starts of as *unassociated `alpha`* a.k.a.
+/// *non-premultipled* and converts it to *associated `alpha`*/*premultipled*.
+impl ImageBuffer {
+    #[named]
+    pub fn replace_by_premultiply(&mut self, source: &ImageBuffer) -> Result<&mut Self> {
+        let is_ok = self.premult_ffi(source, &Options::default());
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn replace_by_premultiply_with(
+        &mut self,
+        source: &ImageBuffer,
+        options: &Options,
+    ) -> Result<&mut Self> {
+        let is_ok = self.premult_ffi(source, options);
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn premultiply(&mut self) -> Result<&mut Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.premult_ffi(self, &Options::default());
+        *self = image_buffer;
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+
+    #[named]
+    pub fn premultiply_with(&mut self, options: &Options) -> Result<&mut Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.premult_ffi(self, options);
+        *self = image_buffer;
+
+        self.mut_self_or_error(is_ok, function_name!())
+    }
+}
+
 /// # Un-Premultiplication
 ///
-/// Premultiply or un-premultiply color by alpha.
+/// Un-premultiply color by alpha.
 ///
 /// The `unpremultiply` operations divides all color `alpha` or `z`) by the
 /// `alpha` value, to 'un-premultiply' them.
@@ -47,51 +92,6 @@ impl ImageBuffer {
     pub fn unpremultiply_with(&mut self, options: &Options) -> Result<&mut Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.unpremult_ffi(self, options);
-        *self = image_buffer;
-
-        self.mut_self_or_error(is_ok, function_name!())
-    }
-}
-
-/// # Premultiplication
-///
-/// The operation multiplies all color channels (those not `alpha` or `z`) by
-/// the `alpha` value, to 'premultiply' them.
-///
-/// This presumes that the image starts of as *unassociated `alpha`* a.k.a.
-/// *non-premultipled* and converts it to *associated `alpha`*/*premultipled*.
-impl ImageBuffer {
-    #[named]
-    pub fn replace_by_premultiply(&mut self, source: &ImageBuffer) -> Result<&mut Self> {
-        let is_ok = self.premult_ffi(source, &Options::default());
-
-        self.mut_self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn replace_by_premultiply_with(
-        &mut self,
-        source: &ImageBuffer,
-        options: &Options,
-    ) -> Result<&mut Self> {
-        let is_ok = self.premult_ffi(source, options);
-
-        self.mut_self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn premultiply(&mut self) -> Result<&mut Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.premult_ffi(self, &Options::default());
-        *self = image_buffer;
-
-        self.mut_self_or_error(is_ok, function_name!())
-    }
-
-    #[named]
-    pub fn premultiply_with(&mut self, options: &Options) -> Result<&mut Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.premult_ffi(self, options);
         *self = image_buffer;
 
         self.mut_self_or_error(is_ok, function_name!())
