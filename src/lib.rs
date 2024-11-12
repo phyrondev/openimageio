@@ -135,10 +135,10 @@
 //! * Type- and function names were changed to adhere to the official [Rust API Naming](https://rust-lang.github.io/api-guidelines/naming.html)
 //!   guidelines and [RFC 344](https://github.com/rust-lang/rfcs/blob/master/text/0344-conventions-galore.md).
 //!
-//!   That said --, for all types where names were changed, the crate ships with
-//!   `type` aliases that mirror the original C++ names as much as possible
-//!   within the constraints referenced in the previous paragraph. These are
-//!   gated behind the `cpp_api_names` [feature](#special-features).
+//!   For all types where names were changed, the crate ships with `type`
+//!   aliases that mirror the original C++ names as much as possible within the
+//!   constraints referenced in the previous paragraph. These are gated behind
+//!   the `cpp_api_names` [feature](#special-features).
 //!
 //!   * Abbreviations were removed to make naming more stringent across the API.
 //!     For example `ImageBuf` (C++) became `ImageBuffer` (Rust) (an `ImageBuf`
@@ -154,9 +154,10 @@
 //!
 //!   * Acronyms were spelled out to make code easier to read for developers
 //!     coming from a non-VFX background. For example `ROI` (C++) became
-//!     `RegionOfInterest` (Rust). However, there is a type alias, `Roi` for
-//!     those familiar with the acronym (note the capitalization change to
-//!     adhere to
+//!     `Region` (Rust). The 'of interest' part was skipped, see also
+//!     [here](https://github.com/phyrondev/openimageio/issues/3).
+//!     However, there is a type alias, `Roi` for those familiar with the
+//!     acronym (note the capitalization change to adhere to
 //!     [aforementioned guidelines](https://rust-lang.github.io/api-guidelines/naming.html)).
 //!
 //!   * The ubiquitous `n`/`num`-prefixes (C++) meaning 'number (of)' were
@@ -178,9 +179,8 @@
 //! The [builder pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)
 //! is mostly used for opaque/side-effects-free `struct` initalization in the
 //! wild and quite verbose. But it is seldom used for optional function
-//! parameters. It also requires a lot of boilerplate code. Even when such code
-//! is automatically generated this incurs a compile-time cost for generation
-//! and compilation.
+//! parameters. It requires a lot of boilerplate code. Even when such code is
+//! automatically generated this incurs a cost for generationand compilation.
 //!
 //! Instead the
 //! [init-struct pattern](https://xaeroxe.github.io/init-struct-pattern/)
@@ -212,7 +212,7 @@
 //!
 //! ```
 //! # use openimageio::{ImageBuffer, algorithms::{
-//! #     PixelFilter, RotateOptions
+//! #     PixelFilter2D, RotateOptions
 //! # }, Utf8Path};
 //! # use std::f32::consts::TAU;
 //! let mut image_buf =
@@ -221,7 +221,7 @@
 //! image_buf.rotate_with(42.0 * TAU / 360.0, &RotateOptions {
 //!     // Use a Blackmann-Harris filter to avoid halos easily introduced
 //!     // when operating on HDRs using the default filter (Lanczos3).
-//!     filter: Some(PixelFilter::BlackmanHarris.into()),
+//!     filter: Some(PixelFilter2D::BlackmanHarris.into()),
 //!     ..Default::default()
 //! });
 //!

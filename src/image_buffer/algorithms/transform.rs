@@ -58,6 +58,10 @@ impl ImageBuffer {
     }
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`transform_with()`](ImageBuffer::transform_with),
+/// [`replace_by_transform_with()`](ImageBuffer::replace_by_transform_with)
+/// methods.
 #[derive(Clone, Default)]
 pub struct TransformOptions {
     /// The reconstruction filter is used to weight the source image pixels

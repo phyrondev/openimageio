@@ -87,7 +87,7 @@ pub struct TextureOptions<'a> {
     // `try_into()` at the FFI boundary).
     /// First channel of the lookup.
     pub first_channel: u16,
-    /// Sub-image or `Ptex` face ID.
+    /// Sub-image or [`Ptex`](https://ptex.us/) face ID.
     pub sub_image: u16,
     /// Sub-image name.
     pub sub_image_name: Ustr,
@@ -95,6 +95,8 @@ pub struct TextureOptions<'a> {
     pub s_wrap: Wrap,
     /// Wrap mode in the `t` direction.
     pub t_wrap: Wrap,
+    /// Wrap mode in the `r` direction for 3D volume texture lookups only.
+    pub r_wrap: Wrap,
     /// Mip mode.
     pub mip_mode: MipMode,
     /// Interpolation mode.
@@ -107,10 +109,14 @@ pub struct TextureOptions<'a> {
     pub s_blur: f32,
     /// Blur amount in `t` direction.
     pub t_blur: f32,
+    /// Blur amount in the `r` direction
+    pub r_blur: f32,
     /// Multiplier for derivative in `s` direction.
     pub s_width: f32,
     /// Multiplier for derivative in `t` direction.
     pub t_width: f32,
+    /// Multiplier for derivatives in `r` direction.
+    pub r_width: f32,
     /// Fill value for missing channels.
     pub fill: f32,
     /// Color for missing texture.
@@ -118,15 +124,10 @@ pub struct TextureOptions<'a> {
     /// Time (for time-dependent texture lookups).
     pub time: f32,
     /// Stratified sample value.
-    pub random: Option<f32>,
+    pub random: f32,
     /// Number of samples for certain map lookups (e.g. shadow maps).
-    pub samples: Option<u16>,
-    /// Wrap mode in the `r` direction for 3D volume texture lookups only.
-    pub r_wrap: Wrap,
-    /// Blur amount in the `r` direction
-    pub r_blur: f32,
-    /// Multiplier for derivatives in `r` direction.
-    pub r_width: f32,
+    // TODO: what happens if this is `0`? Should we use `NonZeroU16`?
+    pub samples: u16,
 }
 
 impl From<&TextureOptions<'_>> for oiio_TextureOpt_t {
@@ -154,8 +155,8 @@ impl From<&TextureOptions<'_>> for oiio_TextureOpt_t {
                     .map(|c| c as *const _ as *const _)
                     .unwrap_or(ptr::null()) as _,
                 t.time,
-                t.random.unwrap_or(-1.0),
-                t.samples.unwrap_or(1) as _,
+                t.random,
+                t.samples as _,
                 t.r_wrap.into(),
                 t.r_blur,
                 t.r_width,
@@ -174,22 +175,22 @@ impl Default for TextureOptions<'_> {
             sub_image_name: Ustr::default(),
             s_wrap: Wrap::default(),
             t_wrap: Wrap::default(),
+            r_wrap: Wrap::default(),
             mip_mode: MipMode::default(),
             interpolation_mode: InterpolationMode::default(),
             anisotropic: 32,
             conservative_filter: true,
             s_blur: 0.0,
             t_blur: 0.0,
+            r_blur: 0.0,
             s_width: 1.0,
             t_width: 1.0,
+            r_width: 1.0,
             fill: 0.0,
             missing_color: None,
             time: 0.0,
-            random: None,
-            samples: None,
-            r_wrap: Wrap::default(),
-            r_blur: 0.0,
-            r_width: 1.0,
+            random: -1.0,
+            samples: 1,
         }
     }
 }
@@ -240,12 +241,9 @@ pub struct TextureHandle<'a, 'b> {
 impl TextureHandle<'_, '_> {
     pub fn texture(
         &self,
-        s: f32,
-        t: f32,
-        ds_dx: f32,
-        dt_dx: f32,
-        ds_dy: f32,
-        dt_dy: f32,
+        st: (f32, f32),
+        delta_st_dx: (f32, f32),
+        delta_st_dy: (f32, f32),
         channel_count: u32,
         options: Option<&TextureOptions>,
     ) -> Vec<f32> {
@@ -262,12 +260,12 @@ impl TextureHandle<'_, '_> {
                 // Perthread
                 std::ptr::null_mut() as _,
                 options as *mut oiio_TextureOpt_t as _,
-                s,
-                t,
-                ds_dx,
-                dt_dx,
-                ds_dy,
-                dt_dy,
+                st.0,
+                st.1,
+                delta_st_dx.0,
+                delta_st_dx.1,
+                delta_st_dy.0,
+                delta_st_dy.1,
                 channel_count.try_into().unwrap(),
                 result.as_mut_ptr(),
                 std::ptr::null_mut(),

@@ -192,6 +192,15 @@ BBL_MODULE(oiio) {
                     int))&OIIO::ImageBufAlgo::repremult,
           "ImageBufAlgo_repremult");
 
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &,
+                    const OIIO::ImageBuf &, bool, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::convolve,
+          "ImageBufAlgo_convolve");
+
+  bbl::fn((OIIO::ImageBuf(*)(OIIO::string_view, float, float, float,
+                             bool))&OIIO::ImageBufAlgo::make_kernel,
+          "ImageBufAlgo_from_kernel");
+
   bbl::fn((std::string(*)(const OIIO::ImageBuf &, OIIO::string_view, OIIO::ROI,
                           int, int))&OIIO::ImageBufAlgo::computePixelHashSHA1,
           "ImageBufAlgo_computePixelHashSHA1");

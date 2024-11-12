@@ -533,6 +533,10 @@ pub fn oiio_Filter2D_create(filtername: *mut oiio_StringView_t, width: c_float, 
 
 pub fn oiio_Filter2D_destroy(filt: *mut oiio_Filter2D_t) -> c_int;
 
+pub fn oiio_Filter2D_width(_this: *const oiio_Filter2D_t, _result: *mut c_float) -> c_int;
+
+pub fn oiio_Filter2D_height(_this: *const oiio_Filter2D_t, _result: *mut c_float) -> c_int;
+
 pub fn oiio_Filter2D_dtor(_this: *mut oiio_Filter2D_t) -> c_int;
 
 pub fn oiio_ImageBuf_clear(_this: *mut oiio_ImageBuf_t) -> c_int;
@@ -1662,6 +1666,10 @@ pub fn oiio_ImageBufAlgo_premult(dst: *mut oiio_ImageBuf_t, src: *const oiio_Ima
 pub fn oiio_ImageBufAlgo_unpremult(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufAlgo_repremult(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufAlgo_convolve(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, kernel: *const oiio_ImageBuf_t, normalize: bool, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufAlgo_from_kernel(name: *mut oiio_StringView_t, width: c_float, height: c_float, depth: c_float, normalize: bool, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
 pub fn oiio_ImageBufAlgo_computePixelHashSHA1(src: *const oiio_ImageBuf_t, extrainfo: *mut oiio_StringView_t, roi: oiio_ROI_t, blocksize: c_int, nthreads: c_int, _result: *mut *mut oiio_String_t) -> c_int;
 

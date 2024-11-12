@@ -57,6 +57,9 @@ impl ImageBuffer {
     }
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`from_render_text_with()`](ImageBuffer::from_render_text_with),
+/// [`render_test_with()`](ImageBuffer::render_test_with) methods.
 #[derive(Clone, Default)]
 pub struct ResizeOptions {
     /// The pixel filter is used to weight the pixels falling underneath

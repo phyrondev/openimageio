@@ -5,6 +5,18 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=bbl-oiio/*");
 
+    // Do not generate anything during a `doc` build or the user told us so.
+    if cfg!(doc) || env::var("OIIO_DO_NOT_GENERATE_BENDINGS").is_ok() {
+        return Ok(());
+    }
+
+    #[cfg(target_os = "linux")]
+    println!("cargo::rustc-link-arg=-lstdc++");
+
+    if let Ok(cmake_install_prefix) = std::env::var("CMAKE_INSTALL_PREFIX") {
+        println!("cargo:rustc-link-search={}/lib", cmake_install_prefix);
+    }
+
     // Build OIIO itself.
 
     /*
@@ -27,26 +39,13 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     // OIIO_REGENERATE is set.
     //println!("cargo::rustc-check-cfg=cfg(generated_bindings)");
 
-    // Do not try to generate anything during a `doc` build or the user told us so.
-    if cfg!(doc) || env::var("OIIO_DO_NOT_GENERATE_CPP_API").is_ok() {
-        //println!("cargo:rustc-cfg=generated_bindings");
-
-        return Ok(());
-    }
-
     if std::env::var("BBL_PLUGIN_PATH").is_err() {
         error!("BBL_PLUGIN_PATH is no set");
     }
 
-    #[cfg(target_os = "linux")]
-    println!("cargo::rustc-link-arg=-lstdc++");
-
-    if let Ok(cmake_install_prefix) = std::env::var("CMAKE_INSTALL_PREFIX") {
-        println!("cargo:rustc-link-search={}/lib", cmake_install_prefix);
-    }
-
     let bindings_path = bbl_build::Config::new("oiio", "bbl-oiio")
         .define("BBL_LANGUAGES", "rust")
+        .define("OIIO_DIST", "/home/ritz/code/OpenImageIO/dist")
         .build()?
         .join("build/oiio.rs");
 
@@ -54,6 +53,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _ = fs::create_dir_all(&destination);
 
+    // Update the bindings file.
     fs::copy(bindings_path, destination.join("oiio.rs"))?;
 
     Ok(())

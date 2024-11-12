@@ -62,6 +62,10 @@ impl ImageBuffer {
     }
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`warp_with()`](ImageBuffer::warp_with),
+/// [`replace_by_warp_with()`](ImageBuffer::replace_by_warp_with)
+/// methods.
 #[derive(Clone, Default)]
 pub struct WarpOptions {
     pub filter: Option<Filter2D>,

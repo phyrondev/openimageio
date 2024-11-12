@@ -119,6 +119,10 @@ impl ImageBuffer {
     }
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`rotate_with()`](ImageBuffer::rotate_with),
+/// [`replace_by_rotate_with()`](ImageBuffer::replace_by_rotate_with)
+/// methods.
 #[derive(Clone, Default)]
 pub struct RotateOptions {
     pub filter: Option<Filter2D>,
@@ -196,7 +200,7 @@ mod tests {
                 // Use a Blackmann-Harris filter to avoid halos easily
                 // introduced when operating on HDRs with the default one,
                 // Lanczos3.
-                filter: Some(PixelFilter::BlackmanHarris.into()),
+                filter: Some(PixelFilter2D::BlackmanHarris.into()),
                 recompute_region: true,
                 ..Default::default()
             },

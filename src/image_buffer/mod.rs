@@ -1,11 +1,7 @@
 use crate::*;
-use algorithms::pixel_hash::PixelHashOptions;
 use anyhow::{Result, anyhow};
 use core::{ffi::c_int, mem::MaybeUninit, num::NonZeroU16, ptr};
-use std::{
-    hash::{Hash, Hasher},
-    string::String,
-};
+use std::{hash::Hash, string::String};
 
 #[cfg(feature = "algorithms")]
 pub mod algorithms;
@@ -74,23 +70,6 @@ impl Default for ImageBuffer {
     }
 }
 
-impl Hash for ImageBuffer {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write(
-            &self
-                .pixel_hash_sha1_with(&PixelHashOptions {
-                    // Block size 8 should ensure a 1080p image being hashed on a 128 core machine
-                    // still maxes out all cores (1080/128 ≈ 8)
-                    block_size: 8,
-                    ..Default::default()
-                })
-                .as_bytes(),
-        )
-        // TODO: Add all of the `ImageBuffer`'s metadata to the hash too; once
-        // we implement accessors for it.
-    }
-}
-
 impl Clone for ImageBuffer {
     fn clone(&self) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
@@ -151,60 +130,6 @@ impl ImageBuffer {
     }
 }
 
-impl ImageBuffer {
-    pub(crate) fn new_empty_ffi(
-        image_spec_internal: &ImageSpecInternal,
-        initialize_pixels: InitializePixels,
-    ) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
-
-        Self {
-            ptr: unsafe {
-                oiio_ImageBuf_ctor_03(
-                    image_spec_internal.as_raw_ptr(),
-                    initialize_pixels.into(),
-                    &mut ptr as *mut _ as _,
-                );
-                ptr.assume_init()
-            },
-            image_cache: None,
-            //_marker: PhantomData,
-        }
-    }
-
-    pub(crate) fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
-
-        Self {
-            ptr: unsafe {
-                oiio_ImageBuf_ctor_01(
-                    StringView::from(name).ptr,
-                    options.sub_image as _,
-                    options.mip_level as _,
-                    options
-                        .image_cache
-                        .as_ref()
-                        .map(|c| c.as_raw_ptr_mut())
-                        .unwrap_or(ptr::null_mut()),
-                    options
-                        .image_spec
-                        .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
-                        .unwrap_or(ptr::null_mut()),
-                    /*options
-                    .io_proxy
-                    .map(|p| p.as_raw_ptr())
-                    .unwrap_or(ptr::null_mut()),*/
-                    ptr::null_mut() as _,
-                    &mut ptr as *mut _ as _,
-                );
-                ptr.assume_init()
-            },
-            image_cache: options.image_cache.clone(),
-            //_marker: PhantomData,
-        }
-    }
-}
-
 /// # Constructors & Resetting
 impl ImageBuffer {
     /// Construct a read-only `ImageBuffer` that will be used to read the named
@@ -248,7 +173,7 @@ impl ImageBuffer {
         unsafe {
             oiio_ImageBuf_write(
                 self.ptr,
-                StringView::from(file).ptr,
+                StringView::from(file).as_raw_ptr(),
                 &mut is_ok as *mut _ as _,
             );
 
@@ -302,6 +227,14 @@ impl ImageBuffer {
             } else {
                 Ok(())
             }
+        }
+    }
+
+    pub(crate) fn from_raw_ptr(ptr: *mut oiio_ImageBuf_t) -> Self {
+        Self {
+            ptr,
+            image_cache: None,
+            //_marker: PhantomData,
         }
     }
 }
@@ -903,6 +836,60 @@ impl<'a> Iterator<T> for ImageBuffer<'a> {
         Some(current)
     }
 }*/
+
+impl ImageBuffer {
+    pub(crate) fn new_empty_ffi(
+        image_spec_internal: &ImageSpecInternal,
+        initialize_pixels: InitializePixels,
+    ) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        Self {
+            ptr: unsafe {
+                oiio_ImageBuf_ctor_03(
+                    image_spec_internal.as_raw_ptr(),
+                    initialize_pixels.into(),
+                    &mut ptr as *mut _ as _,
+                );
+                ptr.assume_init()
+            },
+            image_cache: None,
+            //_marker: PhantomData,
+        }
+    }
+
+    pub(crate) fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        Self {
+            ptr: unsafe {
+                oiio_ImageBuf_ctor_01(
+                    StringView::from(name).ptr,
+                    options.sub_image as _,
+                    options.mip_level as _,
+                    options
+                        .image_cache
+                        .as_ref()
+                        .map(|c| c.as_raw_ptr_mut())
+                        .unwrap_or(ptr::null_mut()),
+                    options
+                        .image_spec
+                        .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
+                        .unwrap_or(ptr::null_mut()),
+                    /*options
+                    .io_proxy
+                    .map(|p| p.as_raw_ptr())
+                    .unwrap_or(ptr::null_mut()),*/
+                    ptr::null_mut() as _,
+                    &mut ptr as *mut _ as _,
+                );
+                ptr.assume_init()
+            },
+            image_cache: options.image_cache.clone(),
+            //_marker: PhantomData,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

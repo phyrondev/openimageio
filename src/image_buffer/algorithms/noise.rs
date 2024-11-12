@@ -19,10 +19,11 @@ pub struct NoiseOptions {
     /// `(x, y, z)` in channel `c` will be completely deterministic and
     /// repeatable.
     pub seed: i32,
-    /// See the [Region of Interest](#region-of-interest) section on
-    /// [`ImageBuffer`].
+    /// See the [Region of Interest](module@algorithms#region-of-interest)
+    /// section in the [module@algorithms] module. .
     pub region: Region,
-    /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
+    /// See the [Multithreading](module@algorithms#multithreading) section
+    /// in the [module@algorithms] module.
     pub thread_count: u16,
 }
 

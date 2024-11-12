@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 project(oiio VERSION 0.1 LANGUAGES C CXX)
 
-find_package(OpenImageIO 2.5 REQUIRED)
+find_package(
+    OpenImageIO 2.5
+    REQUIRED
+    HINTS
+    ${OIIO_DIST}
+)
 find_package(babble 0.8 CONFIG REQUIRED)
 
 include(GNUInstallDirs)
@@ -38,6 +43,8 @@ bbl_translate_binding(
 target_link_libraries(oiio-c PUBLIC OpenImageIO::OpenImageIO)
 target_compile_definitions(oiio-c PRIVATE NOMINMAX)
 
+# set_target_properties(oiio-c PROPERTIES CXX_STANDARD 17)
+
 # This is just here to trigger generation of compile commands for the bind file
 # so we get LSP functionality in the bind file.
 add_library(bind-dummy ${bindfiles})
@@ -55,4 +62,3 @@ install(
     INCLUDES
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-

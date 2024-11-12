@@ -4,8 +4,12 @@
 
 BBL_MODULE(oiio) {
 
-    bbl::Class<OIIO::Filter2D>()
-        .m((OIIO::Filter2D* (*)(OIIO::string_view, float, float))
-            &OIIO::Filter2D::create, "create")
-        .m(&OIIO::Filter2D::destroy);
+  bbl::Class<OIIO::Filter2D>()
+      .m((OIIO::Filter2D * (*)(OIIO::string_view, float, float)) &
+             OIIO::Filter2D::create,
+         "create")
+      .m(&OIIO::Filter2D::destroy)
+
+      .m(&OIIO::Filter2D::width)
+      .m(&OIIO::Filter2D::height);
 }
