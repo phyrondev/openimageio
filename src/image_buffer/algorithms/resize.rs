@@ -1,6 +1,6 @@
 use crate::{algorithms::*, *};
 use anyhow::Result;
-use core::{mem::MaybeUninit, ptr};
+use core::mem::MaybeUninit;
 
 /// # Resize
 ///
@@ -58,8 +58,8 @@ impl ImageBuffer {
 }
 
 /// Optional parameters for [`ImageBuffer`]'s
-/// [`from_render_text_with()`](ImageBuffer::from_render_text_with),
-/// [`render_test_with()`](ImageBuffer::render_test_with) methods.
+/// [`replace_by_resize_with()`](ImageBuffer::replace_by_resize_with),
+/// [`resize_with()`](ImageBuffer::resize_with) methods.
 #[derive(Clone, Default)]
 pub struct ResizeOptions {
     /// The pixel filter is used to weight the pixels falling underneath
@@ -85,13 +85,32 @@ impl ImageBuffer {
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
 
+        let options = if let Some(filter) = resize_options.filter {
+            let filter_ptr = ParamValue::new_ffi(
+                "filterptr",
+                // TODO: is this safe? What are the lifetimes expectation for this pointer?
+                // We assume it only has to outlive the `oiio_ImageBufAlgo_resize()` call.
+                &filter,
+                TypeDesc::PTR,
+                1,
+                &ParamValueOptions::default(),
+            );
+
+            let mut options = ParamValueList::new();
+            options.add_or_replace(filter_ptr);
+
+            options
+        } else {
+            ParamValueList::new()
+        };
+
+        let options = ParamValueSlice::from(&options);
+
         unsafe {
             oiio_ImageBufAlgo_resize(
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
-                resize_options
-                    .filter
-                    .map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
+                options.as_raw_ptr() as _,
                 region.clone().into(),
                 resize_options.thread_count as _,
                 &mut is_ok as *mut _ as _,

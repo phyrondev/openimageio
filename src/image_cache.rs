@@ -68,7 +68,7 @@ fn set_or_get_persist(persist: bool) -> bool {
 
 #[derive(Clone, Debug)]
 pub struct ImageCache {
-    pub(crate) ptr: Arc<*mut oiio_ImageCache_t>,
+    pub(crate) ptr: Arc<*mut oiio_ImageCacheSharedPtr_t>,
 }
 
 unsafe impl Send for ImageCache {}
@@ -117,7 +117,7 @@ impl Default for ImageCache {
 impl ImageCache {
     /// Create a unique `ImageCache`.
     pub fn new() -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
+        let mut ptr = MaybeUninit::<*mut oiio_ImageCacheSharedPtr_t>::uninit();
 
         Self {
             ptr: Arc::new(unsafe {
@@ -138,7 +138,7 @@ impl ImageCache {
     pub fn shared(persist: bool) -> Self {
         set_or_get_persist(persist);
 
-        let mut ptr = std::mem::MaybeUninit::<*mut oiio_ImageCache_t>::uninit();
+        let mut ptr = std::mem::MaybeUninit::<*mut oiio_ImageCacheSharedPtr_t>::uninit();
 
         Self {
             ptr: Arc::new(unsafe {
@@ -150,12 +150,22 @@ impl ImageCache {
 }
 
 impl ImageCache {
-    pub(crate) fn _as_raw_ptr(&self) -> *const oiio_ImageCache_t {
+    pub(crate) fn _as_raw_ptr(&self) -> *const oiio_ImageCacheSharedPtr_t {
         *self.ptr
     }
 
-    pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageCache_t {
+    pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_ImageCacheSharedPtr_t {
         *self.ptr
+    }
+
+    pub(crate) fn null_ptr() -> *mut oiio_ImageCacheSharedPtr_t {
+        let mut result = MaybeUninit::<*mut oiio_ImageCacheSharedPtr_t>::uninit();
+
+        unsafe {
+            oiio_ImageCacheSharedPtr_ctor(std::ptr::null_mut(), &mut result as *mut _ as _);
+
+            result.assume_init()
+        }
     }
 }
 
@@ -166,7 +176,7 @@ impl Drop for ImageCache {
     /// the implementation will only release its resources when the last shared
     /// instance goes out of scope.
     fn drop(&mut self) {
-        if 1 == Arc::<*mut oiio_ImageCache_t>::strong_count(&self.ptr) {
+        if 1 == Arc::<*mut oiio_ImageCacheSharedPtr_t>::strong_count(&self.ptr) {
             // FIXME? Can we have a situation where the cache is dropped
             // while another thread copies some object that holds a reference
             // to the cache?

@@ -114,7 +114,7 @@ impl From<TextAlignY> for oiio_TextAlignY {
 }
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`from_render_text_with()`](ImageBuffer::from_render_text_with),
-/// [`render_test_with()`](ImageBuffer::render_test_with) methods.
+/// [`render_text_with()`](ImageBuffer::render_text_with) methods.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RenderTextOptions<'a> {
     /// The nominal height of the font (in pixels).

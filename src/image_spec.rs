@@ -2,6 +2,7 @@ use crate::*;
 use core::mem::MaybeUninit;
 use ustr::Ustr;
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ChannelFormat {
     Uniform(BaseType, usize),
     PerChannel(Vec<BaseType>),
@@ -88,7 +89,7 @@ impl ChannelFormat {
 /// [`ImageSpec`], is available behind a `type` alias.
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#image-specification-imagespec)
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq, Hash)]
 pub struct ImageSpec {
     /// Origin (upper left corner) of pixel data.
     pub x: i32,
@@ -217,10 +218,7 @@ impl From<&ImageSpec> for ImageSpecInternal {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
-            oiio_ImageSpec_new(
-                (&TypeDescription::default()).into(),
-                &mut ptr as *mut _ as *mut _,
-            );
+            oiio_ImageSpec_new((&TypeDesc::default()).into(), &mut ptr as *mut _ as *mut _);
 
             let ptr = ptr.assume_init();
 
@@ -280,10 +278,10 @@ impl From<&ImageSpec> for ImageSpecInternal {
 
 impl ImageSpecInternal {
     pub fn new() -> Self {
-        Self::new_with(&TypeDescription::default())
+        Self::new_with(&TypeDesc::default())
     }
 
-    pub fn new_with(type_desc: &TypeDescription) -> Self {
+    pub fn new_with(type_desc: &TypeDesc) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
@@ -308,7 +306,7 @@ impl ImageSpecInternal {
         x_res: u32,
         y_res: u32,
         channel_count: u32,
-        type_desc: &TypeDescription,
+        type_desc: &TypeDesc,
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
@@ -328,7 +326,7 @@ impl ImageSpecInternal {
     }
 
     /*
-    pub fn new_with_bounds(bounds: Bounds, type_desc: &TypeDescription) -> Self {
+    pub fn new_with_bounds(bounds: Bounds, type_desc: &TypeDesc) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {

@@ -2,8 +2,7 @@ use crate::algorithms::*;
 use core::mem::MaybeUninit;
 
 /// Optional parameters for [`ImageBuffer`]'s
-/// [`replace_by_noise_with()`](ImageBuffer::replace_by_noise_with) and
-/// [`noise_with()`](ImageBuffer::noise_with) methods.
+/// [`noise_with()`](ImageBuffer::noise_with) method.
 #[derive(Clone, Default)]
 pub struct NoiseOptions {
     /// If this flag is `true`, a single noise value will be applied to all

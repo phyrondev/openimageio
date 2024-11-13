@@ -59,3 +59,15 @@ impl ImageBuffer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn zero() -> Result<()> {
+        let image_buffer = ImageBuffer::from_zero(&Bounds::new_2d(0..640, 0..480))?;
+
+        image_buffer.write(Utf8Path::new("target/zero.exr"))
+    }
+}

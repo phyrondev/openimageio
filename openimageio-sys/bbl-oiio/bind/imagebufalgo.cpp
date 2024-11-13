@@ -1,6 +1,7 @@
 #include <babble>
 
 #include <OpenImageIO/imagebufalgo.h>
+#include <OpenImageIO/paramlist.h>
 
 BBL_MODULE(oiio) {
 
@@ -130,9 +131,10 @@ BBL_MODULE(oiio) {
 #endif
 
   // resize()
-  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::Filter2D *,
-                    OIIO::ROI, int))&OIIO::ImageBufAlgo::resize,
-          "ImageBufAlgo_resize");
+  bbl::fn(
+      (bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ParamValueSpan,
+                OIIO::ROI, int))&OIIO::ImageBufAlgo::resize,
+      "ImageBufAlgo_resize");
 
   // warp()
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::M33fParam,

@@ -5,7 +5,7 @@ pub trait ImageBufferFromSlice<T> {
     fn from_slice(
         width: u32,
         height: u32,
-        type_description: &TypeDescription,
+        type_description: &TypeDesc,
         color_space: Option<&str>,
         slice: &[T],
     ) -> Result<ImageBuffer>;
@@ -16,7 +16,7 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
     fn from_slice(
         width: u32,
         height: u32,
-        type_description: &TypeDescription,
+        type_description: &TypeDesc,
         color_space: Option<&str>,
         slice: &[u8],
     ) -> Result<Self> {
@@ -37,14 +37,10 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
         let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
         unsafe {
-            oiio_ImageBuf_set_pixels(
+            oiio_ImageBuf_set_pixels_u8(
                 image_buffer.as_raw_ptr_mut(),
                 ALL.clone().into(),
-                (*type_description).into(),
                 slice.as_ptr() as *const _ as _,
-                0,
-                0,
-                0,
                 &mut is_ok as *mut _ as _,
             );
 
@@ -63,7 +59,7 @@ impl TryFrom<tiny_skia::Pixmap> for ImageBuffer {
         let image_buffer = ImageBuffer::from_slice(
             pix_map.width(),
             pix_map.height(),
-            &TypeDescription {
+            &TypeDesc {
                 base_type: Some(BaseType::U8),
                 ..Default::default()
             },

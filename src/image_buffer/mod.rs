@@ -210,7 +210,7 @@ impl ImageBuffer {
                 options
                     .type_description
                     .map(|t| t.into())
-                    .unwrap_or((&TypeDescription::default()).into()),
+                    .unwrap_or((&TypeDesc::default()).into()),
                 match options.file_format {
                     Some(file_format) => StringView::from(file_format),
                     None => StringView::default(),
@@ -454,7 +454,7 @@ impl ImageBuffer {
         .into()
     }
 
-    pub fn type_description(&self) -> TypeDescription {
+    pub fn type_description(&self) -> TypeDesc {
         let mut pixel_type = MaybeUninit::<oiio_TypeDesc_t>::uninit();
 
         (&unsafe {
@@ -496,7 +496,7 @@ impl ImageBuffer {
         }
     }
 
-    /// Alters the metadata of the [`ImageSpecification`] in the `ImageBuffer`
+    /// Alters the metadata of the [`ImageSpec`] in the `ImageBuffer`
     /// to reset the 'origin' of the pixel *data window* to the specified
     /// coordinates.
     ///
@@ -508,7 +508,7 @@ impl ImageBuffer {
         }
     }
 
-    /// Alters the metadata of the [`ImageSpecification`] in the `ImageBuffer`
+    /// Alters the metadata of the [`ImageSpec`] in the `ImageBuffer`
     /// to set the display window to the specified dimensions.
     ///
     /// This does not affect the size of the pixel *data window*.
@@ -547,7 +547,7 @@ impl ImageBuffer {
         unimplemented!()
     }
 
-    pub fn set_write_per_channel_format(&mut self, _channel_format: &[TypeDescription]) {
+    pub fn set_write_per_channel_format(&mut self, _channel_format: &[TypeDesc]) {
         unimplemented!()
     }
 }
@@ -613,7 +613,7 @@ impl ImageBuffer {
 /// already initialized and has [`AppBuffer`](ImageBufferStorage::AppBuffer)
 /// storage ('wrapping' an application buffer), this parameter is ignored.
 impl ImageBuffer {
-    pub fn copy(&self, type_description: &TypeDescription) -> Self {
+    pub fn copy(&self, type_description: &TypeDesc) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
@@ -627,7 +627,7 @@ impl ImageBuffer {
         }
     }
 
-    pub fn from_copy(type_description: &TypeDescription) -> Self {
+    pub fn from_copy(type_description: &TypeDesc) -> Self {
         let image_buffer = Self::new();
 
         image_buffer.copy(type_description)
@@ -669,7 +669,7 @@ impl From<WrapMode> for oiio_WrapMode {
 
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`from_file_with()`](ImageBuffer::from_file_with) method.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct FromFileOptions<'a> {
     /// The subimage to read (defaults to the first subimage of the file).
     pub sub_image: u32,
@@ -704,7 +704,7 @@ pub struct WriteOptions<'a> {
     /// In either case, if the file format does not support that data type,
     /// another will be automatically chosen that is supported by the file
     /// type and loses as little precision as possible.
-    pub type_description: Option<&'a TypeDescription>,
+    pub type_description: Option<&'a TypeDesc>,
     /// Override of the file format to write.
     ///
     /// The default (`None`) means to infer the file format from the extension
@@ -864,22 +864,18 @@ impl ImageBuffer {
         Self {
             ptr: unsafe {
                 oiio_ImageBuf_ctor_01(
-                    StringView::from(name).ptr,
+                    StringView::from(name).as_raw_ptr() as _,
                     options.sub_image as _,
                     options.mip_level as _,
                     options
                         .image_cache
                         .as_ref()
                         .map(|c| c.as_raw_ptr_mut())
-                        .unwrap_or(ptr::null_mut()),
+                        .unwrap_or(ImageCache::null_ptr()),
                     options
                         .image_spec
                         .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
-                    /*options
-                    .io_proxy
-                    .map(|p| p.as_raw_ptr())
-                    .unwrap_or(ptr::null_mut()),*/
                     ptr::null_mut() as _,
                     &mut ptr as *mut _ as _,
                 );

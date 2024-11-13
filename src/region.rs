@@ -141,7 +141,7 @@ impl Region {
 /// * [Setters](#setters)
 /// * [Predicates](#predicates)
 /// * [Operations](#operations)
-#[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub struct Bounds {
     x: Range<i32>,
@@ -150,9 +150,15 @@ pub struct Bounds {
     channel: Range<u32>,
 }
 
+impl Default for Bounds {
+    fn default() -> Self {
+        Self::new(0..0, 0..0, 0..0, Some(0..10000))
+    }
+}
+
 impl Bounds {
     pub fn new(x: Range<i32>, y: Range<i32>, z: Range<i32>, channel: Option<Range<u32>>) -> Self {
-        let channel = channel.unwrap_or(0..10000);
+        let channel = channel.unwrap_or(0..4);
 
         assert!(x.start <= x.end);
         assert!(y.start <= y.end);
@@ -163,11 +169,11 @@ impl Bounds {
     }
 
     pub fn new_2d(x: Range<i32>, y: Range<i32>) -> Self {
-        Self::new(x, y, 0..1, None)
+        Self::new(x, y, 0..1, Some(0..4))
     }
 
     pub fn new_3d(x: Range<i32>, y: Range<i32>, z: Range<i32>) -> Self {
-        Self::new(x, y, z, None)
+        Self::new(x, y, z, Some(0..4))
     }
 
     pub fn from_union(a: &Self, b: &Self) -> Self {
@@ -646,7 +652,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn region_of_interest() {
+    fn region() {
         let region = Region::Bounds(Bounds::new_3d(3..42, 5..16, -33..9));
 
         assert_eq!(
@@ -658,7 +664,7 @@ mod tests {
                 zbegin: -33,
                 zend: 9,
                 chbegin: 0,
-                chend: 10000,
+                chend: 4,
             },
             oiio_ROI_t::from(region)
         );

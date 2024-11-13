@@ -3,12 +3,13 @@ use std::{env, fs, path::PathBuf};
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=bbl-oiio/*");
 
     // Do not generate anything during a `doc` build or the user told us so.
-    if cfg!(doc) || env::var("OIIO_DO_NOT_GENERATE_BENDINGS").is_ok() {
+    if cfg!(doc) || env::var("OIIO_DO_NOT_GENERATE_BINDINGS").is_ok() {
         return Ok(());
     }
+
+    println!("cargo:rerun-if-changed=bbl-oiio/*");
 
     #[cfg(target_os = "linux")]
     println!("cargo::rustc-link-arg=-lstdc++");

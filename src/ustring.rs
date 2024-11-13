@@ -154,15 +154,15 @@ impl Ustring {
     }
 }
 
-#[cfg(feature = "ffi")]
 impl Ustring {
     /// Returns a pointer to the underlying [`oiio_ustring_t`].
-    pub fn as_raw_ptr(&self) -> *const oiio_ustring_t {
+    pub(crate) fn as_raw_ptr(&self) -> *const oiio_ustring_t {
         self.ptr
     }
 
     /// Returns a mutable pointer to the underlying [`oiio_ustring_t`].
-    pub fn as_raw_ptr_mut(&mut self) -> *mut oiio_ustring_t {
+    #[allow(dead_code)]
+    pub(crate) fn as_raw_ptr_mut(&mut self) -> *mut oiio_ustring_t {
         self.ptr
     }
 }

@@ -2,30 +2,48 @@
 
 #include <OpenImageIO/imagebuf.h>
 
+namespace bblext {
+
+OIIO::ParamValue ParamValue_ctor(const OIIO::ustring &name, OIIO::TypeDesc type,
+                                 int nvalues, OIIO::ParamValue::Interp interp,
+                                 const void *value, bool copy) {
+  return OIIO::ParamValue(name, type, nvalues, interp, value,
+                          OIIO::ParamValue::Copy(copy));
+}
+
+} // namespace bblext
+
 BBL_MODULE(oiio) {
+
+  bbl::Enum<OIIO::ParamValue::Interp>();
+
+  bbl::fn(&bblext::ParamValue_ctor);
 
   bbl::Class<OIIO::ParamValue>()
       .ctor(bbl::Class<OIIO::ParamValue>::Ctor<>(), "default")
-      .ctor(bbl::Class<OIIO::ParamValue>::Ctor<
-                const OIIO::ustring &, OIIO::TypeDesc, int, const void *, bool>(
-                "_name", "_type", "_nvalues", "_value", "_copy"),
-            "ctor_01")
+      /* .ctor(
+          bbl::Class<OIIO::ParamValue>::Ctor<const OIIO::ustring &,
+                                             OIIO::TypeDesc, int, const void *,
+                                             OIIO::ParamValue::Copy>(
+              "_name", "_type", "_nvalues", "_value", "_copy"),
+          "ctor_01")
       .ctor(bbl::Class<OIIO::ParamValue>::Ctor<
                 const OIIO::ustring &, OIIO::TypeDesc, int,
-                OIIO::ParamValue::Interp, const void *, bool>(
+                OIIO::ParamValue::Interp, const void *, OIIO::ParamValue::Copy>(
                 "_name", "_type", "_nvalues", "_interp", "_value", "_copy"),
-            "ctor_02")
-      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, TypeDesc, int,
-      // const void *, bool>("_name", "_type", "_nvalues", "_value", "_copy"),
-      // "ctor_03") .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view,
-      // TypeDesc, int, Interp, const void *, bool>("_name", "_type",
+            "ctor_02")*/
+      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, TypeDesc,
+      // int, const void *, bool>("_name", "_type", "_nvalues", "_value",
+      // "_copy"), "ctor_03")
+      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, TypeDesc,
+      // int, Interp, const void *, bool>("_name", "_type",
       // "_nvalues", "_interp", "_value", "_copy"), "ctor_04")
       // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, int>("_name",
       // "value"), "ctor_05")
-      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, float>("_name",
-      // "value"), "ctor_06")
-      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, ustring>("_name",
-      // "value"), "ctor_07")
+      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view,
+      // float>("_name", "value"), "ctor_06")
+      // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view,
+      // ustring>("_name", "value"), "ctor_07")
       // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view,
       // string_view>("_name", "value"), "ctor_08")
       // .ctor(bbl::Class<OIIO::ParamValue>::Ctor<string_view, TypeDesc,
@@ -34,15 +52,15 @@ BBL_MODULE(oiio) {
       // bool>("p", "_copy"), "ctor_10")
       .m((void(OIIO::ParamValue::*)(OIIO::ustring, OIIO::TypeDesc, int,
                                     OIIO::ParamValue::Interp, const void *,
-                                    bool)) &
+                                    OIIO::ParamValue::Copy)) &
              OIIO::ParamValue::init,
          "init_00")
       .m((void(OIIO::ParamValue::*)(OIIO::ustring, OIIO::TypeDesc, int,
-                                    const void *, bool)) &
+                                    const void *, OIIO::ParamValue::Copy)) &
              OIIO::ParamValue::init,
          "init_01")
-      // .m((void (OIIO::ParamValue::*)(string_view, OIIO::TypeDesc, int, const
-      // void *, bool))
+      // .m((void (OIIO::ParamValue::*)(string_view, OIIO::TypeDesc, int,
+      // const void *, bool))
       //     &OIIO::ParamValue::init, "init_02")
       // .m((void (OIIO::ParamValue::*)(string_view, OIIO::TypeDesc, int,
       // OIIO::ParamValue::Interp, const void *, bool))
@@ -60,8 +78,8 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ParamValue::nvalues)
       .m(&OIIO::ParamValue::data)
       .m(&OIIO::ParamValue::datasize)
-      .m((OIIO::ParamValue::Interp(OIIO::ParamValue::*)() const) &
-             OIIO::ParamValue::interp,
+      .m((OIIO::ParamValue::Interp(OIIO::ParamValue::*)()
+              const)&OIIO::ParamValue::interp,
          "interp_00")
       .m((void(OIIO::ParamValue::*)(OIIO::ParamValue::Interp)) &
              OIIO::ParamValue::interp,
@@ -75,8 +93,6 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ParamValue::get_string_indexed)
       .m(&OIIO::ParamValue::get_ustring)
       .m(&OIIO::ParamValue::get_ustring_indexed);
-
-  bbl::Enum<OIIO::ParamValue::Interp>();
 
   bbl::Class<OIIO::ParamValueList>()
       .ctor(bbl::Class<OIIO::ParamValueList>::Ctor<>(), "default")
@@ -119,7 +135,7 @@ BBL_MODULE(oiio) {
                       char const **result, long long *len) -> void {
                      auto sv = _this.get_string(name, defaultval, casesensitive,
                                                 convert);
-                     *result = sv.c_str();
+                     *result = OIIO::c_str(sv);
                      *len = sv.size();
                    }))
       .m(bbl::Wrap(&OIIO::ParamValueList::remove,

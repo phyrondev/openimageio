@@ -26,7 +26,7 @@ pub struct PixelsOptions {
 /// a [`image::ImageBuffer`](https://docs.rs/image/latest/image/struct.ImageBuffer.html).
 ///
 /// Note that this is readily available behind the `image` feature as
-/// [`image::ImageBuffer::TryFrom<ImageBuffer>`](ImageBuffer::TryInto::<image::ImageBuffer>).
+/// [`image::ImageBuffer::TryFrom<ImageBuffer>`](ImageBuffer::try_into::<image::ImageBuffer>).
 ///
 /// ```ignore
 /// let image_buffer = openimageio::ImageBuffer::from_file(Utf8Path::new(
@@ -62,7 +62,7 @@ pub trait Pixels<T: Primitive> {
 }
 
 macro_rules! pixels {
-    ($rust_type:ty, $base_type:expr) => {
+    ($rust_type:ty, $base_type:expr, $fn_name:ident) => {
         impl Pixels<$rust_type> for ImageBuffer {
             /// Get a region of pixels from the image buffer.
             fn pixels(&self, region: &Region) -> Result<Vec<$rust_type>> {
@@ -135,10 +135,9 @@ macro_rules! pixels {
                 let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
                 unsafe {
-                    oiio_ImageBuf_set_pixels_02(
+                    $fn_name(
                         self.ptr,
                         region.into(),
-                        $base_type,
                         pixels.as_ptr() as _,
                         &mut is_ok as *mut _ as _,
                     );
@@ -156,13 +155,53 @@ macro_rules! pixels {
     };
 }
 
-pixels!(u8, oiio_BASETYPE::oiio_BASETYPE_UINT8);
-pixels!(u16, oiio_BASETYPE::oiio_BASETYPE_UINT16);
-pixels!(u32, oiio_BASETYPE::oiio_BASETYPE_UINT32);
-pixels!(u64, oiio_BASETYPE::oiio_BASETYPE_UINT64);
-pixels!(i8, oiio_BASETYPE::oiio_BASETYPE_INT8);
-pixels!(i16, oiio_BASETYPE::oiio_BASETYPE_INT16);
-pixels!(i32, oiio_BASETYPE::oiio_BASETYPE_INT32);
-pixels!(i64, oiio_BASETYPE::oiio_BASETYPE_INT64);
-pixels!(f32, oiio_BASETYPE::oiio_BASETYPE_FLOAT);
-pixels!(f64, oiio_BASETYPE::oiio_BASETYPE_DOUBLE);
+pixels!(
+    u8,
+    oiio_BASETYPE::oiio_BASETYPE_UINT8,
+    oiio_ImageBuf_set_pixels_u8
+);
+pixels!(
+    u16,
+    oiio_BASETYPE::oiio_BASETYPE_UINT16,
+    oiio_ImageBuf_set_pixels_u16
+);
+pixels!(
+    u32,
+    oiio_BASETYPE::oiio_BASETYPE_UINT32,
+    oiio_ImageBuf_set_pixels_u32
+);
+/*pixels!(
+    u64,
+    oiio_BASETYPE::oiio_BASETYPE_UINT64,
+    oiio_ImageBuf_set_pixels_u64
+);*/
+pixels!(
+    i8,
+    oiio_BASETYPE::oiio_BASETYPE_INT8,
+    oiio_ImageBuf_set_pixels_u8
+);
+pixels!(
+    i16,
+    oiio_BASETYPE::oiio_BASETYPE_INT16,
+    oiio_ImageBuf_set_pixels_u16
+);
+pixels!(
+    i32,
+    oiio_BASETYPE::oiio_BASETYPE_INT32,
+    oiio_ImageBuf_set_pixels_u32
+);
+/*pixels!(
+    i64,
+    oiio_BASETYPE::oiio_BASETYPE_INT64,
+    oiio_ImageBuf_set_pixels_u64
+);*/
+pixels!(
+    f32,
+    oiio_BASETYPE::oiio_BASETYPE_FLOAT,
+    oiio_ImageBuf_set_pixels_f32
+);
+pixels!(
+    f64,
+    oiio_BASETYPE::oiio_BASETYPE_DOUBLE,
+    oiio_ImageBuf_set_pixels_f64
+);

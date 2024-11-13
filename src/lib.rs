@@ -259,11 +259,14 @@ pub use image_io::*;
 mod image_cache;
 pub use image_cache::*;
 
-mod image_specification;
-pub use image_specification::*;
+mod image_spec;
+pub use image_spec::*;
 
 mod misc;
 pub(crate) use misc::*;
+
+mod param_value;
+pub use param_value::*;
 
 mod region;
 pub use region::*;
@@ -277,8 +280,8 @@ pub(crate) use string_view::*;
 mod texture;
 pub use texture::*;
 
-mod type_description;
-pub use type_description::*;
+mod type_desc;
+pub use type_desc::*;
 
 mod ustring;
 pub use ustring::*;

@@ -1,10 +1,10 @@
-use crate::{algorithms::*, *};
+use crate::*;
 use anyhow::Result;
 use core::mem::MaybeUninit;
 
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`replace_by_convolve_with()`](ImageBuffer::replace_by_convolve_with) and
-/// [`covolve_with()`](ImageBuffer::covolve_with) methods.
+/// [`convolve_with()`](ImageBuffer::convolve_with) methods.
 pub struct ConvolveOptions {
     /// If `true`, the kernel will be normalized for the convolution, otherwise
     /// the original values will be used.

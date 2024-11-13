@@ -52,9 +52,9 @@ BBL_MODULE(oiio) {
       .m(&OIIO::TypeDesc::is_vec4)
       .m(&OIIO::TypeDesc::is_box2)
       .m(&OIIO::TypeDesc::is_box3)
-      .m(&OIIO::TypeDesc::unarray)
-      // .m(&OIIO::TypeDesc::operator<, "op_lt")
-      .m(&OIIO::TypeDesc::basetype_merge);
+      .m(&OIIO::TypeDesc::unarray);
+  // .m(&OIIO::TypeDesc::operator<, "op_lt")
+  // .m(&OIIO::TypeDesc::basetype_merge);
 
   bbl::Enum<OIIO::TypeDesc::AGGREGATE>();
   bbl::Enum<OIIO::TypeDesc::BASETYPE>();

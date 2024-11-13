@@ -9,23 +9,23 @@ use ustr::Ustr;
 /// Describes what happens when texture coordinates hit a value outside the
 /// usual *\[0, 1\]* range where a texture is defined.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
-#[repr(C)]
+#[repr(u8)]
 pub enum Wrap {
     /// Use the default found in the file.
     #[default]
-    Default = oiio_Wrap::oiio_Wrap_WrapDefault.0 as _,
+    Default = oiio_Wrap::oiio_Wrap_Default.0 as _,
     /// Black outside [0..1].
-    Black = oiio_Wrap::oiio_Wrap_WrapBlack.0 as _,
+    Black = oiio_Wrap::oiio_Wrap_Black.0 as _,
     /// Clamp to [0..1]
-    Clamp = oiio_Wrap::oiio_Wrap_WrapClamp.0 as _,
+    Clamp = oiio_Wrap::oiio_Wrap_Clamp.0 as _,
     /// Periodic mod 1.
-    Periodic = oiio_Wrap::oiio_Wrap_WrapPeriodic.0 as _,
+    Periodic = oiio_Wrap::oiio_Wrap_Periodic.0 as _,
     /// Mirror the image.
-    Mirror = oiio_Wrap::oiio_Wrap_WrapMirror.0 as _,
+    Mirror = oiio_Wrap::oiio_Wrap_Mirror.0 as _,
     /// Periodic, but only for powers of 2.
-    PeriodicPow2 = oiio_Wrap::oiio_Wrap_WrapPeriodicPow2.0 as _,
+    PeriodicPow2 = oiio_Wrap::oiio_Wrap_PeriodicPow2.0 as _,
     /// Periodic with shared border (environment map).
-    PeriodicSharedBorder = oiio_Wrap::oiio_Wrap_WrapPeriodicSharedBorder.0 as _,
+    PeriodicSharedBorder = oiio_Wrap::oiio_Wrap_PeriodicSharedBorder.0 as _,
 }
 
 impl From<Wrap> for oiio_Wrap {
@@ -36,19 +36,19 @@ impl From<Wrap> for oiio_Wrap {
 
 /// Determines if/how we use mipmaps.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
-#[repr(C)]
+#[repr(u8)]
 pub enum MipMode {
     /// Default high-quality lookup.
     #[default]
-    Default = oiio_MipMode::oiio_MipMode_MipModeDefault.0 as _,
+    Default = oiio_MipMode::oiio_MipMode_Default.0 as _,
     /// Just use highest-res image, no mipmapping,
-    NoMip = oiio_MipMode::oiio_MipMode_MipModeNoMIP.0 as _,
+    NoMip = oiio_MipMode::oiio_MipMode_NoMIP.0 as _,
     /// Use just one mipmap level.
-    OneLevel = oiio_MipMode::oiio_MipMode_MipModeOneLevel.0 as _,
+    OneLevel = oiio_MipMode::oiio_MipMode_OneLevel.0 as _,
     /// Use two mipmap levels (trilinear).
-    Trilinear = oiio_MipMode::oiio_MipMode_MipModeTrilinear.0 as _,
+    Trilinear = oiio_MipMode::oiio_MipMode_Trilinear.0 as _,
     /// Use two mipmap levels with anisotropic filtering.
-    Anisotropic = oiio_MipMode::oiio_MipMode_MipModeAniso.0 as _,
+    Anisotropic = oiio_MipMode::oiio_MipMode_Aniso.0 as _,
 }
 
 impl From<MipMode> for oiio_MipMode {
@@ -59,17 +59,17 @@ impl From<MipMode> for oiio_MipMode {
 
 /// Determines how we sample within a mipmap level.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
-#[repr(C)]
+#[repr(u8)]
 pub enum InterpolationMode {
     /// Closest texel.
-    Closest = oiio_InterpMode::oiio_InterpMode_InterpClosest.0 as _,
+    Closest = oiio_InterpMode::oiio_InterpMode_Closest.0 as _,
     /// Bilinear lookup within a mip level.
-    Bilinear = oiio_InterpMode::oiio_InterpMode_InterpBilinear.0 as _,
+    Bilinear = oiio_InterpMode::oiio_InterpMode_Bilinear.0 as _,
     /// Cubic lookup within a mip level.
-    Bicubic = oiio_InterpMode::oiio_InterpMode_InterpBicubic.0 as _,
+    Bicubic = oiio_InterpMode::oiio_InterpMode_Bicubic.0 as _,
     /// Bicubic when magnifying, else bilinear.
     #[default]
-    SmartBicubic = oiio_InterpMode::oiio_InterpMode_InterpSmartBicubic.0 as _,
+    SmartBicubic = oiio_InterpMode::oiio_InterpMode_SmartBicubic.0 as _,
 }
 
 impl From<InterpolationMode> for oiio_InterpMode {
@@ -121,18 +121,13 @@ pub struct TextureOptions<'a> {
     pub fill: f32,
     /// Color for missing texture.
     pub missing_color: Option<&'a [f32]>,
-    /// Time (for time-dependent texture lookups).
-    pub time: f32,
     /// Stratified sample value.
     pub random: f32,
-    /// Number of samples for certain map lookups (e.g. shadow maps).
-    // TODO: what happens if this is `0`? Should we use `NonZeroU16`?
-    pub samples: u16,
 }
 
-impl From<&TextureOptions<'_>> for oiio_TextureOpt_t {
+impl From<&TextureOptions<'_>> for oiio_TextureOpt_v2_t {
     fn from(t: &TextureOptions<'_>) -> Self {
-        let mut dst = MaybeUninit::<oiio_TextureOpt_t>::uninit();
+        let mut dst = MaybeUninit::<oiio_TextureOpt_v2_t>::uninit();
 
         unsafe {
             oiio_TextureSystem_make_texture_options(
@@ -154,9 +149,7 @@ impl From<&TextureOptions<'_>> for oiio_TextureOpt_t {
                     .as_ref()
                     .map(|c| c as *const _ as *const _)
                     .unwrap_or(ptr::null()) as _,
-                t.time,
                 t.random,
-                t.samples as _,
                 t.r_wrap.into(),
                 t.r_blur,
                 t.r_width,
@@ -188,9 +181,7 @@ impl Default for TextureOptions<'_> {
             r_width: 1.0,
             fill: 0.0,
             missing_color: None,
-            time: 0.0,
             random: -1.0,
-            samples: 1,
         }
     }
 }
@@ -199,16 +190,16 @@ impl Default for TextureOptions<'_> {
 /// `TextureOptions` and `oiio_TextureOpt_t`.
 /// This hinges on `Ustring`.
 struct TextureOpt {
-    ptr: *mut oiio_TextureOpt_t,
+    ptr: *mut oiio_TextureOpt_v2_t,
 }
 
 impl Default for TextureOpt {
     fn default() -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_TextureOpt_t>::uninit();
+        let mut ptr = MaybeUninit::<*mut oiio_TextureOpt_v2_t>::uninit();
 
         Self {
             ptr: unsafe {
-                oiio_TextureOpt_default(&mut ptr as *mut _ as _);
+                oiio_TextureOpt_v2_default(&mut ptr as *mut _ as _);
                 ptr.assume_init()
             },
         }
@@ -216,11 +207,11 @@ impl Default for TextureOpt {
 }
 
 impl TextureOpt {
-    fn as_raw_ptr(&self) -> *const oiio_TextureOpt_t {
+    fn as_raw_ptr(&self) -> *const oiio_TextureOpt_v2_t {
         self.ptr as _
     }
 
-    fn _as_raw_ptr_mut(&mut self) -> *mut oiio_TextureOpt_t {
+    fn _as_raw_ptr_mut(&mut self) -> *mut oiio_TextureOpt_v2_t {
         self.ptr
     }
 }
@@ -247,7 +238,7 @@ impl TextureHandle<'_, '_> {
         channel_count: u32,
         options: Option<&TextureOptions>,
     ) -> Vec<f32> {
-        let options: *const oiio_TextureOpt_t = options
+        let options: *const oiio_TextureOpt_v2_t = options
             .map(|o| &o.into() as *const _ as _)
             .unwrap_or(TextureOpt::default().as_raw_ptr());
 
@@ -259,7 +250,7 @@ impl TextureHandle<'_, '_> {
                 self.ptr,
                 // Perthread
                 std::ptr::null_mut() as _,
-                options as *mut oiio_TextureOpt_t as _,
+                options as *mut _,
                 st.0,
                 st.1,
                 delta_st_dx.0,
@@ -288,14 +279,14 @@ impl TextureHandle<'_, '_> {
 /// shadow map-, and environment map lookups.
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct TextureSystem<'a> {
-    ptr: *mut oiio_TextureSystem_t,
+    ptr: *mut oiio_TextureSystemSharedPtr_t,
     _marker: PhantomData<*mut &'a ()>,
 }
 
 impl<'a> TextureSystem<'a> {
     #[inline]
     fn do_new(shared: bool, image_cache: Option<&'a ImageCache>) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_TextureSystem_t>::uninit();
+        let mut ptr = MaybeUninit::<*mut oiio_TextureSystemSharedPtr_t>::uninit();
 
         Self {
             ptr: unsafe {
