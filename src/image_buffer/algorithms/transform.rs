@@ -128,7 +128,7 @@ impl ImageBuffer {
                 transform_options.wrap_mode.clone().into(),
                 transform_options.region.clone().into(),
                 transform_options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -162,10 +162,14 @@ mod tests {
 
         let mut transformed = ImageBuf::new();
 
-        transformed.replace_by_transform_with(&image_buf, matrix, &TransformOptions {
-            recompute_region: true,
-            ..Default::default()
-        })?;
+        transformed.replace_by_transform_with(
+            &image_buf,
+            matrix,
+            &TransformOptions {
+                recompute_region: true,
+                ..Default::default()
+            },
+        )?;
 
         /*image_buf.transform_with(matrix, &TransformOptions {
             recompute_region: true,

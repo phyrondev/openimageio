@@ -25,7 +25,7 @@ macro_rules! gen_fn_error {
         pub fn error(&self, clear: bool) -> Option<String> {
             let mut error = MaybeUninit::<*mut oiio_String_t>::uninit();
 
-            if unsafe { 0 != $error_fn(self.ptr, clear, &mut error as *mut _ as _) } {
+            if unsafe { 0 != $error_fn(self.ptr, clear, &raw mut error as _) } {
                 // Something went wrong.
                 None
             } else {
@@ -53,7 +53,7 @@ macro_rules! gen_fn_is_ok {
             let mut is_error = MaybeUninit::<bool>::uninit();
 
             unsafe {
-                $has_error_fn(self.ptr, &mut is_error as *mut _ as _);
+                $has_error_fn(self.ptr, &raw mut is_error as _);
 
                 !is_error.assume_init()
             }

@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 /*
 pub struct PixelsOptions {
@@ -96,17 +96,16 @@ macro_rules! pixels {
                         region.clone().into(),
                         $base_type,
                         data.as_mut_ptr() as _,
-                        &mut is_ok as *mut _ as _,
+                        &raw mut is_ok as _,
                     );
 
                     if is_ok.assume_init() {
                         data.set_len(size);
                         Ok(data)
                     } else {
-                        Err(anyhow!(
-                            self.error(true)
-                                .unwrap_or("ImageBuffer::pixels(): unknown error".into())
-                        ))
+                        Err(anyhow!(self
+                            .error(true)
+                            .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
                     }
                 }
             }
@@ -139,7 +138,7 @@ macro_rules! pixels {
                         self.ptr,
                         region.into(),
                         pixels.as_ptr() as _,
-                        &mut is_ok as *mut _ as _,
+                        &raw mut is_ok as _,
                     );
 
                     if is_ok.assume_init() {

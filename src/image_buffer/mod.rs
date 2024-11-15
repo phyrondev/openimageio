@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use core::{ffi::c_int, mem::MaybeUninit, num::NonZeroU16, ptr};
 use std::{hash::Hash, string::String};
 
@@ -79,7 +79,7 @@ impl Clone for ImageBuffer {
                 // Will copy format from `self` as `oiio_TypeDesc_t::default()`
                 // (Rust) maps to `TypeDesc::UNKNOWN` (C++).
                 oiio_TypeDesc_t::default(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -117,7 +117,7 @@ impl ImageBuffer {
 
         Self {
             ptr: unsafe {
-                oiio_ImageBuf_default(&mut ptr as *mut _ as _);
+                oiio_ImageBuf_default(&raw mut ptr as _);
                 ptr.assume_init()
             },
             image_cache: None,
@@ -174,14 +174,13 @@ impl ImageBuffer {
             oiio_ImageBuf_write(
                 self.ptr,
                 StringView::from(file).as_raw_ptr(),
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(
-                    self.error(true)
-                        .unwrap_or("ImageBuffer::write(): unknown error".into())
-                ))
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
             } else {
                 Ok(())
             }
@@ -216,14 +215,13 @@ impl ImageBuffer {
                     None => StringView::default(),
                 }
                 .ptr,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(
-                    self.error(true)
-                        .unwrap_or("ImageBuffer::write(): unknown error".into())
-                ))
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
             } else {
                 Ok(())
             }
@@ -617,7 +615,7 @@ impl ImageBuffer {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
-            oiio_ImageBuf_copy_01(self.ptr, type_description.into(), &mut ptr as *mut _ as _);
+            oiio_ImageBuf_copy_01(self.ptr, type_description.into(), &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -770,7 +768,7 @@ impl IntoIterator for ImageBuffer {
             oiio_Iterator_ctor_00(
                 self.ptr,
                 WrapMode::Default.into(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             ImageBufferIterator {
@@ -849,7 +847,7 @@ impl ImageBuffer {
                 oiio_ImageBuf_ctor_03(
                     image_spec_internal.as_raw_ptr(),
                     initialize_pixels.into(),
-                    &mut ptr as *mut _ as _,
+                    &raw mut ptr as _,
                 );
                 ptr.assume_init()
             },
@@ -877,7 +875,7 @@ impl ImageBuffer {
                         .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
                     ptr::null_mut() as _,
-                    &mut ptr as *mut _ as _,
+                    &raw mut ptr as _,
                 );
                 ptr.assume_init()
             },

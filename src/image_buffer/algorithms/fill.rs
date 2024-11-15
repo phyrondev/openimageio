@@ -24,10 +24,13 @@ impl ImageBuffer {
     #[named]
     pub fn from_fill(values: &[f32], region: &Bounds) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_ffi(values, &Options {
-            region: Region::Bounds(region.clone()),
-            ..Default::default()
-        });
+        let is_ok = image_buffer.fill_ffi(
+            values,
+            &Options {
+                region: Region::Bounds(region.clone()),
+                ..Default::default()
+            },
+        );
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -35,10 +38,13 @@ impl ImageBuffer {
     #[named]
     pub fn from_fill_with(values: &[f32], region: &Bounds, thread_count: u16) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_ffi(values, &Options {
-            region: Region::Bounds(region.clone()),
-            thread_count,
-        });
+        let is_ok = image_buffer.fill_ffi(
+            values,
+            &Options {
+                region: Region::Bounds(region.clone()),
+                thread_count,
+            },
+        );
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -66,10 +72,14 @@ impl ImageBuffer {
     #[named]
     pub fn from_fill_vertical(start: &[f32], end: &[f32], region: &Bounds) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
-            region: Region::Bounds(region.clone()),
-            ..Default::default()
-        });
+        let is_ok = image_buffer.fill_vertical_ffi(
+            start,
+            end,
+            &Options {
+                region: Region::Bounds(region.clone()),
+                ..Default::default()
+            },
+        );
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -82,10 +92,14 @@ impl ImageBuffer {
         thread_count: u16,
     ) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.fill_vertical_ffi(start, end, &Options {
-            region: Region::Bounds(region.clone()),
-            thread_count,
-        });
+        let is_ok = image_buffer.fill_vertical_ffi(
+            start,
+            end,
+            &Options {
+                region: Region::Bounds(region.clone()),
+                thread_count,
+            },
+        );
 
         image_buffer.self_or_error(is_ok, function_name!())
     }
@@ -207,7 +221,7 @@ impl ImageBuffer {
                 CspanF32::new(values).as_raw_ptr() as _,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -225,7 +239,7 @@ impl ImageBuffer {
                 CspanF32::new(end).as_raw_ptr() as _,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -252,7 +266,7 @@ impl ImageBuffer {
                 CspanF32::new(bottom_right).as_raw_ptr() as _,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -269,8 +283,8 @@ mod tests {
     fn fill() -> Result<()> {
         let pink = [1.0, 0.7, 0.7, 1.0];
         let red = [1.0, 0.0, 0.0, 1.0];
-        let blue = [0.0, 0.1, 0.8, 1.0];
-        let yellow = [0.5, 0.5, 0.0, 1.0];
+        let _blue = [0.0, 0.1, 0.8, 1.0];
+        let _yellow = [0.5, 0.5, 0.0, 1.0];
 
         // Create a new 640x480 RGB image, with a top-to-bottom gradient
         // from red to pink

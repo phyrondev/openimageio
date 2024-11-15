@@ -198,7 +198,7 @@ impl ImageBuffer {
                 options.outline as _,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -215,14 +215,19 @@ mod test {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
-        image_buffer.render_text_with(512, 256, "Kringers Fossed!", &RenderTextOptions {
-            font_size: 128,
-            font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
-            text_align_x: TextAlignX::Center,
-            text_align_y: TextAlignY::Center,
-            color: Some(&[1.0, 0.0, 0.0, 0.25]),
-            ..Default::default()
-        })?;
+        image_buffer.render_text_with(
+            512,
+            256,
+            "Kringers Fossed!",
+            &RenderTextOptions {
+                font_size: 128,
+                font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
+                text_align_x: TextAlignX::Center,
+                text_align_y: TextAlignY::Center,
+                color: Some(&[1.0, 0.0, 0.0, 0.25]),
+                ..Default::default()
+            },
+        )?;
 
         image_buffer.write(Utf8Path::new("target/render_text.exr"))?;
 

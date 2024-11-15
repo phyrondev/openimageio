@@ -3,7 +3,7 @@ cargo-features = ["edition2024"]
 [package]
 name = "openimageio"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 license = "Apache-2.0"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>"]
 homepage = "https://openimageio.org/"

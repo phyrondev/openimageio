@@ -370,9 +370,9 @@ impl ParamValue {
                         type_desc.into(),
                         len as _,
                         transmute(options.interpolation as u32),
-                        &value as *const _ as _,
+                        &raw const value as _,
                         true, // Copy
-                        &mut ptr as *mut _ as _,
+                        &raw mut ptr as _,
                     );
 
                     ptr.assume_init()
@@ -410,7 +410,7 @@ impl ParamValueList {
                 let mut ptr = std::mem::MaybeUninit::<*mut oiio_ParamValueList_t>::uninit();
 
                 unsafe {
-                    oiio_ParamValueList_default(&mut ptr as *mut _ as _);
+                    oiio_ParamValueList_default(&raw mut ptr as _);
 
                     ptr.assume_init()
                 }
@@ -460,10 +460,7 @@ impl<'a> From<&'a ParamValueList> for ParamValueSlice<'a> {
                 let mut ptr = std::mem::MaybeUninit::<*mut oiio_ParamValueSpan_t>::uninit();
 
                 unsafe {
-                    oiio_ParamValueSpan_ctor(
-                        param_value_list.as_raw_ptr(),
-                        &mut ptr as *mut _ as _,
-                    );
+                    oiio_ParamValueSpan_ctor(param_value_list.as_raw_ptr(), &raw mut ptr as _);
 
                     ptr.assume_init()
                 }

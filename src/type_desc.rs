@@ -357,7 +357,7 @@ impl TypeDesc {
         let mut result = std::mem::MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_TypeDesc_size(&self.into() as *const _ as _, &mut result as *mut _ as _);
+            oiio_TypeDesc_size(&self.into() as *const _ as _, &raw mut result as _);
             result.assume_init()
         }
     }
@@ -366,7 +366,7 @@ impl TypeDesc {
         let mut result = std::mem::MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_TypeDesc_elementsize(&self.into() as *const _ as _, &mut result as *mut _ as _);
+            oiio_TypeDesc_elementsize(&self.into() as *const _ as _, &raw mut result as _);
             result.assume_init()
         }
     }
@@ -382,7 +382,7 @@ impl TypeDesc {
             oiio_TypeDesc_is_vec2(
                 &self.into() as *const _ as _,
                 base_type.unwrap_or(BaseType::F32).into(),
-                &mut result as *mut _ as _,
+                &raw mut result as _,
             );
             result.assume_init()
         }
@@ -397,7 +397,7 @@ impl TypeDesc {
             oiio_TypeDesc_is_vec3(
                 &self.into() as *const _ as _,
                 base_type.unwrap_or(BaseType::F32).into(),
-                &mut result as *mut _ as _,
+                &raw mut result as _,
             );
             result.assume_init()
         }

@@ -240,19 +240,25 @@ impl From<&ImageSpec> for ImageSpecInternal {
 
             match &i.channel_format {
                 ChannelFormat::Uniform(base_type, len) => {
-                    oiio_ImageSpec_set_format(ptr, oiio_TypeDesc_t {
-                        basetype: (*base_type).into(),
-                        ..Default::default()
-                    });
+                    oiio_ImageSpec_set_format(
+                        ptr,
+                        oiio_TypeDesc_t {
+                            basetype: (*base_type).into(),
+                            ..Default::default()
+                        },
+                    );
                     oiio_ImageSpec_set_nchannels(ptr, *len as _);
                 }
                 ChannelFormat::PerChannel(formats) => {
                     oiio_ImageSpec_clear_and_reserve_channelformats(ptr, formats.len());
                     for format in formats.iter() {
-                        oiio_ImageSpec_push_channelformat(ptr, oiio_TypeDesc_t {
-                            basetype: (*format).into(),
-                            ..Default::default()
-                        });
+                        oiio_ImageSpec_push_channelformat(
+                            ptr,
+                            oiio_TypeDesc_t {
+                                basetype: (*format).into(),
+                                ..Default::default()
+                            },
+                        );
                     }
                 }
             }
@@ -285,7 +291,7 @@ impl ImageSpecInternal {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
-            oiio_ImageSpec_new(type_desc.into(), &mut ptr as *mut _ as _);
+            oiio_ImageSpec_new(type_desc.into(), &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -316,7 +322,7 @@ impl ImageSpecInternal {
                 y_res as _,
                 channel_count as _,
                 type_desc.into(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -335,7 +341,7 @@ impl ImageSpecInternal {
                 y_res as _,
                 channel_count as _,
                 type_desc.into(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {

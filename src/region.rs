@@ -1,7 +1,7 @@
 use crate::*;
 use anyhow::Result;
 use core::{
-    mem::{MaybeUninit, transmute},
+    mem::{transmute, MaybeUninit},
     ops::Range,
 };
 

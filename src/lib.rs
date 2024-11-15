@@ -218,12 +218,15 @@
 //! let mut image_buf =
 //!     ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 //!
-//! image_buf.rotate_with(42.0 * TAU / 360.0, &RotateOptions {
-//!     // Use a Blackmann-Harris filter to avoid halos easily introduced
-//!     // when operating on HDRs using the default filter (Lanczos3).
-//!     filter: Some(PixelFilter2D::BlackmanHarris.into()),
-//!     ..Default::default()
-//! });
+//! image_buf.rotate_with(
+//!     42.0 * TAU / 360.0,
+//!     &RotateOptions {
+//!         // Use a Blackmann-Harris filter to avoid halos easily introduced
+//!         // when operating on HDRs using the default filter (Lanczos3).
+//!         filter: Some(PixelFilter2D::BlackmanHarris.into()),
+//!         ..Default::default()
+//!     },
+//! );
 //!
 //! # Ok::<(), anyhow::Error>(())
 //! ```
@@ -239,7 +242,7 @@ use num_traits::{Bounded, Num, NumCast};
 pub use openimageio_sys::*;
 #[cfg(not(feature = "ffi"))]
 pub(crate) use openimageio_sys::*;
-pub use ustr::{Ustr, ustr};
+pub use ustr::{ustr, Ustr};
 
 mod color;
 pub use color::*;

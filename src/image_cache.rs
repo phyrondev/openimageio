@@ -121,7 +121,7 @@ impl ImageCache {
 
         Self {
             ptr: Arc::new(unsafe {
-                oiio_ImageCache_create(false, &mut ptr as *mut _ as _);
+                oiio_ImageCache_create(false, &raw mut ptr as _);
                 ptr.assume_init()
             }),
         }
@@ -142,7 +142,7 @@ impl ImageCache {
 
         Self {
             ptr: Arc::new(unsafe {
-                oiio_ImageCache_create(true, &mut ptr as *mut _ as _);
+                oiio_ImageCache_create(true, &raw mut ptr as _);
                 ptr.assume_init()
             }),
         }

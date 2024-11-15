@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 pub trait ImageBufferFromSlice<T> {
     fn from_slice(
@@ -41,7 +41,7 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
                 image_buffer.as_raw_ptr_mut(),
                 ALL.clone().into(),
                 slice.as_ptr() as *const _ as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             let is_ok = is_ok.assume_init();

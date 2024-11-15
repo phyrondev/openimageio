@@ -113,7 +113,7 @@ impl ImageBuffer {
                 options.as_raw_ptr() as _,
                 region.clone().into(),
                 resize_options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -137,11 +137,14 @@ mod tests {
             image_buffer.color_convert(None, ustr("sRGB"))?;
             let image: image::DynamicImage = image_buffer.try_into()?;
 
-            viuer::print(&image, &viuer::Config {
-                width: Some(80),
-                height: Some(40),
-                ..Default::default()
-            })?;
+            viuer::print(
+                &image,
+                &viuer::Config {
+                    width: Some(80),
+                    height: Some(40),
+                    ..Default::default()
+                },
+            )?;
         }
 
         #[cfg(not(feature = "image"))]

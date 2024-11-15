@@ -88,7 +88,7 @@ impl ImageBuffer {
                 height,
                 options.depth,
                 options.normalize,
-                &mut kernel_buffer as *mut _ as _,
+                &raw mut kernel_buffer as _,
             );
 
             Self::from_raw_ptr(kernel_buffer.assume_init())
@@ -103,11 +103,15 @@ mod tests {
     #[test]
     fn from_kernel() -> Result<()> {
         // Load fg image. This is 1024×1024
-        let blur_kernel =
-            ImageBuffer::from_kernel_with(PixelFilter2D::Gaussian, 5.0, 5.0, &FromKernelOptions {
+        let blur_kernel = ImageBuffer::from_kernel_with(
+            PixelFilter2D::Gaussian,
+            5.0,
+            5.0,
+            &FromKernelOptions {
                 normalize: true,
                 ..Default::default()
-            })?;
+            },
+        )?;
 
         blur_kernel.write(Utf8Path::new("target/from_kernel.exr"))
     }

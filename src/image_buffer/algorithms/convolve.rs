@@ -99,7 +99,7 @@ impl ImageBuffer {
                 options.normalize,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -125,11 +125,14 @@ mod tests {
         {
             let image: image::DynamicImage = image_buffer.try_into()?;
 
-            viuer::print(&image, &viuer::Config {
-                width: Some(80),
-                height: Some(40),
-                ..Default::default()
-            })?;
+            viuer::print(
+                &image,
+                &viuer::Config {
+                    width: Some(80),
+                    height: Some(40),
+                    ..Default::default()
+                },
+            )?;
         }
 
         Ok(())

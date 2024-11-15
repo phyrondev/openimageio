@@ -94,7 +94,7 @@ impl ImageBuffer {
                 options.flop as _,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()

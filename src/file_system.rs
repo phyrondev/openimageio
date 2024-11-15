@@ -44,7 +44,7 @@ impl IoFile {
             oiio_IOFile_ctor(
                 StringView::from(file_name).as_raw_ptr() as _,
                 mode.into(),
-                &mut ptr as *mut _ as *mut _,
+                &raw mut ptr as _,
             );
 
             Self {

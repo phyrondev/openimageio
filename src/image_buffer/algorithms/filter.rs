@@ -173,7 +173,7 @@ impl Filter2D {
                 StringView::from(name).as_raw_ptr() as _,
                 x_width,
                 y_width,
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {

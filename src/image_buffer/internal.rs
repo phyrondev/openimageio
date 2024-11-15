@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 static UNKNOWN_ERROR: &str = "Unknown error";
 

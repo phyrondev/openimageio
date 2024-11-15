@@ -54,8 +54,8 @@ impl Display for OiioString {
         let mut size = MaybeUninit::<c_ulong>::uninit();
 
         unsafe {
-            oiio_String_data(self.ptr, &mut ptr as *mut _ as _);
-            oiio_String_size(self.ptr, &mut size as *mut _ as _);
+            oiio_String_data(self.ptr, &raw mut ptr as _);
+            oiio_String_size(self.ptr, &raw mut size as _);
 
             // TODO: check with lg that a OIIO::String is guranteed to always be
             // valid UTF8.
@@ -80,7 +80,7 @@ impl OiioString {
             oiio_String_ctor(
                 s.as_ptr() as _,
                 s.len().try_into().unwrap(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
             Self {
                 ptr: ptr.assume_init(),

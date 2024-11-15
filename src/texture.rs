@@ -1,7 +1,7 @@
 use crate::*;
 use core::{
     marker::PhantomData,
-    mem::{MaybeUninit, transmute},
+    mem::{transmute, MaybeUninit},
     ptr,
 };
 use ustr::Ustr;
@@ -199,7 +199,7 @@ impl Default for TextureOpt {
 
         Self {
             ptr: unsafe {
-                oiio_TextureOpt_v2_default(&mut ptr as *mut _ as _);
+                oiio_TextureOpt_v2_default(&raw mut ptr as _);
                 ptr.assume_init()
             },
         }
@@ -330,7 +330,7 @@ impl<'a> TextureSystem<'a> {
                 StringView::from(file_name).ptr as _,
                 // Prethread
                 ptr::null_mut(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             TextureHandle {

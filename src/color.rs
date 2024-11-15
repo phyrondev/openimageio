@@ -1,5 +1,5 @@
 use crate::*;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use core::mem::MaybeUninit;
 use parking_lot::{ArcRwLockReadGuard, ArcRwLockWriteGuard, RawRwLock, RwLock};
 use std::sync::Arc;
@@ -37,7 +37,7 @@ impl ColorConfig {
         let mut ptr = MaybeUninit::<*mut oiio_ColorConfig_t>::uninit();
 
         unsafe {
-            oiio_ColorConfig_ctor(StringView::default().ptr, &mut ptr as *mut _ as _);
+            oiio_ColorConfig_ctor(StringView::default().ptr, &raw mut ptr as _);
 
             Self {
                 ptr: Arc::new(RwLock::new(ptr.assume_init())),
@@ -50,7 +50,7 @@ impl ColorConfig {
         let mut ptr = MaybeUninit::<*mut oiio_ColorConfig_t>::uninit();
 
         let color_config = unsafe {
-            oiio_ColorConfig_ctor(StringView::from(path).ptr, &mut ptr as *mut _ as _);
+            oiio_ColorConfig_ctor(StringView::from(path).ptr, &raw mut ptr as _);
 
             Self {
                 ptr: Arc::new(RwLock::new(ptr.assume_init())),
