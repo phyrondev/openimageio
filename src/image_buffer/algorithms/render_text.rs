@@ -143,7 +143,7 @@ pub struct RenderTextOptions<'a> {
     /// in all channels if `None`. If provided, it is expected to point to an
     /// `[f32]` slice of length at least equal to
     /// `R.specification().channel_count`, or defaults will be chosen for you.
-    pub color: Option<&'a [f32]>,
+    pub color: &'a [f32],
     /// Text alignment in the horizontal direction.
     pub text_align_x: TextAlignX,
     /// Text alignment in the vertical direction.
@@ -163,7 +163,7 @@ impl Default for RenderTextOptions<'_> {
         Self {
             font_size: 16,
             font_name: None,
-            color: None,
+            color: &[1.0],
             text_align_x: TextAlignX::default(),
             text_align_y: TextAlignY::default(),
             outline: 0,
@@ -189,10 +189,7 @@ impl ImageBuffer {
                     .font_name
                     .map_or(StringView::default(), StringView::from)
                     .as_raw_ptr() as _,
-                options
-                    .color
-                    .map_or(CspanF32::new(&[1.0]), CspanF32::new)
-                    .as_raw_ptr() as _,
+                CspanF32::new(options.color).as_raw_ptr() as _,
                 options.text_align_x.into(),
                 options.text_align_y.into(),
                 options.outline as _,
@@ -224,7 +221,7 @@ mod test {
                 font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
                 text_align_x: TextAlignX::Center,
                 text_align_y: TextAlignY::Center,
-                color: Some(&[1.0, 0.0, 0.0, 0.25]),
+                color: &[1.0, 0.0, 0.0, 0.25],
                 ..Default::default()
             },
         )?;

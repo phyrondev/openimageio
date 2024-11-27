@@ -11,35 +11,35 @@ find in a production pipeline.
 
 OIIO consists of:
 
-* Simple but powerful `ImageInput` and `ImageOutput` APIs that provide an
+- Simple but powerful `ImageInput` and `ImageOutput` APIs that provide an
   abstraction for reading and writing image files of nearly any format, without
   the calling application needing to know any of the details of these file
   formats, and indeed without the calling application needing to be aware of
   which formats are available.
 
-* A library that manages subclasses of `ImageInput` and `ImageOutput` that
+- A library that manages subclasses of `ImageInput` and `ImageOutput` that
   implement I/O from specific file formats, with each file format's
   implementation stored as a plug-in. Therefore, an application using OIIO's
   APIs can read and write any image file for which a plugin can be found at
   runtime.
 
-* Plugins implementing I/O for several popular image file formats, including
+- Plugins implementing I/O for several popular image file formats, including
   TIFF, JPEG/JFIF, JPEG XL, OpenEXR, PNG, HDR/RGBE, ICO, BMP, Targa, JPEG-2000,
   RMan Zfile, FITS, DDS, Softimage PIC, PNM, DPX, Cineon, IFF, OpenVDB, Ptex,
   Photoshop PSD, Wavefront RLA, SGI, WebP, GIF, DICOM, HEIF/HEIC/AVIF, many
   "RAW" digital camera formats, and a variety of movie formats (readable as
   individual frames). More are being developed all the time.
 
-* An `ImageCache` class that transparently manages a cache so that it can
+- An `ImageCache` class that transparently manages a cache so that it can
   access truly vast amounts of image data (tens of thousands of image files
   totaling multiple TB) very efficiently using only a tiny amount (tens of
   megabytes at most) of runtime memory.
 
-* A `TextureSystem` class that provides filtered MIP-map texture lookups, atop
+- A `TextureSystem` class that provides filtered MIP-map texture lookups, atop
   the nice caching behavior of `ImageCache`. This is used in commercial
   renderers and has been used on many large VFX and animated films.
 
-* `ImageBuffer` – a simple class for storing and manipulating whole images in
+- `ImageBuffer` – a simple class for storing and manipulating whole images in
   memory and a collection of the most useful computations you might want to do
   involving those images, including many image processing operations.
 
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
     // Create an app-global, shared cache that will persist after this
     // instance gets dropped.
     let image_cache = ImageCache::shared(
-        // Persist cache across this process.
+        // Persist cache accross this process.
         true
     );
 
@@ -65,17 +65,17 @@ fn main() -> Result<()> {
             image_cache,
             Default::default()
         },
-    );
+    )?;
 
     // Load bg image. This is 2048×1024.
     let image_b = ImageBuffer::from_file(
         &Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"),
-    );
+    )?;
 
     // Compose fg over bg, replacing the data window of fg
     // with the result. I.e. the result will be cropped at
     // fg's original dimensions of 1024×1024.
-    image_a.over(&image_b);
+    image_a.over(&image_b)?;
 
     // Write the result.
     image_a.write(&Utf8Path::new("a_over_b.exr"))?;
@@ -96,17 +96,17 @@ fn main() -> Result<()> {
 
 ## Features
 
-* `algorithms` – enables useful `ImageBuffer` algorithms. Enabled by default.
+- `algorithms` – enables useful `ImageBuffer` algorithms (enabled by default).
 
-* `ffi` – exposes the low-level FFI bindings to OIIO. Disabled by default.
+- `ffi` – exposes the low-level FFI bindings to OIIO.
 
 ## Building
 
 ### Dependencies
 
-* We currently build against/require OIIO `v2.5`.
+- We currently build against/require OIIO `v3.x`.
 
-* [`babble`](https://github.com/anderslanglands/babble).
+- [`babble`](https://github.com/anderslanglands/babble).
 
   As of this writing `openimageio` depends on `babble` ≥ `v0.8` and the
   latest binary release is `v0.6`. As such you need to
