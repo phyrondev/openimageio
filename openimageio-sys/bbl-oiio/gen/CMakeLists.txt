@@ -10,17 +10,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
 ")
 
 find_package(babble 0.8 CONFIG REQUIRED)
-find_package(OpenImageIO 3.1 REQUIRED)
+find_package(OpenImageIO 3 REQUIRED)
 
 include(GNUInstallDirs)
 
 bbl_generate_binding(
     oiio
     gen.cpp
-    OpenImageIO_v3_1
+    OpenImageIO_v3
 )
 
 target_link_libraries(oiio-gen PUBLIC OpenImageIO::OpenImageIO)
 target_compile_definitions(oiio-gen PRIVATE NOMINMAX BOOST_ALL_NO_LIB __TBB_show_deprecation_message_task_H)
-
-#

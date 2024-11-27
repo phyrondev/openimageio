@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
 
 
 find_package(
-    OpenImageIO 3.1
+    OpenImageIO 3
     REQUIRED
     HINTS
     ${OIIO_DIST}

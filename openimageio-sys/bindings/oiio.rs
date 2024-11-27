@@ -1748,6 +1748,8 @@ pub fn oiio_ImageBufAlgo_render_text(dst: *mut oiio_ImageBuf_t, x: c_int, y: c_i
 
 pub fn oiio_ImageBufAlgo_colorconvert(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, fromspace: *mut oiio_StringView_t, tospace: *mut oiio_StringView_t, unpremult: bool, context_key: *mut oiio_StringView_t, context_value: *mut oiio_StringView_t, colorconfig: *const oiio_ColorConfig_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
+pub fn oiio_ImageBufAlgo_resample(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, interpolate: bool, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
 pub fn oiio_ImageBufAlgo_resize(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, options: *mut oiio_ParamValueSpan_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufAlgo_warp(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, M: *mut oiio_oiio_M33fParam_t_t, filter: *const oiio_Filter2D_t, recompute_roi: bool, wrap: oiio_WrapMode, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
@@ -1777,6 +1779,8 @@ pub fn oiio_ImageBufAlgo_convolve(dst: *mut oiio_ImageBuf_t, src: *const oiio_Im
 pub fn oiio_ImageBufAlgo_from_kernel(name: *mut oiio_StringView_t, width: c_float, height: c_float, depth: c_float, normalize: bool, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
 pub fn oiio_ImageBufAlgo_computePixelHashSHA1(src: *const oiio_ImageBuf_t, extrainfo: *mut oiio_StringView_t, roi: oiio_ROI_t, blocksize: c_int, nthreads: c_int, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageBufAlgo_crop(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageCacheSharedPtr_ctor(ptr: *mut oiio_ImageCache_t, _result: *mut *mut oiio_ImageCacheSharedPtr_t) -> c_int;
 

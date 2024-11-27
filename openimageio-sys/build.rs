@@ -44,11 +44,15 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         error!("BBL_PLUGIN_PATH is no set");
     }
 
-    let bindings_path = bbl_build::Config::new("oiio", "bbl-oiio")
-        .define("BBL_LANGUAGES", "rust")
-        .define("OIIO_DIST", "/home/ritz/code/OpenImageIO/dist")
-        .build()?
-        .join("build/oiio.rs");
+    let mut bindings = bbl_build::Config::new("oiio", "bbl-oiio");
+
+    bindings.define("BBL_LANGUAGES", "rust");
+
+    if let Ok(oiio_dist) = env::var("OIIO_DIST") {
+        bindings.define("OIIO_DIST", oiio_dist);
+    }
+
+    let bindings_path = bindings.build()?.join("build/oiio.rs");
 
     let destination = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("bindings");
 
