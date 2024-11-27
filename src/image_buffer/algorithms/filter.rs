@@ -21,6 +21,10 @@ struct Filter2DInfo {
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq, Debug)]
 #[non_exhaustive]
 pub enum PixelFilter2D {
+    // Special case, no filter, just nearest-neighbor.
+    Nearest,
+    // Special case, no filter, just nearest-neighbor bilinear.
+    NearestBilinear,
     Box,
     Triangle,
     Gaussian,
@@ -46,6 +50,8 @@ pub enum PixelFilter2D {
 impl From<PixelFilter2D> for &str {
     fn from(pf: PixelFilter2D) -> Self {
         match pf {
+            PixelFilter2D::Nearest => "nearest",
+            PixelFilter2D::NearestBilinear => "nearest-bilinear",
             PixelFilter2D::Box => "box",
             PixelFilter2D::Triangle => "triangle",
             PixelFilter2D::Gaussian => "gaussian",
@@ -72,6 +78,8 @@ impl From<PixelFilter2D> for &str {
 impl From<&str> for PixelFilter2D {
     fn from(name: &str) -> Self {
         match name {
+            "nearest" => Self::Nearest,
+            "nearest-bilinear" => Self::NearestBilinear,
             "box" => Self::Box,
             "triangle" => Self::Triangle,
             "gaussian" => Self::Gaussian,
@@ -105,6 +113,7 @@ impl From<PixelFilter2D> for Ustr {
 #[derive(Clone, Copy)]
 pub struct Filter2D {
     ptr: *mut oiio_Filter2D_t,
+    pub(crate) filter: PixelFilter2D,
 }
 
 impl Filter2D {
@@ -122,7 +131,7 @@ impl Filter2D {
         if let Some(filter_2d) = FILTER_2D_MAP.read().get(&filter) {
             *filter_2d
         } else {
-            let filter_2d = Filter2D::new_ffi(name.into(), x_width, y_width);
+            let filter_2d = Filter2D::new_ffi(name, x_width, y_width);
             FILTER_2D_MAP.write().insert(filter, filter_2d);
 
             filter_2d
@@ -141,6 +150,16 @@ impl Filter2D {
 impl From<PixelFilter2D> for Filter2D {
     fn from(pf: PixelFilter2D) -> Self {
         match pf {
+            PixelFilter2D::Nearest => {
+                let mut f2d = Filter2D::new(PixelFilter2D::Box, 0.0, 0.0);
+                f2d.filter = pf;
+                f2d
+            }
+            PixelFilter2D::NearestBilinear => {
+                let mut f2d = Filter2D::new(PixelFilter2D::Box, 0.1, 0.1);
+                f2d.filter = pf;
+                f2d
+            }
             PixelFilter2D::Box => Filter2D::new(pf, 1.0, 1.0),
             PixelFilter2D::Triangle => Filter2D::new(pf, 2.0, 2.0),
             PixelFilter2D::Gaussian => Filter2D::new(pf, 3.0, 3.0),
@@ -165,8 +184,10 @@ impl From<PixelFilter2D> for Filter2D {
 }
 
 impl Filter2D {
-    fn new_ffi(name: &str, x_width: f32, y_width: f32) -> Self {
+    fn new_ffi(filter: PixelFilter2D, x_width: f32, y_width: f32) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_Filter2D_t>::uninit();
+
+        let name: &str = filter.into();
 
         unsafe {
             oiio_Filter2D_create(
@@ -178,6 +199,7 @@ impl Filter2D {
 
             Self {
                 ptr: ptr.assume_init(),
+                filter,
             }
         }
     }

@@ -403,6 +403,12 @@ pub struct ParamValueList {
     ptr: *mut oiio_ParamValueList_t,
 }
 
+impl Default for ParamValueList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ParamValueList {
     pub fn new() -> Self {
         Self {

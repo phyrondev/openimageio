@@ -22,10 +22,10 @@ use core::ptr;
 /// pixels falling underneath it for each dst pixel. The caller may specify a
 /// reconstruction filter by name and width (expressed in pixels units of the
 /// dst image), or rotate() will choose a reasonable default high-quality
-/// default filter ([`Lanczos3`](PixelFilter::Lanczos3)) if the empty string is
-/// passed, and a reasonable filter width if filterwidth is 0. (Note that some
-/// filter choices only make sense with particular width, in which case this
-/// filterwidth parameter may be ignored.)
+/// default filter ([`Lanczos3`](PixelFilter2D::Lanczos3)) if the empty string
+/// is passed, and a reasonable filter width if filterwidth is 0. (Note that
+/// some filter choices only make sense with particular width, in which case
+/// this filterwidth parameter may be ignored.)
 impl ImageBuffer {
     #[named]
     pub fn replace_by_rotate(&mut self, source: &ImageBuffer, angle: f32) -> Result<&mut Self> {

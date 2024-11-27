@@ -151,6 +151,7 @@ pub mod premult;
 pub mod render_text;
 pub use render_text::*;
 pub mod resize;
+pub use resize::*;
 pub mod rotate;
 pub use rotate::*;
 pub mod transform;
