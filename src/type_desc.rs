@@ -72,7 +72,7 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
     }
 }
 
-/// Describes whether a [`TypeDescription`] is a simple scalar of one of the
+/// Describes whether a [`TypeDesc`] is a simple scalar of one of the
 /// [`BaseType`]s, or one of several simple aggregates.
 ///
 /// Note that *aggregates* and *arrays* are different.
@@ -80,7 +80,7 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
 /// * An array of three `f32`s:
 ///
 ///   ```ignore
-///   TypeDescription {
+///   TypeDesc {
 ///       base_type: Some(BaseType::F32),
 ///       array_len: Some(3),
 ///       ..Default::default()
@@ -90,7 +90,7 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
 /// * A single three-component vector comprised of `f32`s.
 ///
 ///   ```ignore
-///   TypeDescription {
+///   TypeDesc {
 ///       base_type: Some(BaseType::F32),
 ///       aggregate: Aggregate::Vec3,
 ///       ..Default::default()
@@ -100,7 +100,7 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
 /// * An array of three vectors, each of which is comprised of three `f32`s:
 ///
 ///   ```ignore
-///   TypeDescription {
+///   TypeDesc {
 ///       base_type: Some(BaseType::F32),
 ///       array_len: Some(3),
 ///       aggregate: Aggregate::Vec3,
@@ -156,11 +156,11 @@ pub enum VecSemantics {
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
-#[repr(C)]
+#[repr(i32)]
 pub enum ArrayLen {
     Specific(NonZeroU32),
     #[default]
-    Unspecific,
+    Unspecific = -1,
 }
 
 /// Describes the types of data that are handled by OpenImageIO.
@@ -175,10 +175,10 @@ pub enum ArrayLen {
 ///
 /// Both internal and file data is stored in a particular data format that
 /// describes the numerical encoding of the values. OpenImageIO understands
-/// several types of data encodings, and `TypeDescription` allows their
+/// several types of data encodings, and `TypeDesc` allows their
 /// enumeration.
 ///
-/// A `TypeDescription` describes a base data format type, aggregation into
+/// A `TypeDesc` describes a base data format type, aggregation into
 /// simple vector and matrix types, and an array length (if it's an array).
 ///
 /// # For C++ Developers
@@ -190,141 +190,147 @@ pub enum ArrayLen {
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#data-type-descriptions-typedesc)
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
 #[repr(C)]
-pub struct TypeDescription {
+pub struct TypeDesc {
     pub base_type: Option<BaseType>,
     pub aggregate: Aggregate,
     pub vec_semantics: Option<VecSemantics>,
     pub array_len: Option<ArrayLen>,
 }
 
-impl TypeDescription {
-    pub const COLOR_F32: TypeDescription = TypeDescription {
+impl TypeDesc {
+    pub const COLOR_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
         vec_semantics: Some(VecSemantics::Color),
         array_len: None,
     };
-    pub const F16: TypeDescription = TypeDescription {
+    pub const F16: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F16),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const F32: TypeDescription = TypeDescription {
+    pub const F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const F64: TypeDescription = TypeDescription {
+    pub const F64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F64),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const I16: TypeDescription = TypeDescription {
+    pub const I16: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I16),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const I32: TypeDescription = TypeDescription {
+    pub const I32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I32),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const I64: TypeDescription = TypeDescription {
+    pub const I64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I64),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const I8: TypeDescription = TypeDescription {
+    pub const I8: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I8),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const KEY_CODE: TypeDescription = TypeDescription {
+    pub const KEY_CODE: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I32),
         aggregate: Aggregate::Scalar,
         vec_semantics: Some(VecSemantics::KeyCode),
         array_len: Some(ArrayLen::Specific(NonZeroU32::new(7).unwrap())),
     };
-    pub const MATRIX3_F32: TypeDescription = TypeDescription {
+    pub const MATRIX3_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Matrix3,
         vec_semantics: None,
         array_len: None,
     };
-    pub const MATRIX4_F32: TypeDescription = TypeDescription {
+    pub const MATRIX4_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Matrix4,
         vec_semantics: None,
         array_len: None,
     };
-    pub const MATRIX4_F64: TypeDescription = TypeDescription {
+    pub const MATRIX4_F64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F64),
         aggregate: Aggregate::Matrix4,
         vec_semantics: None,
         array_len: None,
     };
-    pub const NORMAL_F32: TypeDescription = TypeDescription {
+    pub const NORMAL_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
         vec_semantics: Some(VecSemantics::Normal),
         array_len: None,
     };
-    pub const POINT_F32: TypeDescription = TypeDescription {
+    pub const POINT_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
         vec_semantics: Some(VecSemantics::Point),
         array_len: None,
     };
-    pub const STRING: TypeDescription = TypeDescription {
+    pub const PTR: TypeDesc = TypeDesc {
+        base_type: Some(BaseType::Ptr),
+        aggregate: Aggregate::Scalar,
+        vec_semantics: None,
+        array_len: None,
+    };
+    pub const STRING: TypeDesc = TypeDesc {
         base_type: Some(BaseType::String),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const TIMECODE: TypeDescription = TypeDescription {
+    pub const TIMECODE: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U32),
         aggregate: Aggregate::Scalar,
         vec_semantics: Some(VecSemantics::TimeCode),
         array_len: Some(ArrayLen::Specific(NonZeroU32::new(2).unwrap())),
     };
-    pub const U16: TypeDescription = TypeDescription {
+    pub const U16: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U16),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const U32: TypeDescription = TypeDescription {
+    pub const U32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U32),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const U64: TypeDescription = TypeDescription {
+    pub const U64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U64),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const U8: TypeDescription = TypeDescription {
+    pub const U8: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U8),
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const UNKNOWN: TypeDescription = TypeDescription {
+    pub const UNKNOWN: TypeDesc = TypeDesc {
         base_type: None,
         aggregate: Aggregate::Scalar,
         vec_semantics: None,
         array_len: None,
     };
-    pub const VECTOR_F32: TypeDescription = TypeDescription {
+    pub const VECTOR_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
         vec_semantics: Some(VecSemantics::Vector),
@@ -332,15 +338,17 @@ impl TypeDescription {
     };
 }
 
+/*
 /// Convenience type alias for developers familiar with the OpenImageIO C++ API.
 ///
 /// # For C++ Developers
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#data-type-descriptions-typedesc)
 #[cfg(feature = "cpp_api_names")]
-pub type TypeDesc = TypeDescription;
+pub type TypeDesc = TypeDesc;
+*/
 
-impl TypeDescription {
+impl TypeDesc {
     pub fn is_array(&self) -> bool {
         matches!(self.array_len, Some(ArrayLen::Specific(_)))
     }
@@ -349,7 +357,7 @@ impl TypeDescription {
         let mut result = std::mem::MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_TypeDesc_size(&self.into() as *const _ as _, &mut result as *mut _ as _);
+            oiio_TypeDesc_size(&self.into() as *const _ as _, &raw mut result as _);
             result.assume_init()
         }
     }
@@ -358,7 +366,7 @@ impl TypeDescription {
         let mut result = std::mem::MaybeUninit::<usize>::uninit();
 
         unsafe {
-            oiio_TypeDesc_elementsize(&self.into() as *const _ as _, &mut result as *mut _ as _);
+            oiio_TypeDesc_elementsize(&self.into() as *const _ as _, &raw mut result as _);
             result.assume_init()
         }
     }
@@ -374,7 +382,7 @@ impl TypeDescription {
             oiio_TypeDesc_is_vec2(
                 &self.into() as *const _ as _,
                 base_type.unwrap_or(BaseType::F32).into(),
-                &mut result as *mut _ as _,
+                &raw mut result as _,
             );
             result.assume_init()
         }
@@ -389,7 +397,7 @@ impl TypeDescription {
             oiio_TypeDesc_is_vec3(
                 &self.into() as *const _ as _,
                 base_type.unwrap_or(BaseType::F32).into(),
-                &mut result as *mut _ as _,
+                &raw mut result as _,
             );
             result.assume_init()
         }
@@ -411,7 +419,7 @@ impl TypeDescription {
     }
 }
 
-impl TryFrom<*const oiio_TypeDesc_t> for TypeDescription {
+impl TryFrom<*const oiio_TypeDesc_t> for TypeDesc {
     type Error = anyhow::Error;
 
     #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -423,7 +431,24 @@ impl TryFrom<*const oiio_TypeDesc_t> for TypeDescription {
     }
 }
 
-impl From<&oiio_TypeDesc_t> for TypeDescription {
+/*
+impl From<TypeDesc> for oiio_TypeDesc_t {
+    fn from(t: TypeDesc) -> Self {
+        Self {
+            basetype: unsafe { transmute(t.basetype) },
+            aggregate: t.aggregate as _,
+            vecsemantics: unsafe { transmute(t.vecsemantics) },
+            arraylen: match t.array_len {
+                None => 0,
+                Some(ArrayLen::Unspecific) => -1,
+                Some(ArrayLen::Specific(l)) => l.get() as _,
+            },
+            reserved: 0,
+        }
+    }
+}*/
+
+impl From<&oiio_TypeDesc_t> for TypeDesc {
     fn from(t: &oiio_TypeDesc_t) -> Self {
         Self {
             base_type: match t.basetype {
@@ -448,8 +473,8 @@ impl From<&oiio_TypeDesc_t> for TypeDescription {
     }
 }
 
-impl From<&TypeDescription> for oiio_TypeDesc_t {
-    fn from(t: &TypeDescription) -> oiio_TypeDesc_t {
+impl From<&TypeDesc> for oiio_TypeDesc_t {
+    fn from(t: &TypeDesc) -> oiio_TypeDesc_t {
         oiio_TypeDesc_t {
             basetype: match t.base_type {
                 None => oiio_BASETYPE::oiio_BASETYPE_NONE.0 as _,
@@ -470,8 +495,8 @@ impl From<&TypeDescription> for oiio_TypeDesc_t {
     }
 }
 
-impl From<TypeDescription> for oiio_TypeDesc_t {
-    fn from(t: TypeDescription) -> Self {
+impl From<TypeDesc> for oiio_TypeDesc_t {
+    fn from(t: TypeDesc) -> Self {
         (&t).into()
     }
 }
@@ -482,7 +507,7 @@ mod tests {
 
     #[test]
     fn type_description() {
-        let t = TypeDescription::default();
+        let t = TypeDesc::default();
 
         let c_type = oiio_TypeDesc_t::from(&t);
 

@@ -1,5 +1,5 @@
 use crate::{algorithms::*, *};
-use core::mem::{MaybeUninit, transmute};
+use core::mem::{transmute, MaybeUninit};
 
 /// # Compare
 ///

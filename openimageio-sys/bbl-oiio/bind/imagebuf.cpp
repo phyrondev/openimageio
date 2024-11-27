@@ -1,8 +1,8 @@
 #include <babble>
 
 #include <OpenImageIO/imagebuf.h>
-
 #include <OpenImageIO/texture.h>
+#include <sys/types.h>
 
 namespace bblext {
 
@@ -36,11 +36,34 @@ bool ImageBuf_get_pixels(OIIO::ImageBuf const &buf, OIIO::ROI roi,
   return buf.get_pixels(roi, type_desc, result);
 }
 
-bool ImageBuf_set_pixels_02(OIIO::ImageBuf &buf, OIIO::ROI roi,
-                            OIIO::TypeDesc::BASETYPE base_type, void *pixels) {
-  OIIO::TypeDesc type_desc = OIIO::TypeDesc(base_type, 0);
+bool ImageBuf_set_pixels_f64(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                             OIIO::cspan<double> pixels) {
+  return buf.set_pixels(roi, pixels);
+}
 
-  return buf.set_pixels(roi, type_desc, pixels);
+bool ImageBuf_set_pixels_f32(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                             OIIO::cspan<float> pixels) {
+  return buf.set_pixels(roi, pixels);
+}
+
+/*bool ImageBuf_set_pixels_u64(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                             OIIO::cspan<unsigned long> pixels) {
+  return buf.set_pixels(roi, pixels);
+}*/
+
+bool ImageBuf_set_pixels_u32(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                             OIIO::cspan<u_int32_t> pixels) {
+  return buf.set_pixels(roi, pixels);
+}
+
+bool ImageBuf_set_pixels_u16(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                             OIIO::cspan<u_int16_t> pixels) {
+  return buf.set_pixels(roi, pixels);
+}
+
+bool ImageBuf_set_pixels_u8(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                            OIIO::cspan<u_int8_t> pixels) {
+  return buf.set_pixels(roi, pixels);
 }
 
 void ImageBuf_expand_roi_full(OIIO::ImageBuf &buf) {
@@ -54,7 +77,7 @@ BBL_MODULE(oiio) {
   bbl::Class<OIIO::ImageBuf>()
       .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<>(), "default")
       .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<
-                OIIO::string_view, int, int, OIIO::ImageCache *,
+                OIIO::string_view, int, int, std::shared_ptr<OIIO::ImageCache>,
                 const OIIO::ImageSpec *, OIIO::Filesystem::IOProxy *>(
                 "name", "subimage", "miplevel", "imagecache", "config",
                 "ioproxy"),
@@ -144,11 +167,11 @@ BBL_MODULE(oiio) {
                                   OIIO::ImageBuf::WrapMode) const) &
              OIIO::ImageBuf::getpixel,
          "getpixel")
-      .m(&OIIO::ImageBuf::interppixel)
-      .m(&OIIO::ImageBuf::interppixel_NDC)
+      //.m(&OIIO::ImageBuf::interppixel)
+      //.m(&OIIO::ImageBuf::interppixel_NDC)
       //.m(&OIIO::ImageBuf::interppixel_NDC_full)
-      .m(&OIIO::ImageBuf::interppixel_bicubic)
-      .m(&OIIO::ImageBuf::interppixel_bicubic_NDC)
+      //.m(&OIIO::ImageBuf::interppixel_bicubic)
+      //.m(&OIIO::ImageBuf::interppixel_bicubic_NDC)
 
       //.m(&OIIO::ImageBuf::get_pixels)
       .m(&OIIO::ImageBuf::initialized)
@@ -241,7 +264,7 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageBuf::set_roi_full)
       .m(&OIIO::ImageBuf::set_origin)
       .m(&OIIO::ImageBuf::set_full)
-      .m(&OIIO::ImageBuf::set_pixels)
+      //.m(&OIIO::ImageBuf::set_pixels)
       .m((void(OIIO::ImageBuf::*)(int, int, int, int, int, float)) &
              OIIO::ImageBuf::set_deep_value,
          "set_deep_value_00")
@@ -254,7 +277,12 @@ BBL_MODULE(oiio) {
   bbl::fn(&bblext::ImageBuf_write);
   bbl::fn(&bblext::ImageBuf_write_with_spec);
   bbl::fn(&bblext::ImageBuf_get_pixels);
-  bbl::fn(&bblext::ImageBuf_set_pixels_02);
+  bbl::fn(&bblext::ImageBuf_set_pixels_f32);
+  bbl::fn(&bblext::ImageBuf_set_pixels_f64);
+  // bbl::fn(&bblext::ImageBuf_set_pixels_u64);
+  bbl::fn(&bblext::ImageBuf_set_pixels_u32);
+  bbl::fn(&bblext::ImageBuf_set_pixels_u16);
+  bbl::fn(&bblext::ImageBuf_set_pixels_u8);
   bbl::fn(&bblext::ImageBuf_expand_roi_full);
 
   bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")

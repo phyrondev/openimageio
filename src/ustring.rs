@@ -101,7 +101,7 @@ impl From<Ustr> for Ustring {
         let mut ptr = MaybeUninit::<*mut oiio_ustring_t>::uninit();
 
         unsafe {
-            oiio_ustring_new(s.as_char_ptr(), &mut ptr as *mut _ as _);
+            oiio_ustring_new(s.as_char_ptr(), &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -115,7 +115,7 @@ impl From<&str> for Ustring {
         let mut ptr = MaybeUninit::<*mut oiio_ustring_t>::uninit();
 
         unsafe {
-            oiio_ustring_new_from_parts(s.as_ptr() as _, s.len() as _, &mut ptr as *mut _ as _);
+            oiio_ustring_new_from_parts(s.as_ptr() as _, s.len() as _, &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -146,23 +146,23 @@ impl Ustring {
         let mut len = MaybeUninit::<c_size_t>::uninit();
 
         unsafe {
-            oiio_ustring_c_str(self.ptr, &mut ptr as *mut _ as _);
-            oiio_ustring_size(self.ptr, &mut len as *mut _ as _);
+            oiio_ustring_c_str(self.ptr, &raw mut ptr as _);
+            oiio_ustring_size(self.ptr, &raw mut len as _);
 
             std::str::from_raw_parts(ptr.assume_init() as _, len.assume_init() as _)
         }
     }
 }
 
-#[cfg(feature = "ffi")]
 impl Ustring {
     /// Returns a pointer to the underlying [`oiio_ustring_t`].
-    pub fn as_raw_ptr(&self) -> *const oiio_ustring_t {
+    pub(crate) fn as_raw_ptr(&self) -> *const oiio_ustring_t {
         self.ptr
     }
 
     /// Returns a mutable pointer to the underlying [`oiio_ustring_t`].
-    pub fn as_raw_ptr_mut(&mut self) -> *mut oiio_ustring_t {
+    #[allow(dead_code)]
+    pub(crate) fn as_raw_ptr_mut(&mut self) -> *mut oiio_ustring_t {
         self.ptr
     }
 }

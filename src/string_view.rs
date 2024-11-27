@@ -42,7 +42,7 @@ impl Default for StringView<'_> {
     fn default() -> Self {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
-            oiio_StringView_default(&mut ptr as *mut _ as _);
+            oiio_StringView_default(&raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -57,9 +57,9 @@ impl<'a> From<&'a str> for StringView<'a> {
         let mut ptr = std::mem::MaybeUninit::<*mut oiio_StringView_t>::uninit();
         unsafe {
             oiio_StringView_ctor(
-                string.as_ptr() as *const _,
+                string.as_ptr() as _,
                 string.len().try_into().unwrap(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -77,7 +77,7 @@ impl From<Ustr> for StringView<'static> {
             oiio_StringView_ctor(
                 string.as_char_ptr(),
                 string.len().try_into().unwrap(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -95,7 +95,7 @@ impl<'a> From<&'a Ustr> for StringView<'a> {
             oiio_StringView_ctor(
                 string.as_char_ptr(),
                 string.len().try_into().unwrap(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -112,9 +112,9 @@ impl<'a> From<&'a Path> for StringView<'a> {
         let os_str_path = path.as_os_str();
         unsafe {
             oiio_StringView_ctor(
-                os_str_path.as_encoded_bytes().as_ptr() as *const _,
+                os_str_path.as_encoded_bytes().as_ptr() as _,
                 os_str_path.len().try_into().unwrap(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -131,9 +131,9 @@ impl<'a> From<&'a Utf8Path> for StringView<'a> {
         let str_path = path.as_str();
         unsafe {
             oiio_StringView_ctor(
-                str_path.as_ptr() as *const _,
+                str_path.as_ptr() as _,
                 str_path.len().try_into().unwrap(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -181,7 +181,7 @@ impl StringView<'_> {
         self.ptr as _
     }
 
-    pub(crate) fn as_raw_ptr_mut(&self) -> *mut oiio_StringView_t {
+    pub(crate) fn _as_raw_ptr_mut(&mut self) -> *mut oiio_StringView_t {
         self.ptr
     }
 }

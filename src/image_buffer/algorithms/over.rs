@@ -63,7 +63,7 @@ impl ImageBuffer {
                 background.as_raw_ptr(),
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()

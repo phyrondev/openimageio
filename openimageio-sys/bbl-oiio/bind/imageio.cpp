@@ -157,6 +157,7 @@ void ImageSpec_clear_and_reserve_channelformats(OIIO::ImageSpec &self,
 
 void ImageSpec_push_channelformat(OIIO::ImageSpec &self, OIIO::TypeDesc value) {
   self.channelformats.push_back(value);
+  self.nchannels = self.channelformats.size();
 }
 
 void ImageSpec_clear_and_reserve_channelnames(OIIO::ImageSpec &self,
@@ -304,7 +305,7 @@ BBL_MODULE(oiio) {
              char const **compression, long long *compression_len,
              int *compression_quality) -> void {
             auto result = _this.decode_compression_metadata(name, defaultqual);
-            *compression = result.first.c_str();
+            *compression = OIIO::c_str(result.first);
             *compression_len = result.first.size();
             *compression_quality = result.second;
           }))
@@ -314,7 +315,7 @@ BBL_MODULE(oiio) {
                    [](OIIO::ImageSpec const &_this, int chan, char const **name,
                       long long *len) -> void {
                      auto sv = _this.channel_name(chan);
-                     *name = sv.c_str();
+                     *name = OIIO::c_str(sv);
                      *len = sv.size();
                    }))
       .m(&OIIO::ImageSpec::get_channelformats)
@@ -425,7 +426,7 @@ BBL_MODULE(oiio) {
                                                ioproxy, plugin_searchpath);
              }),
          "create_with_ioproxy")
-      .m(&OIIO::ImageInput::destroy)
+      //.m(&OIIO::ImageInput::destroy)
       .m(&OIIO::ImageInput::format_name)
       .m(bbl::Wrap(&OIIO::ImageInput::supports,
                    [](OIIO::ImageInput const &_this, char const *feature)
@@ -449,12 +450,12 @@ BBL_MODULE(oiio) {
       .m((bool(OIIO::ImageInput::*)(int, int)) &
              OIIO::ImageInput::seek_subimage,
          "seek_subimage_00")
-      .m((bool(OIIO::ImageInput::*)(int, int, OIIO::ImageSpec &)) &
-             OIIO::ImageInput::seek_subimage,
-         "seek_subimage_01")
-      .m((bool(OIIO::ImageInput::*)(int, OIIO::ImageSpec &)) &
-             OIIO::ImageInput::seek_subimage,
-         "seek_subimage_02")
+      //.m((bool(OIIO::ImageInput::*)(int, int, OIIO::ImageSpec &)) &
+      //       OIIO::ImageInput::seek_subimage,
+      //   "seek_subimage_01")
+      //.m((bool(OIIO::ImageInput::*)(int, OIIO::ImageSpec &)) &
+      //       OIIO::ImageInput::seek_subimage,
+      //   "seek_subimage_02")
       .m((bool(OIIO::ImageInput::*)(int, int, OIIO::TypeDesc, void *,
                                     OIIO::stride_t)) &
              OIIO::ImageInput::read_scanline,
@@ -544,7 +545,7 @@ BBL_MODULE(oiio) {
                                                       plugin_searchpath);
                    }),
          "create")
-      .m(&OIIO::ImageOutput::destroy)
+      //.m(&OIIO::ImageOutput::destroy)
       .m(&OIIO::ImageOutput::format_name)
       .m(bbl::Wrap(&OIIO::ImageOutput::supports,
                    [](OIIO::ImageOutput const &_this, char const *feature)

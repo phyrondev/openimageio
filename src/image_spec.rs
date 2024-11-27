@@ -2,9 +2,25 @@ use crate::*;
 use core::mem::MaybeUninit;
 use ustr::Ustr;
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ChannelFormat {
-    Uniform(BaseType),
+    Uniform(BaseType, usize),
     PerChannel(Vec<BaseType>),
+}
+
+impl Default for ChannelFormat {
+    fn default() -> Self {
+        Self::Uniform(BaseType::default(), 4)
+    }
+}
+
+impl ChannelFormat {
+    pub fn channel_count(&self) -> usize {
+        match self {
+            Self::Uniform(_, len) => *len,
+            Self::PerChannel(channels) => channels.len(),
+        }
+    }
 }
 
 /// Describes the data format of an image -- dimensions, layout, number and
@@ -73,74 +89,76 @@ pub enum ChannelFormat {
 /// [`ImageSpec`], is available behind a `type` alias.
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#image-specification-imagespec)
-pub struct ImageSpecification {
+#[derive(Default, Debug, PartialEq, Eq, Hash)]
+pub struct ImageSpec {
     /// Origin (upper left corner) of pixel data.
-    x: i32,
+    pub x: i32,
     /// Origin (upper left corner) of pixel data.
-    y: i32,
+    pub y: i32,
     /// Origin (upper left corner) of pixel data.
-    z: i32,
+    pub z: i32,
     /// Width of the pixel data window.
-    width: u32,
+    pub width: u32,
     /// Height of the pixel data window.
-    height: u32,
+    pub height: u32,
     /// Depth of pixel data, >1 indicates a "volume".
-    depth: u32,
+    pub depth: u32,
     /// Origin of the full (display) window.
-    full_x: i32,
+    pub display_window_x: i32,
     /// Origin of the full (display) window.
-    full_y: i32,
+    pub display_window_y: i32,
     /// Origin of the full (display) window.
-    full_z: i32,
+    pub display_window_z: i32,
     /// Width of the full (display) window.
-    full_width: u32,
+    pub display_window_width: u32,
     /// Height of the full (display) window.
-    full_height: u32,
+    pub display_window_height: u32,
     /// Depth of the full (display) window.
-    full_depth: u32,
+    pub display_window_depth: u32,
     /// Tile width (0 for a non-tiled image).
-    tile_width: u32,
+    pub tile_width: u32,
     /// Tile height (0 for a non-tiled image).
-    tile_height: u32,
+    pub tile_height: u32,
     /// Tile depth (0 for a non-tiled image, 1 for a non-volume image).
-    tile_depth: u32,
+    pub tile_depth: u32,
     /// Data format of the channels.
     ///
     /// Describes the native format of the pixel data values themselves, as a
     /// [`BaseType`]. Typical values would be [`BaseType::U8`] for 8-bit
     /// unsigned values, [`BaseType::F32`] for 32-bit floating-point
     /// values, etc.
+    ///
     /// If all channels of the image have the same data format, that will be
-    /// described by channel_format[0].
+    /// described by `ChannelFormat::Uniform`.
     ///
     /// If there are different data formats for each channel, they will be
-    /// described in the `channel_formats` `Vec`, and the `format` field
-    /// will indicate a single default data format for applications that
-    /// don't wish to support per-channel formats (usually this will be the
-    /// format of the channel that has the most precision).
-    channel_format: ChannelFormat,
+    /// described in the `ChannelFormat::PerChannel` field's `Vec`, and the
+    /// `format` will indicate a single default data format for applications
+    /// that don't wish to support per-channel formats (usually this will be
+    /// the format of the channel that has the most precision).
+    pub channel_format: ChannelFormat,
     /// The names of each channel, in order. Typically this will be `"R"`,
     /// `"G"`, `"B"`, `"A"` (alpha), `"Z"` (depth), or other arbitrary names.
-    channel_name: Vec<Ustr>,
+    pub channel_name: Vec<Ustr>,
     /// The index of the channel that represents *alpha* (pixel coverage and/or
     /// transparency).
     ///
     /// It defaults to `None` if no alpha channel is present, or if it is not
     /// known which channel represents alpha.
-    alpha_channel_index: Option<u32>,
+    pub alpha_channel_index: Option<u32>,
     /// The index of the channel that represents *z* or *depth* (from the
     /// camera).
     ///
     /// It defaults to `None` if no depth channel is present, or if it is not
     /// know which channel represents depth.
-    z_channel_index: Option<u32>,
+    pub z_channel_index: Option<u32>,
 
     /// If the image contains deep data.
     ///
     /// If `true`, this indicates that the image describes contains 'deep' data
     /// consisting of multiple samples per pixel. If  `false`, it's an
     /// ordinary image with one data value (per channel) per pixel.
-    deep: bool,
+    pub deep: bool,
     /*
     /// A list of arbitrarily-named and arbitrarily-typed additional attributes
     /// of the image, for any metadata not described by the hard-coded
@@ -149,8 +167,35 @@ pub struct ImageSpecification {
     extra_attribs: ParamValueList,*/
 }
 
-/// Convenience type alias for developers familiar with the OpenImageIO C++ API.
-pub type ImageSpec = ImageSpecification;
+// Convenience type alias for developers familiar with the OpenImageIO C++ API.
+//pub type ImageSpec = ImageSpecification;
+
+impl ImageSpec {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn new_with(channel_type: BaseType) -> Self {
+        Self {
+            channel_format: ChannelFormat::Uniform(channel_type, 4),
+            ..Default::default()
+        }
+    }
+
+    pub fn new_with_dimensions(
+        width: u32,
+        height: u32,
+        channel_count: u32,
+        channel_type: BaseType,
+    ) -> Self {
+        Self {
+            width,
+            height,
+            channel_format: ChannelFormat::Uniform(channel_type, channel_count as _),
+            ..Default::default()
+        }
+    }
+}
 
 pub(crate) struct ImageSpecInternal {
     ptr: *mut oiio_ImageSpec_t,
@@ -168,15 +213,12 @@ pub(crate) struct ImageSpecInternal {
     }
 }*/
 
-impl From<&ImageSpecification> for ImageSpecInternal {
-    fn from(i: &ImageSpecification) -> Self {
+impl From<&ImageSpec> for ImageSpecInternal {
+    fn from(i: &ImageSpec) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
-            oiio_ImageSpec_new(
-                (&TypeDescription::default()).into(),
-                &mut ptr as *mut _ as *mut _,
-            );
+            oiio_ImageSpec_new((&TypeDesc::default()).into(), &mut ptr as *mut _ as *mut _);
 
             let ptr = ptr.assume_init();
 
@@ -186,31 +228,37 @@ impl From<&ImageSpecification> for ImageSpecInternal {
             oiio_ImageSpec_set_width(ptr, i.width as _);
             oiio_ImageSpec_set_height(ptr, i.height as _);
             oiio_ImageSpec_set_depth(ptr, i.depth as _);
-            oiio_ImageSpec_set_full_x(ptr, i.full_x);
-            oiio_ImageSpec_set_full_y(ptr, i.full_y);
-            oiio_ImageSpec_set_full_z(ptr, i.full_z);
-            oiio_ImageSpec_set_full_width(ptr, i.full_width as _);
-            oiio_ImageSpec_set_full_height(ptr, i.full_height as _);
-            oiio_ImageSpec_set_full_depth(ptr, i.full_depth as _);
+            oiio_ImageSpec_set_full_x(ptr, i.display_window_x);
+            oiio_ImageSpec_set_full_y(ptr, i.display_window_y);
+            oiio_ImageSpec_set_full_z(ptr, i.display_window_z);
+            oiio_ImageSpec_set_full_width(ptr, i.display_window_width as _);
+            oiio_ImageSpec_set_full_height(ptr, i.display_window_height as _);
+            oiio_ImageSpec_set_full_depth(ptr, i.display_window_depth as _);
             oiio_ImageSpec_set_tile_width(ptr, i.tile_width as _);
             oiio_ImageSpec_set_tile_height(ptr, i.tile_height as _);
             oiio_ImageSpec_set_tile_depth(ptr, i.tile_depth as _);
-            oiio_ImageSpec_set_nchannels(ptr, i.channel_name.len() as _);
 
             match &i.channel_format {
-                ChannelFormat::Uniform(format) => {
-                    oiio_ImageSpec_set_format(ptr, oiio_TypeDesc_t {
-                        basetype: (*format).into(),
-                        ..Default::default()
-                    });
+                ChannelFormat::Uniform(base_type, len) => {
+                    oiio_ImageSpec_set_format(
+                        ptr,
+                        oiio_TypeDesc_t {
+                            basetype: (*base_type).into(),
+                            ..Default::default()
+                        },
+                    );
+                    oiio_ImageSpec_set_nchannels(ptr, *len as _);
                 }
                 ChannelFormat::PerChannel(formats) => {
                     oiio_ImageSpec_clear_and_reserve_channelformats(ptr, formats.len());
                     for format in formats.iter() {
-                        oiio_ImageSpec_push_channelformat(ptr, oiio_TypeDesc_t {
-                            basetype: (*format).into(),
-                            ..Default::default()
-                        });
+                        oiio_ImageSpec_push_channelformat(
+                            ptr,
+                            oiio_TypeDesc_t {
+                                basetype: (*format).into(),
+                                ..Default::default()
+                            },
+                        );
                     }
                 }
             }
@@ -236,14 +284,14 @@ impl From<&ImageSpecification> for ImageSpecInternal {
 
 impl ImageSpecInternal {
     pub fn new() -> Self {
-        Self::new_with(&TypeDescription::default())
+        Self::new_with(&TypeDesc::default())
     }
 
-    pub fn new_with(type_desc: &TypeDescription) -> Self {
+    pub fn new_with(type_desc: &TypeDesc) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {
-            oiio_ImageSpec_new(type_desc.into(), &mut ptr as *mut _ as _);
+            oiio_ImageSpec_new(type_desc.into(), &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -260,12 +308,11 @@ impl ImageSpecInternal {
         }
     }
 
-    /*
-    pub fn new_with_dimensions(
+    pub fn _new_with_dimensions(
         x_res: u32,
         y_res: u32,
         channel_count: u32,
-        type_desc: &TypeDescription,
+        type_desc: &TypeDesc,
     ) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
@@ -275,7 +322,26 @@ impl ImageSpecInternal {
                 y_res as _,
                 channel_count as _,
                 type_desc.into(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
+            );
+
+            Self {
+                ptr: ptr.assume_init(),
+            }
+        }
+    }
+
+    /*
+    pub fn new_with_bounds(bounds: Bounds, type_desc: &TypeDesc) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
+
+        unsafe {
+            oiio_ImageSpec_with_dimensions(
+                x_res as _,
+                y_res as _,
+                channel_count as _,
+                type_desc.into(),
+                &raw mut ptr as _,
             );
 
             Self {
@@ -290,7 +356,7 @@ impl ImageSpecInternal {
         self.ptr
     }
 
-    pub fn as_raw_ptr_mut(&self) -> *mut oiio_ImageSpec_t {
+    pub fn _as_raw_ptr_mut(&self) -> *mut oiio_ImageSpec_t {
         self.ptr
     }
 }

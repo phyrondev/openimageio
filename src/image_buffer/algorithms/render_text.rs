@@ -1,81 +1,6 @@
 use crate::*;
 use core::mem::MaybeUninit;
 
-#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
-pub enum TextAlignX {
-    #[default]
-    Left = oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
-    Center = oiio_TextAlignX::oiio_TextAlignX_Center.0 as _,
-    Right = oiio_TextAlignX::oiio_TextAlignX_Right.0 as _,
-}
-
-#[derive(Clone, Copy, Default, Hash, PartialEq, Eq)]
-pub enum TextAlignY {
-    #[default]
-    Baseline = oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _,
-    Top = oiio_TextAlignY::oiio_TextAlignY_Top.0 as _,
-    Bottom = oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _,
-    Center = oiio_TextAlignY::oiio_TextAlignY_Center.0 as _,
-}
-
-#[derive(Clone, PartialEq)]
-pub struct RenderTextOptions<'a> {
-    /// The nominal height of the font (in pixels).
-    pub font_size: u16,
-    /// The name of the font. If the name is not a full pathname to a font
-    /// file, it will search for a matching font, defaulting to some reasonable
-    /// system font if not supplied at all).
-    ///
-    /// Note that any named fonts (if not a full pathname) will search for the
-    /// fonts in the following places:
-    ///
-    /// 1. Any directories named in the global `font_searchpath` attribute or
-    ///    the `$OPENIMAGEIO_FONTS` environment variable.
-    ///
-    /// 2. Any font-related subdirectories (`fonts`, `Fonts`, `share/fonts`, or
-    ///    `Library/Fonts`) underneath the directories in environment variables
-    ///    `$HOME`, `$SystemRoot`, `$OpenImageIO_ROOT`.
-    ///
-    /// 3. A number of common system font areas, including `/usr/share/fonts`,
-    ///    `/Library/fonts`, and `C:/Windows/fonts`.
-    ///
-    /// 4. In fonts directories one level up from the place where the currently
-    ///    running binary lives.
-    pub font_name: Option<&'a str>,
-    /// Color for drawing the text, defaulting to opaque white `[1.0, 1.0, …]`
-    /// in all channels if `None`. If provided, it is expected to point to an
-    /// `[f32]` slice of length at least equal to
-    /// `R.specification().channel_count`, or defaults will be chosen for you.
-    pub color: Option<&'a [f32]>,
-    /// Text alignment in the horizontal direction.
-    pub text_align_x: TextAlignX,
-    /// Text alignment in the vertical direction.
-    pub text_align_y: TextAlignY,
-    /// If nonzero, a 'outline' of this radius will be used to make the
-    /// text look more clear by dilating the alpha channel of the composite
-    /// (makes a black halo around the characters).
-    pub outline: u16,
-    /// See the [Region](#region-of-interest) section on [`ImageBuffer`].
-    pub region: Region,
-    /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
-    pub thread_count: u16,
-}
-
-impl Default for RenderTextOptions<'_> {
-    fn default() -> Self {
-        Self {
-            font_size: 16,
-            font_name: None,
-            color: None,
-            text_align_x: TextAlignX::default(),
-            text_align_y: TextAlignY::default(),
-            outline: 0,
-            region: Region::default(),
-            thread_count: 0,
-        }
-    }
-}
-
 /// # Render Text
 ///
 /// Render a text string (encoded as UTF-8).
@@ -148,6 +73,15 @@ impl ImageBuffer {
     }
 }
 
+/// Text alignment in the horizontal direction.
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+pub enum TextAlignX {
+    #[default]
+    Left = oiio_TextAlignX::oiio_TextAlignX_Left.0 as _,
+    Center = oiio_TextAlignX::oiio_TextAlignX_Center.0 as _,
+    Right = oiio_TextAlignX::oiio_TextAlignX_Right.0 as _,
+}
+
 impl From<TextAlignX> for oiio_TextAlignX {
     fn from(text_align_x: TextAlignX) -> Self {
         Self(match text_align_x {
@@ -158,6 +92,16 @@ impl From<TextAlignX> for oiio_TextAlignX {
     }
 }
 
+/// Text alignment in the vertical direction.
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+pub enum TextAlignY {
+    #[default]
+    Baseline = oiio_TextAlignY::oiio_TextAlignY_Baseline.0 as _,
+    Top = oiio_TextAlignY::oiio_TextAlignY_Top.0 as _,
+    Bottom = oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _,
+    Center = oiio_TextAlignY::oiio_TextAlignY_Center.0 as _,
+}
+
 impl From<TextAlignY> for oiio_TextAlignY {
     fn from(text_align_y: TextAlignY) -> Self {
         Self(match text_align_y {
@@ -166,6 +110,66 @@ impl From<TextAlignY> for oiio_TextAlignY {
             TextAlignY::Bottom => oiio_TextAlignY::oiio_TextAlignY_Bottom.0 as _,
             TextAlignY::Center => oiio_TextAlignY::oiio_TextAlignY_Center.0 as _,
         })
+    }
+}
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`from_render_text_with()`](ImageBuffer::from_render_text_with),
+/// [`render_text_with()`](ImageBuffer::render_text_with) methods.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RenderTextOptions<'a> {
+    /// The nominal height of the font (in pixels).
+    pub font_size: u16,
+    /// The name of the font. If the name is not a full pathname to a font
+    /// file, it will search for a matching font, defaulting to some reasonable
+    /// system font if not supplied at all).
+    ///
+    /// Note that any named fonts (if not a full pathname) will search for the
+    /// fonts in the following places:
+    ///
+    /// 1. Any directories named in the global `font_searchpath` attribute or
+    ///    the `$OPENIMAGEIO_FONTS` environment variable.
+    ///
+    /// 2. Any font-related subdirectories (`fonts`, `Fonts`, `share/fonts`, or
+    ///    `Library/Fonts`) underneath the directories in environment variables
+    ///    `$HOME`, `$SystemRoot`, `$OpenImageIO_ROOT`.
+    ///
+    /// 3. A number of common system font areas, including `/usr/share/fonts`,
+    ///    `/Library/fonts`, and `C:/Windows/fonts`.
+    ///
+    /// 4. In fonts directories one level up from the place where the currently
+    ///    running binary lives.
+    pub font_name: Option<&'a str>,
+    /// Color for drawing the text, defaulting to opaque white `[1.0, 1.0, …]`
+    /// in all channels if `None`. If provided, it is expected to point to an
+    /// `[f32]` slice of length at least equal to
+    /// `R.specification().channel_count`, or defaults will be chosen for you.
+    pub color: &'a [f32],
+    /// Text alignment in the horizontal direction.
+    pub text_align_x: TextAlignX,
+    /// Text alignment in the vertical direction.
+    pub text_align_y: TextAlignY,
+    /// If nonzero, a 'outline' of this radius will be used to make the
+    /// text look more clear by dilating the alpha channel of the composite
+    /// (makes a black halo around the characters).
+    pub outline: u16,
+    /// See the [Region](#region-of-interest) section on [`ImageBuffer`].
+    pub region: Region,
+    /// See the [Multithreading](#multithreading) section on [`ImageBuffer`].
+    pub thread_count: u16,
+}
+
+impl Default for RenderTextOptions<'_> {
+    fn default() -> Self {
+        Self {
+            font_size: 16,
+            font_name: None,
+            color: &[1.0],
+            text_align_x: TextAlignX::default(),
+            text_align_y: TextAlignY::default(),
+            outline: 0,
+            region: Region::default(),
+            thread_count: 0,
+        }
     }
 }
 
@@ -185,16 +189,13 @@ impl ImageBuffer {
                     .font_name
                     .map_or(StringView::default(), StringView::from)
                     .as_raw_ptr() as _,
-                options
-                    .color
-                    .map_or(CspanF32::new(&[1.0]), CspanF32::new)
-                    .as_raw_ptr() as _,
+                CspanF32::new(options.color).as_raw_ptr() as _,
                 options.text_align_x.into(),
                 options.text_align_y.into(),
                 options.outline as _,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -211,14 +212,19 @@ mod test {
         let mut image_buffer =
             ImageBuffer::from_file(Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"))?;
 
-        image_buffer.render_text_with(512, 256, "Kringers Fossed!", &RenderTextOptions {
-            font_size: 128,
-            font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
-            text_align_x: TextAlignX::Center,
-            text_align_y: TextAlignY::Center,
-            color: Some(&[1.0, 0.0, 0.0, 0.25]),
-            ..Default::default()
-        })?;
+        image_buffer.render_text_with(
+            512,
+            256,
+            "Kringers Fossed!",
+            &RenderTextOptions {
+                font_size: 128,
+                font_name: Some("assets/ProtestGuerrilla-Regular.ttf"),
+                text_align_x: TextAlignX::Center,
+                text_align_y: TextAlignY::Center,
+                color: &[1.0, 0.0, 0.0, 0.25],
+                ..Default::default()
+            },
+        )?;
 
         image_buffer.write(Utf8Path::new("target/render_text.exr"))?;
 

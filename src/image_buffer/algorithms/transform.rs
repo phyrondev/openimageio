@@ -58,6 +58,10 @@ impl ImageBuffer {
     }
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`transform_with()`](ImageBuffer::transform_with),
+/// [`replace_by_transform_with()`](ImageBuffer::replace_by_transform_with)
+/// methods.
 #[derive(Clone, Default)]
 pub struct TransformOptions {
     /// The reconstruction filter is used to weight the source image pixels
@@ -124,7 +128,7 @@ impl ImageBuffer {
                 transform_options.wrap_mode.clone().into(),
                 transform_options.region.clone().into(),
                 transform_options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -158,17 +162,21 @@ mod tests {
 
         let mut transformed = ImageBuf::new();
 
-        transformed.replace_by_transform_with(&image_buf, matrix, &TransformOptions {
-            recompute_region: true,
-            ..Default::default()
-        })?;
+        transformed.replace_by_transform_with(
+            &image_buf,
+            matrix,
+            &TransformOptions {
+                recompute_region: true,
+                ..Default::default()
+            },
+        )?;
 
         /*image_buf.transform_with(matrix, &TransformOptions {
             recompute_region: true,
             ..Default::default()
         })?;*/
 
-        transformed.set_display_to_data_window();
+        //transformed.set_display_to_data_window();
 
         transformed.write(Utf8Path::new("target/transform.exr"))?;
 

@@ -7,6 +7,7 @@ use std::ffi::c_longlong;
 use std::ffi::c_uchar;
 use std::ffi::c_uint;
 use std::ffi::c_ulong;
+use std::ffi::c_ushort;
 use std::ffi::c_void;
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
@@ -105,39 +106,37 @@ impl oiio_Interp {
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct oiio_Wrap (pub c_uint);
+pub struct oiio_Wrap (pub u8);
 impl oiio_Wrap {
-    pub const oiio_Wrap_WrapDefault: oiio_Wrap = oiio_Wrap(0);
-    pub const oiio_Wrap_WrapBlack: oiio_Wrap = oiio_Wrap(1);
-    pub const oiio_Wrap_WrapClamp: oiio_Wrap = oiio_Wrap(2);
-    pub const oiio_Wrap_WrapPeriodic: oiio_Wrap = oiio_Wrap(3);
-    pub const oiio_Wrap_WrapMirror: oiio_Wrap = oiio_Wrap(4);
-    pub const oiio_Wrap_WrapPeriodicPow2: oiio_Wrap = oiio_Wrap(5);
-    pub const oiio_Wrap_WrapPeriodicSharedBorder: oiio_Wrap = oiio_Wrap(6);
-    pub const oiio_Wrap_WrapLast: oiio_Wrap = oiio_Wrap(7);
+    pub const oiio_Wrap_Default: oiio_Wrap = oiio_Wrap(0);
+    pub const oiio_Wrap_Black: oiio_Wrap = oiio_Wrap(1);
+    pub const oiio_Wrap_Clamp: oiio_Wrap = oiio_Wrap(2);
+    pub const oiio_Wrap_Periodic: oiio_Wrap = oiio_Wrap(3);
+    pub const oiio_Wrap_Mirror: oiio_Wrap = oiio_Wrap(4);
+    pub const oiio_Wrap_PeriodicPow2: oiio_Wrap = oiio_Wrap(5);
+    pub const oiio_Wrap_PeriodicSharedBorder: oiio_Wrap = oiio_Wrap(6);
+    pub const oiio_Wrap_Last: oiio_Wrap = oiio_Wrap(7);
 }
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct oiio_MipMode (pub c_uint);
+pub struct oiio_MipMode (pub u8);
 impl oiio_MipMode {
-    pub const oiio_MipMode_MipModeDefault: oiio_MipMode = oiio_MipMode(0);
-    pub const oiio_MipMode_MipModeNoMIP: oiio_MipMode = oiio_MipMode(1);
-    pub const oiio_MipMode_MipModeOneLevel: oiio_MipMode = oiio_MipMode(2);
-    pub const oiio_MipMode_MipModeTrilinear: oiio_MipMode = oiio_MipMode(3);
-    pub const oiio_MipMode_MipModeAniso: oiio_MipMode = oiio_MipMode(4);
-    pub const oiio_MipMode_MipModeStochasticTrilinear: oiio_MipMode = oiio_MipMode(5);
-    pub const oiio_MipMode_MipModeStochasticAniso: oiio_MipMode = oiio_MipMode(6);
+    pub const oiio_MipMode_Default: oiio_MipMode = oiio_MipMode(0);
+    pub const oiio_MipMode_NoMIP: oiio_MipMode = oiio_MipMode(1);
+    pub const oiio_MipMode_OneLevel: oiio_MipMode = oiio_MipMode(2);
+    pub const oiio_MipMode_Trilinear: oiio_MipMode = oiio_MipMode(3);
+    pub const oiio_MipMode_Aniso: oiio_MipMode = oiio_MipMode(4);
 }
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct oiio_InterpMode (pub c_uint);
+pub struct oiio_InterpMode (pub u8);
 impl oiio_InterpMode {
-    pub const oiio_InterpMode_InterpClosest: oiio_InterpMode = oiio_InterpMode(0);
-    pub const oiio_InterpMode_InterpBilinear: oiio_InterpMode = oiio_InterpMode(1);
-    pub const oiio_InterpMode_InterpBicubic: oiio_InterpMode = oiio_InterpMode(2);
-    pub const oiio_InterpMode_InterpSmartBicubic: oiio_InterpMode = oiio_InterpMode(3);
+    pub const oiio_InterpMode_Closest: oiio_InterpMode = oiio_InterpMode(0);
+    pub const oiio_InterpMode_Bilinear: oiio_InterpMode = oiio_InterpMode(1);
+    pub const oiio_InterpMode_Bicubic: oiio_InterpMode = oiio_InterpMode(2);
+    pub const oiio_InterpMode_SmartBicubic: oiio_InterpMode = oiio_InterpMode(3);
 }
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
@@ -200,7 +199,37 @@ impl oiio_VECSEMANTICS {
 }
 
 #[repr(C)]
+pub struct oiio_ParamValueSpan_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanF64_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
 pub struct oiio_CspanF32_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanU63_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanU32_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanU16_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanU8_t {
     _unused: [u8; 0],
 }
 
@@ -273,6 +302,11 @@ pub struct oiio_CompareResults_t {
     pub nwarn: u64,
     pub nfail: u64,
     pub error: bool,
+}
+
+#[repr(C)]
+pub struct oiio_ImageCacheSharedPtr_t {
+    _unused: [u8; 0],
 }
 
 #[repr(C)]
@@ -349,6 +383,11 @@ pub struct oiio_ParamValueList_t {
 }
 
 #[repr(C)]
+pub struct oiio_TextureSystemSharedPtr_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
 pub struct oiio_TextureSystem_t {
     _unused: [u8; 0],
 }
@@ -359,7 +398,7 @@ pub struct oiio_Perthread_t {
 }
 
 #[repr(C)]
-pub struct oiio_TextureOpt_t {
+pub struct oiio_TextureOpt_v2_t {
     _unused: [u8; 0],
 }
 
@@ -395,9 +434,33 @@ pub struct oiio_oiio_M33fParam_t_t {
 
 unsafe extern "C" {
 
+pub fn oiio_ParamValueSpan_ctor(list: *const oiio_ParamValueList_t, _result: *mut *mut oiio_ParamValueSpan_t) -> c_int;
+
+pub fn oiio_ParamValueSpan_dtor(_this: *mut oiio_ParamValueSpan_t) -> c_int;
+
+pub fn oiio_CspanF64_ctor(data: *mut c_double, size: c_ulong, _result: *mut *mut oiio_CspanF64_t) -> c_int;
+
+pub fn oiio_CspanF64_dtor(_this: *mut oiio_CspanF64_t) -> c_int;
+
 pub fn oiio_CspanF32_ctor(data: *mut c_float, size: c_ulong, _result: *mut *mut oiio_CspanF32_t) -> c_int;
 
 pub fn oiio_CspanF32_dtor(_this: *mut oiio_CspanF32_t) -> c_int;
+
+pub fn oiio_CspanU63_ctor(data: *mut c_ulong, size: c_ulong, _result: *mut *mut oiio_CspanU63_t) -> c_int;
+
+pub fn oiio_CspanU63_dtor(_this: *mut oiio_CspanU63_t) -> c_int;
+
+pub fn oiio_CspanU32_ctor(data: *mut c_uint, size: c_ulong, _result: *mut *mut oiio_CspanU32_t) -> c_int;
+
+pub fn oiio_CspanU32_dtor(_this: *mut oiio_CspanU32_t) -> c_int;
+
+pub fn oiio_CspanU16_ctor(data: *mut c_ushort, size: c_ulong, _result: *mut *mut oiio_CspanU16_t) -> c_int;
+
+pub fn oiio_CspanU16_dtor(_this: *mut oiio_CspanU16_t) -> c_int;
+
+pub fn oiio_CspanU8_ctor(data: *mut c_uchar, size: c_ulong, _result: *mut *mut oiio_CspanU8_t) -> c_int;
+
+pub fn oiio_CspanU8_dtor(_this: *mut oiio_CspanU8_t) -> c_int;
 
 pub fn oiio_String_c_str(_this: *const oiio_String_t, _result: *mut *const c_char) -> c_int;
 
@@ -533,6 +596,10 @@ pub fn oiio_Filter2D_create(filtername: *mut oiio_StringView_t, width: c_float, 
 
 pub fn oiio_Filter2D_destroy(filt: *mut oiio_Filter2D_t) -> c_int;
 
+pub fn oiio_Filter2D_width(_this: *const oiio_Filter2D_t, _result: *mut c_float) -> c_int;
+
+pub fn oiio_Filter2D_height(_this: *const oiio_Filter2D_t, _result: *mut c_float) -> c_int;
+
 pub fn oiio_Filter2D_dtor(_this: *mut oiio_Filter2D_t) -> c_int;
 
 pub fn oiio_ImageBuf_clear(_this: *mut oiio_ImageBuf_t) -> c_int;
@@ -566,14 +633,6 @@ pub fn oiio_ImageBuf_swap(_this: *mut oiio_ImageBuf_t, other: *mut oiio_ImageBuf
 pub fn oiio_ImageBuf_getchannel(_this: *const oiio_ImageBuf_t, x: c_int, y: c_int, z: c_int, c: c_int, wrap: oiio_WrapMode, _result: *mut c_float) -> c_int;
 
 pub fn oiio_ImageBuf_getpixel(_this: *const oiio_ImageBuf_t, x: c_int, y: c_int, z: c_int, pixel: *mut c_float, maxchannels: c_int, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBuf_interppixel(_this: *const oiio_ImageBuf_t, x: c_float, y: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBuf_interppixel_NDC(_this: *const oiio_ImageBuf_t, s: c_float, t: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBuf_interppixel_bicubic(_this: *const oiio_ImageBuf_t, x: c_float, y: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBuf_interppixel_bicubic_NDC(_this: *const oiio_ImageBuf_t, s: c_float, t: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
 
 pub fn oiio_ImageBuf_initialized(_this: *const oiio_ImageBuf_t, _result: *mut bool) -> c_int;
 
@@ -651,7 +710,7 @@ pub fn oiio_ImageBuf_roi(_this: *const oiio_ImageBuf_t, _result: *mut oiio_ROI_t
 
 pub fn oiio_ImageBuf_roi_full(_this: *const oiio_ImageBuf_t, _result: *mut oiio_ROI_t) -> c_int;
 
-pub fn oiio_ImageBuf_contains_roi(_this: *const oiio_ImageBuf_t, roi: oiio_ROI_t, _result: *mut bool) -> c_int;
+pub fn oiio_ImageBuf_contains_roi(_this: *const oiio_ImageBuf_t, roi: *const oiio_ROI_t, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBuf_pixels_valid(_this: *const oiio_ImageBuf_t, _result: *mut bool) -> c_int;
 
@@ -671,7 +730,7 @@ pub fn oiio_ImageBuf_contiguous(_this: *const oiio_ImageBuf_t, _result: *mut boo
 
 pub fn oiio_ImageBuf_cachedpixels(_this: *const oiio_ImageBuf_t, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageBuf_imagecache(_this: *const oiio_ImageBuf_t, _result: *mut *mut oiio_ImageCache_t) -> c_int;
+pub fn oiio_ImageBuf_imagecache(_this: *const oiio_ImageBuf_t, _result: *mut *mut oiio_ImageCacheSharedPtr_t) -> c_int;
 
 pub fn oiio_ImageBuf_pixeladdr_00(_this: *const oiio_ImageBuf_t, x: c_int, y: c_int, z: c_int, ch: c_int, _result: *mut *const c_void) -> c_int;
 
@@ -721,15 +780,13 @@ pub fn oiio_ImageBuf_set_origin(_this: *mut oiio_ImageBuf_t, x: c_int, y: c_int,
 
 pub fn oiio_ImageBuf_set_full(_this: *mut oiio_ImageBuf_t, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int) -> c_int;
 
-pub fn oiio_ImageBuf_set_pixels(_this: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, format: oiio_TypeDesc_t, data: *const c_void, xstride: i64, ystride: i64, zstride: i64, _result: *mut bool) -> c_int;
-
 pub fn oiio_ImageBuf_set_deep_value_00(_this: *mut oiio_ImageBuf_t, x: c_int, y: c_int, z: c_int, c: c_int, s: c_int, value: c_float) -> c_int;
 
 pub fn oiio_ImageBuf_set_deep_value_01(_this: *mut oiio_ImageBuf_t, x: c_int, y: c_int, z: c_int, c: c_int, s: c_int, value: u32) -> c_int;
 
 pub fn oiio_ImageBuf_default(_result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
-pub fn oiio_ImageBuf_ctor_01(name: *mut oiio_StringView_t, subimage: c_int, miplevel: c_int, imagecache: *mut oiio_ImageCache_t, config: *const oiio_ImageSpec_t, ioproxy: *mut oiio_IOProxy_t, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
+pub fn oiio_ImageBuf_ctor_01(name: *mut oiio_StringView_t, subimage: c_int, miplevel: c_int, imagecache: *mut oiio_ImageCacheSharedPtr_t, config: *const oiio_ImageSpec_t, ioproxy: *mut oiio_IOProxy_t, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
 pub fn oiio_ImageBuf_ctor_02(name: *mut oiio_StringView_t, imagecache: *mut oiio_ImageCache_t, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
@@ -774,14 +831,6 @@ pub fn oiio_ImageBufSharedPtr_swap(_this: *mut oiio_ImageBufSharedPtr_t, other: 
 pub fn oiio_ImageBufSharedPtr_getchannel(_this: *const oiio_ImageBufSharedPtr_t, x: c_int, y: c_int, z: c_int, c: c_int, wrap: oiio_WrapMode, _result: *mut c_float) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_getpixel(_this: *const oiio_ImageBufSharedPtr_t, x: c_int, y: c_int, z: c_int, pixel: *mut c_float, maxchannels: c_int, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBufSharedPtr_interppixel(_this: *const oiio_ImageBufSharedPtr_t, x: c_float, y: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBufSharedPtr_interppixel_NDC(_this: *const oiio_ImageBufSharedPtr_t, s: c_float, t: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBufSharedPtr_interppixel_bicubic(_this: *const oiio_ImageBufSharedPtr_t, x: c_float, y: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
-
-pub fn oiio_ImageBufSharedPtr_interppixel_bicubic_NDC(_this: *const oiio_ImageBufSharedPtr_t, s: c_float, t: c_float, pixel: *mut c_float, wrap: oiio_WrapMode) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_initialized(_this: *const oiio_ImageBufSharedPtr_t, _result: *mut bool) -> c_int;
 
@@ -859,7 +908,7 @@ pub fn oiio_ImageBufSharedPtr_roi(_this: *const oiio_ImageBufSharedPtr_t, _resul
 
 pub fn oiio_ImageBufSharedPtr_roi_full(_this: *const oiio_ImageBufSharedPtr_t, _result: *mut oiio_ROI_t) -> c_int;
 
-pub fn oiio_ImageBufSharedPtr_contains_roi(_this: *const oiio_ImageBufSharedPtr_t, roi: oiio_ROI_t, _result: *mut bool) -> c_int;
+pub fn oiio_ImageBufSharedPtr_contains_roi(_this: *const oiio_ImageBufSharedPtr_t, roi: *const oiio_ROI_t, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_pixels_valid(_this: *const oiio_ImageBufSharedPtr_t, _result: *mut bool) -> c_int;
 
@@ -879,7 +928,7 @@ pub fn oiio_ImageBufSharedPtr_contiguous(_this: *const oiio_ImageBufSharedPtr_t,
 
 pub fn oiio_ImageBufSharedPtr_cachedpixels(_this: *const oiio_ImageBufSharedPtr_t, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageBufSharedPtr_imagecache(_this: *const oiio_ImageBufSharedPtr_t, _result: *mut *mut oiio_ImageCache_t) -> c_int;
+pub fn oiio_ImageBufSharedPtr_imagecache(_this: *const oiio_ImageBufSharedPtr_t, _result: *mut *mut oiio_ImageCacheSharedPtr_t) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_pixeladdr_00(_this: *const oiio_ImageBufSharedPtr_t, x: c_int, y: c_int, z: c_int, ch: c_int, _result: *mut *const c_void) -> c_int;
 
@@ -929,8 +978,6 @@ pub fn oiio_ImageBufSharedPtr_set_origin(_this: *mut oiio_ImageBufSharedPtr_t, x
 
 pub fn oiio_ImageBufSharedPtr_set_full(_this: *mut oiio_ImageBufSharedPtr_t, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int) -> c_int;
 
-pub fn oiio_ImageBufSharedPtr_set_pixels(_this: *mut oiio_ImageBufSharedPtr_t, roi: oiio_ROI_t, format: oiio_TypeDesc_t, data: *const c_void, xstride: i64, ystride: i64, zstride: i64, _result: *mut bool) -> c_int;
-
 pub fn oiio_ImageBufSharedPtr_set_deep_value_00(_this: *mut oiio_ImageBufSharedPtr_t, x: c_int, y: c_int, z: c_int, c: c_int, s: c_int, value: c_float) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_set_deep_value_01(_this: *mut oiio_ImageBufSharedPtr_t, x: c_int, y: c_int, z: c_int, c: c_int, s: c_int, value: u32) -> c_int;
@@ -968,8 +1015,6 @@ pub fn oiio_IteratorBase_range(_this: *const oiio_IteratorBase_t, _result: *mut 
 pub fn oiio_IteratorBase_rerange(_this: *mut oiio_IteratorBase_t, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, wrap: oiio_WrapMode) -> c_int;
 
 pub fn oiio_Iterator_op_assign(_this: *mut oiio_Iterator_t, param00: *const oiio_Iterator_t, _result: *mut *mut oiio_Iterator_t) -> c_int;
-
-pub fn oiio_Iterator_op_index_00(_this: *const oiio_Iterator_t, i: c_int, _result: *mut c_float) -> c_int;
 
 pub fn oiio_Iterator_rawptr(_this: *const oiio_Iterator_t, _result: *mut *mut c_void) -> c_int;
 
@@ -1023,9 +1068,81 @@ pub fn oiio_Iterator_ctor_03(ib: *mut oiio_ImageBuf_t, xbegin: c_int, xend: c_in
 
 pub fn oiio_Iterator_dtor(_this: *mut oiio_Iterator_t) -> c_int;
 
-pub fn oiio_ImageCache_create(shared: bool, _result: *mut *mut oiio_ImageCache_t) -> c_int;
+pub fn oiio_ImageCacheSharedPtr_get_perthread_info(_this: *mut oiio_ImageCacheSharedPtr_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, _result: *mut *mut oiio_ImageCachePerThreadInfo_t) -> c_int;
 
-pub fn oiio_ImageCache_destroy(cache: *mut oiio_ImageCache_t, teardown: bool) -> c_int;
+pub fn oiio_ImageCacheSharedPtr_create_thread_info(_this: *mut oiio_ImageCacheSharedPtr_t, _result: *mut *mut oiio_ImageCachePerThreadInfo_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_destroy_thread_info(_this: *mut oiio_ImageCacheSharedPtr_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_image_handle(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, options: *const oiio_TextureOpt_v2_t, _result: *mut *mut oiio_ImageCacheFile_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_good(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_filename_from_handle(_this: *mut oiio_ImageCacheSharedPtr_t, handle: *mut oiio_ImageCacheFile_t, _result: *mut *mut oiio_ustring_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_resolve_filename(_this: *const oiio_ImageCacheSharedPtr_t, filename: *const oiio_String_t, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_image_info(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, subimage: c_int, miplevel: c_int, dataname: *mut oiio_ustring_t, datatype: oiio_TypeDesc_t, data: *mut c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_image_info_from_handle(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, subimage: c_int, miplevel: c_int, dataname: *mut oiio_ustring_t, datatype: oiio_TypeDesc_t, data: *mut c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_imagespec(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, spec: *mut oiio_ImageSpec_t, subimage: c_int, miplevel: c_int, native: bool, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_imagespec_from_handle(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, spec: *mut oiio_ImageSpec_t, subimage: c_int, miplevel: c_int, native: bool, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_imagespec(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, subimage: c_int, miplevel: c_int, native: bool, _result: *mut *const oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_imagespec_from_handle(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, subimage: c_int, miplevel: c_int, native: bool, _result: *mut *const oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_thumbnail(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, thumbnail: *mut oiio_ImageBuf_t, subimage: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_thumbnail_from_handle(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, thumbnail: *mut oiio_ImageBuf_t, subimage: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_pixels_00(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, subimage: c_int, miplevel: c_int, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, chbegin: c_int, chend: c_int, format: oiio_TypeDesc_t, result: *mut c_void, xstride: i64, ystride: i64, zstride: i64, cache_chbegin: c_int, cache_chend: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_pixels_01(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, subimage: c_int, miplevel: c_int, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, chbegin: c_int, chend: c_int, format: oiio_TypeDesc_t, result: *mut c_void, xstride: i64, ystride: i64, zstride: i64, cache_chbegin: c_int, cache_chend: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_pixels_02(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, subimage: c_int, miplevel: c_int, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, format: oiio_TypeDesc_t, result: *mut c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_pixels_03(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, subimage: c_int, miplevel: c_int, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, format: oiio_TypeDesc_t, result: *mut c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_invalidate_00(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, force: bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_invalidate_01(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, force: bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_invalidate_all(_this: *mut oiio_ImageCacheSharedPtr_t, force: bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_close(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_close_all(_this: *mut oiio_ImageCacheSharedPtr_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_tile(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, subimage: c_int, miplevel: c_int, x: c_int, y: c_int, z: c_int, chbegin: c_int, chend: c_int, _result: *mut *mut oiio_ImageCacheTile_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_get_tile_from_handle(_this: *mut oiio_ImageCacheSharedPtr_t, file: *mut oiio_ImageCacheFile_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, subimage: c_int, miplevel: c_int, x: c_int, y: c_int, z: c_int, chbegin: c_int, chend: c_int, _result: *mut *mut oiio_ImageCacheTile_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_release_tile(_this: *const oiio_ImageCacheSharedPtr_t, tile: *mut oiio_ImageCacheTile_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_tile_format(_this: *const oiio_ImageCacheSharedPtr_t, tile: *const oiio_ImageCacheTile_t, _result: *mut oiio_TypeDesc_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_tile_roi(_this: *const oiio_ImageCacheSharedPtr_t, tile: *const oiio_ImageCacheTile_t, _result: *mut oiio_ROI_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_tile_pixels(_this: *const oiio_ImageCacheSharedPtr_t, tile: *mut oiio_ImageCacheTile_t, format: *mut oiio_TypeDesc_t, _result: *mut *const c_void) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_add_tile(_this: *mut oiio_ImageCacheSharedPtr_t, filename: *mut oiio_ustring_t, subimage: c_int, miplevel: c_int, x: c_int, y: c_int, z: c_int, chbegin: c_int, chend: c_int, format: oiio_TypeDesc_t, buffer: *const c_void, xstride: i64, ystride: i64, zstride: i64, copy: bool, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_has_error(_this: *const oiio_ImageCacheSharedPtr_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_geterror(_this: *const oiio_ImageCacheSharedPtr_t, clear: bool, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_getstats(_this: *const oiio_ImageCacheSharedPtr_t, level: c_int, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_reset_stats(_this: *mut oiio_ImageCacheSharedPtr_t) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_dtor(_this: *mut oiio_ImageCacheSharedPtr_t) -> c_int;
+
+pub fn oiio_ImageCache_create(shared: bool, _result: *mut *mut oiio_ImageCacheSharedPtr_t) -> c_int;
+
+pub fn oiio_ImageCache_destroy(cache: *mut oiio_ImageCacheSharedPtr_t, teardown: bool) -> c_int;
 
 pub fn oiio_ImageCache_get_perthread_info(_this: *mut oiio_ImageCache_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, _result: *mut *mut oiio_ImageCachePerThreadInfo_t) -> c_int;
 
@@ -1033,7 +1150,7 @@ pub fn oiio_ImageCache_create_thread_info(_this: *mut oiio_ImageCache_t, _result
 
 pub fn oiio_ImageCache_destroy_thread_info(_this: *mut oiio_ImageCache_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t) -> c_int;
 
-pub fn oiio_ImageCache_get_image_handle(_this: *mut oiio_ImageCache_t, filename: *mut oiio_ustring_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, options: *const oiio_TextureOpt_t, _result: *mut *mut oiio_ImageCacheFile_t) -> c_int;
+pub fn oiio_ImageCache_get_image_handle(_this: *mut oiio_ImageCache_t, filename: *mut oiio_ustring_t, thread_info: *mut oiio_ImageCachePerThreadInfo_t, options: *const oiio_TextureOpt_v2_t, _result: *mut *mut oiio_ImageCacheFile_t) -> c_int;
 
 pub fn oiio_ImageCache_good(_this: *mut oiio_ImageCache_t, file: *mut oiio_ImageCacheFile_t, _result: *mut bool) -> c_int;
 
@@ -1096,6 +1213,8 @@ pub fn oiio_ImageCache_geterror(_this: *const oiio_ImageCache_t, clear: bool, _r
 pub fn oiio_ImageCache_getstats(_this: *const oiio_ImageCache_t, level: c_int, _result: *mut *mut oiio_String_t) -> c_int;
 
 pub fn oiio_ImageCache_reset_stats(_this: *mut oiio_ImageCache_t) -> c_int;
+
+pub fn oiio_ImageCache_dtor(_this: *mut oiio_ImageCache_t) -> c_int;
 
 pub fn oiio_ROI_defined(_this: *const oiio_ROI_t, _result: *mut bool) -> c_int;
 
@@ -1203,10 +1322,6 @@ pub fn oiio_ImageInputPtr_current_miplevel(_this: *const oiio_ImageInputPtr_t, _
 
 pub fn oiio_ImageInputPtr_seek_subimage_00(_this: *mut oiio_ImageInputPtr_t, subimage: c_int, miplevel: c_int, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageInputPtr_seek_subimage_01(_this: *mut oiio_ImageInputPtr_t, subimage: c_int, miplevel: c_int, newspec: *mut oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageInputPtr_seek_subimage_02(_this: *mut oiio_ImageInputPtr_t, subimage: c_int, newspec: *mut oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
 pub fn oiio_ImageInputPtr_read_scanline_00(_this: *mut oiio_ImageInputPtr_t, y: c_int, z: c_int, format: oiio_TypeDesc_t, data: *mut c_void, xstride: i64, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageInputPtr_read_scanline_01(_this: *mut oiio_ImageInputPtr_t, y: c_int, z: c_int, data: *mut c_float, _result: *mut bool) -> c_int;
@@ -1255,8 +1370,6 @@ pub fn oiio_ImageInputPtr_try_lock(_this: *const oiio_ImageInputPtr_t, _result: 
 
 pub fn oiio_ImageInputPtr_dtor(_this: *mut oiio_ImageInputPtr_t) -> c_int;
 
-pub fn oiio_ImageInput_destroy(x: *mut oiio_ImageInput_t) -> c_int;
-
 pub fn oiio_ImageInput_format_name(_this: *const oiio_ImageInput_t, _result: *mut *const c_char) -> c_int;
 
 pub fn oiio_ImageInput_spec(_this: *const oiio_ImageInput_t, _result: *mut *const oiio_ImageSpec_t) -> c_int;
@@ -1274,10 +1387,6 @@ pub fn oiio_ImageInput_current_subimage(_this: *const oiio_ImageInput_t, _result
 pub fn oiio_ImageInput_current_miplevel(_this: *const oiio_ImageInput_t, _result: *mut c_int) -> c_int;
 
 pub fn oiio_ImageInput_seek_subimage_00(_this: *mut oiio_ImageInput_t, subimage: c_int, miplevel: c_int, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageInput_seek_subimage_01(_this: *mut oiio_ImageInput_t, subimage: c_int, miplevel: c_int, newspec: *mut oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageInput_seek_subimage_02(_this: *mut oiio_ImageInput_t, subimage: c_int, newspec: *mut oiio_ImageSpec_t, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageInput_read_scanline_00(_this: *mut oiio_ImageInput_t, y: c_int, z: c_int, format: oiio_TypeDesc_t, data: *mut c_void, xstride: i64, _result: *mut bool) -> c_int;
 
@@ -1365,8 +1474,6 @@ pub fn oiio_ImageOutputPtr_getthreads(_this: *const oiio_ImageOutputPtr_t, _resu
 
 pub fn oiio_ImageOutputPtr_dtor(_this: *mut oiio_ImageOutputPtr_t) -> c_int;
 
-pub fn oiio_ImageOutput_destroy(x: *mut oiio_ImageOutput_t) -> c_int;
-
 pub fn oiio_ImageOutput_format_name(_this: *const oiio_ImageOutput_t, _result: *mut *const c_char) -> c_int;
 
 pub fn oiio_ImageOutput_spec(_this: *const oiio_ImageOutput_t, _result: *mut *const oiio_ImageSpec_t) -> c_int;
@@ -1404,10 +1511,6 @@ pub fn oiio_ImageOutput_setthreads(_this: *mut oiio_ImageOutput_t, n: c_int) -> 
 pub fn oiio_ImageOutput_getthreads(_this: *const oiio_ImageOutput_t, _result: *mut c_int) -> c_int;
 
 pub fn oiio_ImageOutput_dtor(_this: *mut oiio_ImageOutput_t) -> c_int;
-
-pub fn oiio_ParamValue_init_00(_this: *mut oiio_ParamValue_t, _name: *mut oiio_ustring_t, _type: oiio_TypeDesc_t, _nvalues: c_int, _interp: oiio_Interp, _value: *const c_void, _copy: bool) -> c_int;
-
-pub fn oiio_ParamValue_init_01(_this: *mut oiio_ParamValue_t, _name: *mut oiio_ustring_t, _type: oiio_TypeDesc_t, _nvalues: c_int, _value: *const c_void, _copy: bool) -> c_int;
 
 pub fn oiio_ParamValue_op_assign_00(_this: *mut oiio_ParamValue_t, p: *const oiio_ParamValue_t, _result: *mut *const oiio_ParamValue_t) -> c_int;
 
@@ -1449,10 +1552,6 @@ pub fn oiio_ParamValue_get_ustring_indexed(_this: *const oiio_ParamValue_t, inde
 
 pub fn oiio_ParamValue_default(_result: *mut *mut oiio_ParamValue_t) -> c_int;
 
-pub fn oiio_ParamValue_ctor_01(_name: *const oiio_ustring_t, _type: oiio_TypeDesc_t, _nvalues: c_int, _value: *const c_void, _copy: bool, _result: *mut *mut oiio_ParamValue_t) -> c_int;
-
-pub fn oiio_ParamValue_ctor_02(_name: *const oiio_ustring_t, _type: oiio_TypeDesc_t, _nvalues: c_int, _interp: oiio_Interp, _value: *const c_void, _copy: bool, _result: *mut *mut oiio_ParamValue_t) -> c_int;
-
 pub fn oiio_ParamValue_dtor(_this: *mut oiio_ParamValue_t) -> c_int;
 
 pub fn oiio_ParamValueList_grow(_this: *mut oiio_ParamValueList_t, _result: *mut *mut oiio_ParamValue_t) -> c_int;
@@ -1469,13 +1568,17 @@ pub fn oiio_ParamValueList_default(_result: *mut *mut oiio_ParamValueList_t) -> 
 
 pub fn oiio_ParamValueList_dtor(_this: *mut oiio_ParamValueList_t) -> c_int;
 
-pub fn oiio_TextureSystem_create(shared: bool, imagecache: *mut oiio_ImageCache_t, _result: *mut *mut oiio_TextureSystem_t) -> c_int;
+pub fn oiio_TextureSystemSharedPtr_dtor(_this: *mut oiio_TextureSystemSharedPtr_t) -> c_int;
 
-pub fn oiio_TextureSystem_destroy(ts: *mut oiio_TextureSystem_t, teardown_imagecache: bool) -> c_int;
+pub fn oiio_TextureSystem_create(shared: bool, imagecache: *mut oiio_ImageCacheSharedPtr_t, _result: *mut *mut oiio_TextureSystemSharedPtr_t) -> c_int;
 
-pub fn oiio_TextureOpt_default(_result: *mut *mut oiio_TextureOpt_t) -> c_int;
+pub fn oiio_TextureSystem_destroy(ts: *mut oiio_TextureSystemSharedPtr_t, teardown_imagecache: bool) -> c_int;
 
-pub fn oiio_TextureOpt_dtor(_this: *mut oiio_TextureOpt_t) -> c_int;
+pub fn oiio_TextureSystem_dtor(_this: *mut oiio_TextureSystem_t) -> c_int;
+
+pub fn oiio_TextureOpt_v2_default(_result: *mut *mut oiio_TextureOpt_v2_t) -> c_int;
+
+pub fn oiio_TextureOpt_v2_dtor(_this: *mut oiio_TextureOpt_v2_t) -> c_int;
 
 pub fn oiio_TypeDesc_c_str(_this: *const oiio_TypeDesc_t, _result: *mut *const c_char) -> c_int;
 
@@ -1520,8 +1623,6 @@ pub fn oiio_TypeDesc_is_box2(_this: *const oiio_TypeDesc_t, b: oiio_BASETYPE, _r
 pub fn oiio_TypeDesc_is_box3(_this: *const oiio_TypeDesc_t, b: oiio_BASETYPE, _result: *mut bool) -> c_int;
 
 pub fn oiio_TypeDesc_unarray(_this: *mut oiio_TypeDesc_t) -> c_int;
-
-pub fn oiio_TypeDesc_basetype_merge(a: oiio_TypeDesc_t, b: oiio_TypeDesc_t, _result: *mut oiio_BASETYPE) -> c_int;
 
 pub fn oiio_TypeDesc_ctor_00(btype: oiio_BASETYPE, agg: oiio_AGGREGATE, semantics: oiio_VECSEMANTICS, arraylen: c_int, _result: *mut oiio_TypeDesc_t) -> c_int;
 
@@ -1589,7 +1690,7 @@ pub fn oiio_DeepData_all_data(_this: *const oiio_DeepData_t, data: *mut *const c
 
 pub fn oiio_DeepData_channelname(dd: *const oiio_DeepData_t, c: c_int, _result: *mut *const c_char) -> c_int;
 
-pub fn oiio_DeepData_set_all_samples(dd: *mut oiio_DeepData_t, samples: *const c_uint, num: c_longlong) -> c_int;
+pub fn oiio_DeepData_set_all_samples(dd: *mut oiio_DeepData_t, samples: *const c_uint, num: c_ulong) -> c_int;
 
 pub fn oiio_ImageBuf_WrapMode_from_string(name: *const c_char, _result: *mut oiio_WrapMode) -> c_int;
 
@@ -1599,7 +1700,15 @@ pub fn oiio_ImageBuf_write_with_spec(buf: *const oiio_ImageBuf_t, file_name: *co
 
 pub fn oiio_ImageBuf_get_pixels(buf: *const oiio_ImageBuf_t, roi: oiio_ROI_t, base_type: oiio_BASETYPE, result: *mut c_void, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageBuf_set_pixels_02(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, base_type: oiio_BASETYPE, pixels: *mut c_void, _result: *mut bool) -> c_int;
+pub fn oiio_ImageBuf_set_pixels_f32(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, pixels: *mut oiio_CspanF32_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBuf_set_pixels_f64(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, pixels: *mut oiio_CspanF64_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBuf_set_pixels_u32(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, pixels: *mut oiio_CspanU32_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBuf_set_pixels_u16(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, pixels: *mut oiio_CspanU16_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBuf_set_pixels_u8(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, pixels: *mut oiio_CspanU8_t, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBuf_expand_roi_full(buf: *mut oiio_ImageBuf_t) -> c_int;
 
@@ -1639,7 +1748,9 @@ pub fn oiio_ImageBufAlgo_render_text(dst: *mut oiio_ImageBuf_t, x: c_int, y: c_i
 
 pub fn oiio_ImageBufAlgo_colorconvert(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, fromspace: *mut oiio_StringView_t, tospace: *mut oiio_StringView_t, unpremult: bool, context_key: *mut oiio_StringView_t, context_value: *mut oiio_StringView_t, colorconfig: *const oiio_ColorConfig_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
-pub fn oiio_ImageBufAlgo_resize(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, filter: *mut oiio_Filter2D_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+pub fn oiio_ImageBufAlgo_resample(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, interpolate: bool, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufAlgo_resize(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, options: *mut oiio_ParamValueSpan_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufAlgo_warp(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, M: *mut oiio_oiio_M33fParam_t_t, filter: *const oiio_Filter2D_t, recompute_roi: bool, wrap: oiio_WrapMode, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
@@ -1662,6 +1773,16 @@ pub fn oiio_ImageBufAlgo_premult(dst: *mut oiio_ImageBuf_t, src: *const oiio_Ima
 pub fn oiio_ImageBufAlgo_unpremult(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufAlgo_repremult(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufAlgo_convolve(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, kernel: *const oiio_ImageBuf_t, normalize: bool, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufAlgo_from_kernel(name: *mut oiio_StringView_t, width: c_float, height: c_float, depth: c_float, normalize: bool, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
+
+pub fn oiio_ImageBufAlgo_computePixelHashSHA1(src: *const oiio_ImageBuf_t, extrainfo: *mut oiio_StringView_t, roi: oiio_ROI_t, blocksize: c_int, nthreads: c_int, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageBufAlgo_crop(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageCacheSharedPtr_ctor(ptr: *mut oiio_ImageCache_t, _result: *mut *mut oiio_ImageCacheSharedPtr_t) -> c_int;
 
 pub fn oiio_ImageCache_attribute(_this: *mut oiio_ImageCache_t, name: *const c_char, type_: oiio_TypeDesc_t, data: *const c_void, _result: *mut bool) -> c_int;
 
@@ -1803,6 +1924,8 @@ pub fn oiio_roi_union(A: *const oiio_ROI_t, B: *const oiio_ROI_t, _result: *mut 
 
 pub fn oiio_roi_intersection(A: *const oiio_ROI_t, B: *const oiio_ROI_t, _result: *mut oiio_ROI_t) -> c_int;
 
+pub fn oiio_ParamValue_ctor(name: *const oiio_ustring_t, type_: oiio_TypeDesc_t, nvalues: c_int, interp: oiio_Interp, value: *const c_void, copy: bool, _result: *mut *mut oiio_ParamValue_t) -> c_int;
+
 pub fn oiio_ParamValueList_find(_this: *mut oiio_ParamValueList_t, name: *const c_char, type_: oiio_TypeDesc_t, casesensitive: bool, _result: *mut *mut oiio_ParamValue_t) -> c_int;
 
 pub fn oiio_ParamValueList_find_const(_this: *const oiio_ParamValueList_t, name: *const c_char, type_: oiio_TypeDesc_t, casesensitive: bool, _result: *mut *const oiio_ParamValue_t) -> c_int;
@@ -1823,11 +1946,11 @@ pub fn oiio_ParamValueList_getattributetype(_this: *const oiio_ParamValueList_t,
 
 pub fn oiio_ParamValueList_getattribute(_this: *const oiio_ParamValueList_t, name: *const c_char, type_: oiio_TypeDesc_t, value: *mut c_void, casesensitive: bool, _result: *mut bool) -> c_int;
 
-pub fn oiio_TextureSystem_texture_handle(self_: *mut oiio_TextureSystem_t, file_name: *mut oiio_ustring_t, per_thread: *mut oiio_Perthread_t, _result: *mut *mut oiio_TextureHandle_t) -> c_int;
+pub fn oiio_TextureSystem_texture_handle(self_: *mut oiio_TextureSystemSharedPtr_t, file_name: *mut oiio_ustring_t, per_thread: *mut oiio_Perthread_t, _result: *mut *mut oiio_TextureHandle_t) -> c_int;
 
-pub fn oiio_TextureSystem_texture(self_: *mut oiio_TextureSystem_t, texture_handle: *mut oiio_TextureHandle_t, per_thread: *mut oiio_Perthread_t, options: *mut oiio_TextureOpt_t, s: c_float, t: c_float, ds_dx: c_float, dt_dx: c_float, ds_dy: c_float, dt_dy: c_float, channel_count: c_int, result: *mut c_float, d_result_ds: *mut c_float, d_result_dt: *mut c_float) -> c_int;
+pub fn oiio_TextureSystem_texture(self_: *mut oiio_TextureSystemSharedPtr_t, texture_handle: *mut oiio_TextureHandle_t, per_thread: *mut oiio_Perthread_t, options: *mut oiio_TextureOpt_v2_t, s: c_float, t: c_float, ds_dx: c_float, dt_dx: c_float, ds_dy: c_float, dt_dy: c_float, channel_count: c_int, result: *mut c_float, d_result_ds: *mut c_float, d_result_dt: *mut c_float) -> c_int;
 
-pub fn oiio_TextureSystem_make_texture_options(first_channel: c_int, sub_image: c_int, sub_image_name: *const c_char, s_wrap: oiio_Wrap, t_wrap: oiio_Wrap, mip_mode: oiio_MipMode, interpolation_mode: oiio_InterpMode, anisotropic_samples: c_int, conservative_filter: bool, s_blur: c_float, t_blur: c_float, s_width: c_float, t_width: c_float, fill: c_float, missing_color: *mut c_float, time: c_float, random: c_float, samples: c_int, r_wrap: oiio_Wrap, r_blur: c_float, r_width: c_float, dest: *mut oiio_TextureOpt_t) -> c_int;
+pub fn oiio_TextureSystem_make_texture_options(first_channel: c_int, sub_image: c_int, sub_image_name: *const c_char, s_wrap: oiio_Wrap, t_wrap: oiio_Wrap, mip_mode: oiio_MipMode, interpolation_mode: oiio_InterpMode, anisotropic_samples: c_int, conservative_filter: bool, s_blur: c_float, t_blur: c_float, s_width: c_float, t_width: c_float, fill: c_float, missing_color: *mut c_float, random: c_float, r_wrap: oiio_Wrap, r_blur: c_float, r_width: c_float, dest: *mut oiio_TextureOpt_v2_t) -> c_int;
 
 pub fn oiio_TypeDesc_fromstring(_this: *mut oiio_TypeDesc_t, typestring: *const c_char, _result: *mut usize) -> c_int;
 

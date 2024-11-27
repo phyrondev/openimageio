@@ -3,7 +3,25 @@
 #include <OpenImageIO/imagecache.h>
 #include <OpenImageIO/texture.h>
 
+namespace bblext {
+
+std::shared_ptr<OIIO::ImageCache>
+ImageCacheSharedPtr_ctor(OIIO::ImageCache *ptr) {
+  return std::shared_ptr<OIIO::ImageCache>(ptr);
+}
+
+} // namespace bblext
+
 BBL_MODULE(oiio) {
+
+  bbl::Class<std::shared_ptr<OIIO::ImageCache>>("ImageCacheSharedPtr")
+      .smartptr_to<OIIO::ImageCache>()
+      /* .ctor(bbl::Class<std::shared_ptr<OIIO::ImageCache>>::Ctor<
+                 OIIO::ImageCache *>("ptr"),
+             "ctor")*/
+      .ignore_all_unbound();
+
+  bbl::fn(&bblext::ImageCacheSharedPtr_ctor);
 
   bbl::Class<OIIO::ImageCache>()
       .m(&OIIO::ImageCache::create)
@@ -29,10 +47,12 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageCache::create_thread_info)
       .m(&OIIO::ImageCache::destroy_thread_info)
 
-#if OIIO_VERSION >= OIIO_MAKE_VERSION(2,5,0)
-      .m((OIIO::ImageCache::ImageHandle * (OIIO::ImageCache::*)(OIIO::ustring,
-       OIIO::ImageCache::Perthread *, const OIIO::TextureOpt * ))
-          &OIIO::ImageCache::get_image_handle, "get_image_handle")
+#if OIIO_VERSION >= OIIO_MAKE_VERSION(2, 5, 0)
+      .m((OIIO::ImageCache::ImageHandle *
+          (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *,
+                                const OIIO::TextureOpt *)) &
+             OIIO::ImageCache::get_image_handle,
+         "get_image_handle")
 #else
       .m((OIIO::ImageCache::ImageHandle *
           (OIIO::ImageCache::*)(OIIO::ustring, OIIO::ImageCache::Perthread *)) &

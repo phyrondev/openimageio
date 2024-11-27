@@ -1,6 +1,7 @@
 #include <babble>
 
 #include <OpenImageIO/imagebufalgo.h>
+#include <OpenImageIO/paramlist.h>
 
 BBL_MODULE(oiio) {
 
@@ -129,10 +130,16 @@ BBL_MODULE(oiio) {
           "ImageBufAlgo_colorconvert");
 #endif
 
+  // resample()
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, bool, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::resample,
+          "ImageBufAlgo_resample");
+
   // resize()
-  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::Filter2D *,
-                    OIIO::ROI, int))&OIIO::ImageBufAlgo::resize,
-          "ImageBufAlgo_resize");
+  bbl::fn(
+      (bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ParamValueSpan,
+                OIIO::ROI, int))&OIIO::ImageBufAlgo::resize,
+      "ImageBufAlgo_resize");
 
   // warp()
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::M33fParam,
@@ -191,4 +198,21 @@ BBL_MODULE(oiio) {
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
                     int))&OIIO::ImageBufAlgo::repremult,
           "ImageBufAlgo_repremult");
+
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &,
+                    const OIIO::ImageBuf &, bool, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::convolve,
+          "ImageBufAlgo_convolve");
+
+  bbl::fn((OIIO::ImageBuf(*)(OIIO::string_view, float, float, float,
+                             bool))&OIIO::ImageBufAlgo::make_kernel,
+          "ImageBufAlgo_from_kernel");
+
+  bbl::fn((std::string(*)(const OIIO::ImageBuf &, OIIO::string_view, OIIO::ROI,
+                          int, int))&OIIO::ImageBufAlgo::computePixelHashSHA1,
+          "ImageBufAlgo_computePixelHashSHA1");
+
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
+                    int))&OIIO::ImageBufAlgo::crop,
+          "ImageBufAlgo_crop");
 }

@@ -22,10 +22,10 @@ use core::ptr;
 /// pixels falling underneath it for each dst pixel. The caller may specify a
 /// reconstruction filter by name and width (expressed in pixels units of the
 /// dst image), or rotate() will choose a reasonable default high-quality
-/// default filter ([`Lanczos3`](PixelFilter::Lanczos3)) if the empty string is
-/// passed, and a reasonable filter width if filterwidth is 0. (Note that some
-/// filter choices only make sense with particular width, in which case this
-/// filterwidth parameter may be ignored.)
+/// default filter ([`Lanczos3`](PixelFilter2D::Lanczos3)) if the empty string
+/// is passed, and a reasonable filter width if filterwidth is 0. (Note that
+/// some filter choices only make sense with particular width, in which case
+/// this filterwidth parameter may be ignored.)
 impl ImageBuffer {
     #[named]
     pub fn replace_by_rotate(&mut self, source: &ImageBuffer, angle: f32) -> Result<&mut Self> {
@@ -119,6 +119,10 @@ impl ImageBuffer {
     }
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`rotate_with()`](ImageBuffer::rotate_with),
+/// [`replace_by_rotate_with()`](ImageBuffer::replace_by_rotate_with)
+/// methods.
 #[derive(Clone, Default)]
 pub struct RotateOptions {
     pub filter: Option<Filter2D>,
@@ -141,7 +145,7 @@ impl ImageBuffer {
                 options.recompute_region,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -170,7 +174,7 @@ impl ImageBuffer {
                 options.recompute_region,
                 options.region.clone().into(),
                 options.thread_count as _,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             is_ok.assume_init()
@@ -196,7 +200,7 @@ mod tests {
                 // Use a Blackmann-Harris filter to avoid halos easily
                 // introduced when operating on HDRs with the default one,
                 // Lanczos3.
-                filter: Some(PixelFilter::BlackmanHarris.into()),
+                filter: Some(PixelFilter2D::BlackmanHarris.into()),
                 recompute_region: true,
                 ..Default::default()
             },

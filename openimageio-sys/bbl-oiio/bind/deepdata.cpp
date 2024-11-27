@@ -7,11 +7,11 @@
 namespace bblext {
 
 auto DeepData_channelname(OIIO::DeepData const &dd, int c) -> char const * {
-  return dd.channelname(c).c_str();
+  return OIIO::c_str(dd.channelname(c));
 }
 
 auto DeepData_set_all_samples(OIIO::DeepData &dd, unsigned int const *samples,
-                              long long num) -> void {
+                              unsigned long num) -> void {
   dd.set_all_samples({samples, num});
 }
 
@@ -23,15 +23,15 @@ auto DeepData_all_samples(OIIO::DeepData &dd, unsigned int const **samples,
 }
 
 auto DeepData_all_channeltypes(OIIO::DeepData &dd,
-                               OIIO::TypeDesc const **samples,
-                               long long *num) -> void {
+                               OIIO::TypeDesc const **samples, long long *num)
+    -> void {
   auto result = dd.all_channeltypes();
   *samples = result.data();
   *num = result.size();
 }
 
-auto DeepData_all_data(OIIO::DeepData &dd, char const **samples,
-                       long long *num) -> void {
+auto DeepData_all_data(OIIO::DeepData &dd, char const **samples, long long *num)
+    -> void {
   auto result = dd.all_data();
   *samples = result.data();
   *num = result.size();

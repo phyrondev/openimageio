@@ -1,7 +1,7 @@
 use crate::*;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use core::{ffi::c_int, mem::MaybeUninit, num::NonZeroU16, ptr};
-use std::string::String;
+use std::{hash::Hash, string::String};
 
 #[cfg(feature = "algorithms")]
 pub mod algorithms;
@@ -9,6 +9,7 @@ pub mod algorithms;
 //pub use algorithms::*;
 
 mod adapters;
+pub use adapters::*;
 
 mod internal;
 mod pixels;
@@ -78,7 +79,7 @@ impl Clone for ImageBuffer {
                 // Will copy format from `self` as `oiio_TypeDesc_t::default()`
                 // (Rust) maps to `TypeDesc::UNKNOWN` (C++).
                 oiio_TypeDesc_t::default(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             Self {
@@ -99,17 +100,14 @@ impl Drop for ImageBuffer {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub enum InitializePixels {
-    No = 0,
+    No = oiio_InitializePixels::oiio_InitializePixels_No.0 as _,
     #[default]
-    Yes = 1,
+    Yes = oiio_InitializePixels::oiio_InitializePixels_Yes.0 as _,
 }
 
 impl From<InitializePixels> for oiio_InitializePixels {
     fn from(initialize_pixels: InitializePixels) -> Self {
-        match initialize_pixels {
-            InitializePixels::No => oiio_InitializePixels::oiio_InitializePixels_No,
-            InitializePixels::Yes => oiio_InitializePixels::oiio_InitializePixels_Yes,
-        }
+        unsafe { std::mem::transmute(initialize_pixels) }
     }
 }
 
@@ -119,7 +117,7 @@ impl ImageBuffer {
 
         Self {
             ptr: unsafe {
-                oiio_ImageBuf_default(&mut ptr as *mut _ as _);
+                oiio_ImageBuf_default(&raw mut ptr as _);
                 ptr.assume_init()
             },
             image_cache: None,
@@ -127,68 +125,8 @@ impl ImageBuffer {
         }
     }
 
-    pub fn new_with(
-        image_specificaiton: &ImageSpecification,
-        initialize_pixels: InitializePixels,
-    ) -> Self {
-        Self::new_empty_ffi(
-            &ImageSpecInternal::from(image_specificaiton),
-            initialize_pixels,
-        )
-    }
-}
-
-impl ImageBuffer {
-    pub(crate) fn new_empty_ffi(
-        image_spec_internal: &ImageSpecInternal,
-        initialize_pixels: InitializePixels,
-    ) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
-
-        Self {
-            ptr: unsafe {
-                oiio_ImageBuf_ctor_03(
-                    image_spec_internal.as_raw_ptr(),
-                    initialize_pixels.into(),
-                    &mut ptr as *mut _ as _,
-                );
-                ptr.assume_init()
-            },
-            image_cache: None,
-            //_marker: PhantomData,
-        }
-    }
-
-    pub(crate) fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
-
-        Self {
-            ptr: unsafe {
-                oiio_ImageBuf_ctor_01(
-                    StringView::from(name).ptr,
-                    options.sub_image as _,
-                    options.mip_level as _,
-                    options
-                        .image_cache
-                        .as_ref()
-                        .map(|c| c.as_raw_ptr_mut())
-                        .unwrap_or(ptr::null_mut()),
-                    options
-                        .image_specification
-                        .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
-                        .unwrap_or(ptr::null_mut()),
-                    /*options
-                    .io_proxy
-                    .map(|p| p.as_raw_ptr())
-                    .unwrap_or(ptr::null_mut()),*/
-                    ptr::null_mut() as _,
-                    &mut ptr as *mut _ as _,
-                );
-                ptr.assume_init()
-            },
-            image_cache: options.image_cache.clone(),
-            //_marker: PhantomData,
-        }
+    pub fn new_with(image_spec: &ImageSpec, initialize_pixels: InitializePixels) -> Self {
+        Self::new_empty_ffi(&ImageSpecInternal::from(image_spec), initialize_pixels)
     }
 }
 
@@ -235,15 +173,14 @@ impl ImageBuffer {
         unsafe {
             oiio_ImageBuf_write(
                 self.ptr,
-                StringView::from(file).ptr,
-                &mut is_ok as *mut _ as _,
+                StringView::from(file).as_raw_ptr(),
+                &raw mut is_ok as _,
             );
 
             if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(
-                    self.error(true)
-                        .unwrap_or("ImageBuffer::write(): unknown error".into())
-                ))
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
             } else {
                 Ok(())
             }
@@ -272,23 +209,30 @@ impl ImageBuffer {
                 options
                     .type_description
                     .map(|t| t.into())
-                    .unwrap_or((&TypeDescription::default()).into()),
+                    .unwrap_or((&TypeDesc::default()).into()),
                 match options.file_format {
                     Some(file_format) => StringView::from(file_format),
                     None => StringView::default(),
                 }
                 .ptr,
-                &mut is_ok as *mut _ as _,
+                &raw mut is_ok as _,
             );
 
             if !is_ok.assume_init() || !self.is_ok() {
-                Err(anyhow!(
-                    self.error(true)
-                        .unwrap_or("ImageBuffer::write(): unknown error".into())
-                ))
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::write(): unknown error".into())))
             } else {
                 Ok(())
             }
+        }
+    }
+
+    pub(crate) fn from_raw_ptr(ptr: *mut oiio_ImageBuf_t) -> Self {
+        Self {
+            ptr,
+            image_cache: None,
+            //_marker: PhantomData,
         }
     }
 }
@@ -508,7 +452,7 @@ impl ImageBuffer {
         .into()
     }
 
-    pub fn type_description(&self) -> TypeDescription {
+    pub fn type_description(&self) -> TypeDesc {
         let mut pixel_type = MaybeUninit::<oiio_TypeDesc_t>::uninit();
 
         (&unsafe {
@@ -550,7 +494,7 @@ impl ImageBuffer {
         }
     }
 
-    /// Alters the metadata of the [`ImageSpecification`] in the `ImageBuffer`
+    /// Alters the metadata of the [`ImageSpec`] in the `ImageBuffer`
     /// to reset the 'origin' of the pixel *data window* to the specified
     /// coordinates.
     ///
@@ -562,7 +506,7 @@ impl ImageBuffer {
         }
     }
 
-    /// Alters the metadata of the [`ImageSpecification`] in the `ImageBuffer`
+    /// Alters the metadata of the [`ImageSpec`] in the `ImageBuffer`
     /// to set the display window to the specified dimensions.
     ///
     /// This does not affect the size of the pixel *data window*.
@@ -597,9 +541,13 @@ impl ImageBuffer {
         }
     }
 
-    pub fn set_write_format(&mut self) {}
+    pub fn set_write_format(&mut self) {
+        unimplemented!()
+    }
 
-    pub fn set_write_per_channel_format(&mut self, channel_format: &[TypeDescription]) {}
+    pub fn set_write_per_channel_format(&mut self, _channel_format: &[TypeDesc]) {
+        unimplemented!()
+    }
 }
 
 /// # C++ API Getter Aliases
@@ -659,15 +607,15 @@ impl ImageBuffer {
 /// app buffer.
 ///
 /// Optionally request the pixel data type to be used. The default of
-/// `None` means to use whatever data type is used by the src. If *this is
+/// `None` means to use whatever data type is used by the source. If *this is
 /// already initialized and has [`AppBuffer`](ImageBufferStorage::AppBuffer)
 /// storage ('wrapping' an application buffer), this parameter is ignored.
 impl ImageBuffer {
-    pub fn copy(&self, type_description: &TypeDescription) -> Self {
+    pub fn copy(&self, type_description: &TypeDesc) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
-            oiio_ImageBuf_copy_01(self.ptr, type_description.into(), &mut ptr as *mut _ as _);
+            oiio_ImageBuf_copy_01(self.ptr, type_description.into(), &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
@@ -677,7 +625,7 @@ impl ImageBuffer {
         }
     }
 
-    pub fn from_copy(type_description: &TypeDescription) -> Self {
+    pub fn from_copy(type_description: &TypeDesc) -> Self {
         let image_buffer = Self::new();
 
         image_buffer.copy(type_description)
@@ -717,21 +665,21 @@ impl From<WrapMode> for oiio_WrapMode {
     }
 }
 
-/// Optional parameters for the [`ImageBuffer::from_file_with()`] method.
-#[derive(Default)]
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`from_file_with()`](ImageBuffer::from_file_with) method.
+#[derive(Default, Debug)]
 pub struct FromFileOptions<'a> {
     /// The subimage to read (defaults to the first subimage of the file).
     pub sub_image: u32,
     /// The miplevel to read (defaults to the highest-res miplevel of the
     /// file).
     pub mip_level: u32,
-    /// Optionally, an `ImageCache` to use, if possible, rather than reading
-    /// the entire image file into memory.
+    /// An `ImageCache` to use, if possible, rather than reading the entire
+    /// image file into memory.
     pub image_cache: Option<ImageCache>,
-    /// Optionally, a pointer to an `ImageSpec` whose metadata contains
-    /// configuration hints that set options related to the opening and reading
-    /// of the file.
-    pub image_specification: Option<&'a ImageSpecification>,
+    /// An `ImageSpec` whose metadata contains configuration hints that set
+    /// options related to the opening and reading of the file.
+    pub image_spec: Option<&'a ImageSpec>,
 }
 
 pub trait FnProgress<'a>: Fn(f32) + 'a {}
@@ -741,20 +689,24 @@ pub enum PixelLayout {
     Tile(NonZeroU16, NonZeroU16, NonZeroU16),
 }
 
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`write_with()`](ImageBuffer::write_with) method.
 #[derive(Default)]
 pub struct WriteOptions<'a> {
-    /// Optional override of the pixel data format to use in the file being
-    /// written. The default (UNKNOWN) means to try writing the same
-    /// data format that as pixels are stored within the `ImageBuffer`'s memory
-    /// (or whatever type was specified by a prior call to
-    /// set_write_format()). In either case, if the file format does not
-    /// support that data type, another will be automatically chosen that is
-    /// supported by the file type and loses as little precision as
-    /// possible.
-    pub type_description: Option<&'a TypeDescription>,
-    /// Optional overriPde of the file format to write. The default (`None`)
-    /// means to infer the file format from the extension of the
-    /// filename (for example, `"foo.tif"`" will write a TIFF file).
+    /// Override of the pixel data format to use in the file being written.
+    ///
+    /// The default (`None`) means to try writing the same data format that as
+    /// pixels are stored within the `ImageBuffer`'s memory (or whatever type
+    /// was specified by a prior call to [`set_write_format()`]).
+    ///
+    /// In either case, if the file format does not support that data type,
+    /// another will be automatically chosen that is supported by the file
+    /// type and loses as little precision as possible.
+    pub type_description: Option<&'a TypeDesc>,
+    /// Override of the file format to write.
+    ///
+    /// The default (`None`) means to infer the file format from the extension
+    /// of the filename (for example, `"foo.tif"` will write a TIFF file).
     pub file_format: Option<Ustr>,
     /// Override the tile sizing.
     ///
@@ -816,7 +768,7 @@ impl IntoIterator for ImageBuffer {
             oiio_Iterator_ctor_00(
                 self.ptr,
                 WrapMode::Default.into(),
-                &mut ptr as *mut _ as _,
+                &raw mut ptr as _,
             );
 
             ImageBufferIterator {
@@ -882,6 +834,56 @@ impl<'a> Iterator<T> for ImageBuffer<'a> {
         Some(current)
     }
 }*/
+
+impl ImageBuffer {
+    pub(crate) fn new_empty_ffi(
+        image_spec_internal: &ImageSpecInternal,
+        initialize_pixels: InitializePixels,
+    ) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        Self {
+            ptr: unsafe {
+                oiio_ImageBuf_ctor_03(
+                    image_spec_internal.as_raw_ptr(),
+                    initialize_pixels.into(),
+                    &raw mut ptr as _,
+                );
+                ptr.assume_init()
+            },
+            image_cache: None,
+            //_marker: PhantomData,
+        }
+    }
+
+    pub(crate) fn from_file_ffi(name: &Utf8Path, options: &FromFileOptions<'_>) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        Self {
+            ptr: unsafe {
+                oiio_ImageBuf_ctor_01(
+                    StringView::from(name).as_raw_ptr() as _,
+                    options.sub_image as _,
+                    options.mip_level as _,
+                    options
+                        .image_cache
+                        .as_ref()
+                        .map(|c| c.as_raw_ptr_mut())
+                        .unwrap_or(ImageCache::null_ptr()),
+                    options
+                        .image_spec
+                        .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
+                        .unwrap_or(ptr::null_mut()),
+                    ptr::null_mut() as _,
+                    &raw mut ptr as _,
+                );
+                ptr.assume_init()
+            },
+            image_cache: options.image_cache.clone(),
+            //_marker: PhantomData,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

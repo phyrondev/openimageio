@@ -5,12 +5,13 @@
 namespace bblext {
 
 OIIO::TextureSystem::TextureHandle *
-TextureSystem_texture_handle(OIIO::TextureSystem *self, OIIO::ustring file_name,
+TextureSystem_texture_handle(std::shared_ptr<OIIO::TextureSystem> self,
+                             OIIO::ustring file_name,
                              OIIO::TextureSystem::Perthread *per_thread) {
   return self->get_texture_handle(file_name, per_thread);
 }
 
-void TextureSystem_texture(OIIO::TextureSystem *self,
+void TextureSystem_texture(std::shared_ptr<OIIO::TextureSystem> self,
                            OIIO::TextureSystem::TextureHandle *texture_handle,
                            OIIO::TextureSystem::Perthread *per_thread,
                            OIIO::TextureOpt &options, float s, float t,
@@ -27,8 +28,8 @@ void TextureSystem_make_texture_options(
     OIIO::TextureOpt::MipMode mip_mode,
     OIIO::TextureOpt::InterpMode interpolation_mode, int anisotropic_samples,
     bool conservative_filter, float s_blur, float t_blur, float s_width,
-    float t_width, float fill, float *missing_color, float time, float random,
-    int samples, OIIO::TextureOpt::Wrap r_wrap, float r_blur, float r_width,
+    float t_width, float fill, float *missing_color, float random,
+    OIIO::TextureOpt::Wrap r_wrap, float r_blur, float r_width,
     OIIO::TextureOpt *dest) {
   // Safe but slower. We initialize the struct with defaults and then overwrite
   // it.
@@ -49,9 +50,7 @@ void TextureSystem_make_texture_options(
   dest->twidth = t_width;
   dest->fill = fill;
   dest->missingcolor = missing_color;
-  dest->time = time;
   dest->rnd = random;
-  dest->samples = samples;
   dest->rwrap = r_wrap;
   dest->rblur = r_blur;
   dest->rwidth = r_width;
@@ -61,15 +60,20 @@ void TextureSystem_make_texture_options(
 
 BBL_MODULE(oiio) {
 
+  bbl::Class<std::shared_ptr<OIIO::TextureSystem>>("TextureSystemSharedPtr")
+      .smartptr_to<OIIO::TextureSystem>()
+      .ignore_all_unbound();
+
   bbl::Enum<OIIO::TextureOpt::Wrap>();
   bbl::Enum<OIIO::TextureOpt::MipMode>();
   bbl::Enum<OIIO::TextureOpt::InterpMode>();
 
   bbl::Class<OIIO::TextureSystem>()
-      .m((OIIO::TextureSystem * (*)(bool, OIIO::ImageCache *)) &
+      .m((std::shared_ptr<OIIO::TextureSystem>(*)(bool, OIIO::ImageCache *)) &
              OIIO::TextureSystem::create,
          "create")
-      .m((void (*)(OIIO::TextureSystem *, bool)) & OIIO::TextureSystem::destroy,
+      .m((void (*)(std::shared_ptr<OIIO::TextureSystem>,
+                   bool))&OIIO::TextureSystem::destroy,
          "destroy");
 
   bbl::ClassIncomplete<OIIO::TextureSystem::Perthread>();

@@ -11,7 +11,7 @@ impl<'a> CspanF32<'a> {
         let mut ptr = MaybeUninit::<*const oiio_CspanF32_t>::uninit();
 
         unsafe {
-            oiio_CspanF32_ctor(data.as_ptr() as _, data.len() as _, &mut ptr as *mut _ as _);
+            oiio_CspanF32_ctor(data.as_ptr() as _, data.len() as _, &raw mut ptr as _);
 
             Self {
                 ptr: ptr.assume_init(),
