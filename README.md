@@ -52,6 +52,8 @@ use openimageio::{FromFileOptions, ImageCache, ImageBuffer, Utf8Path};
 fn main() -> Result<()> {
     // Create an app-global, shared cache that will persist after this
     // instance gets dropped.
+    //
+    // I.e. there is only one such shared cache per process.
     let image_cache = ImageCache::shared(
         // Persist cache accross this process.
         true
@@ -63,7 +65,7 @@ fn main() -> Result<()> {
         &Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
         &FromFileOptions {
             image_cache,
-            Default::default()
+            ..Default::default()
         },
     )?;
 

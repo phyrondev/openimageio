@@ -2,8 +2,9 @@ use crate::*;
 use anyhow::Result;
 use core::{
     mem::{transmute, MaybeUninit},
-    ops::Range,
+    ops::{Div, Mul, Range},
 };
+use num_traits::AsPrimitive;
 
 pub(crate) static ALL: Bounds = Bounds {
     x: i32::MIN..0,
@@ -292,6 +293,32 @@ impl Bounds {
 
     pub fn channel_end(&self) -> u32 {
         self.channel.end
+    }
+}
+
+impl<T: AsPrimitive<f32>> Mul<T> for Bounds {
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        Self {
+            x: (self.x.start as f32 * rhs.as_()) as _..(self.x.end as f32 * rhs.as_()) as _,
+            y: (self.y.start as f32 * rhs.as_()) as _..(self.y.end as f32 * rhs.as_()) as _,
+            z: (self.z.start as f32 * rhs.as_()) as _..(self.z.end as f32 * rhs.as_()) as _,
+            channel: self.channel.start..self.channel.end,
+        }
+    }
+}
+
+impl<T: AsPrimitive<f32>> Div<T> for Bounds {
+    type Output = Self;
+
+    fn div(self, rhs: T) -> Self::Output {
+        Self {
+            x: (self.x.start as f32 / rhs.as_()) as _..(self.x.end as f32 / rhs.as_()) as _,
+            y: (self.y.start as f32 / rhs.as_()) as _..(self.y.end as f32 / rhs.as_()) as _,
+            z: (self.z.start as f32 / rhs.as_()) as _..(self.z.end as f32 / rhs.as_()) as _,
+            channel: self.channel.start..self.channel.end,
+        }
     }
 }
 

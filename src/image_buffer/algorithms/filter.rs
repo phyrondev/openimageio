@@ -151,12 +151,12 @@ impl From<PixelFilter2D> for Filter2D {
     fn from(pf: PixelFilter2D) -> Self {
         match pf {
             PixelFilter2D::Nearest => {
-                let mut f2d = Filter2D::new(PixelFilter2D::Box, 0.0, 0.0);
+                let mut f2d = Filter2D::new(PixelFilter2D::Box, 1.0, 1.0);
                 f2d.filter = pf;
                 f2d
             }
             PixelFilter2D::NearestBilinear => {
-                let mut f2d = Filter2D::new(PixelFilter2D::Box, 0.1, 0.1);
+                let mut f2d = Filter2D::new(PixelFilter2D::Triangle, 1.0, 1.0);
                 f2d.filter = pf;
                 f2d
             }

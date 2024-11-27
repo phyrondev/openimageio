@@ -94,8 +94,9 @@
 //!
 //! * Pixel data are presented as 8- 16- or 32-bit integers (signed or
 //!   unsigned), 16- 32- or 64-bit float. *Nothing else*. No bit images, or
-//!   pixel value boundaries that aren't byte boundaries. Files with will appear
-//!   to the client application as 8-bit unsigned grayscale images.
+//!   pixel value boundaries that aren't byte boundaries. Files with bit depths
+//!   < 8 will appear to the client application as 8-bit unsigned grayscale
+//!   images.
 //!
 //! * Only fully elaborated, non-compressed data are accepted and returned by
 //!   the API. Compression or special encodings are handled entirely within an
@@ -233,6 +234,7 @@
 //!
 //! # Features
 #![doc = document_features::document_features!()]
+
 pub use anyhow::Result;
 pub use camino::{Utf8Path, Utf8PathBuf};
 use core::mem::transmute;
