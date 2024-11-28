@@ -89,7 +89,7 @@ impl ChannelFormat {
 /// [`ImageSpec`], is available behind a `type` alias.
 ///
 /// [C++ Documentation](https://openimageio.readthedocs.io/en/latest/imageioapi.html#image-specification-imagespec)
-#[derive(Default, Debug, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ImageSpec {
     /// Origin (upper left corner) of pixel data.
     pub x: i32,
@@ -191,6 +191,7 @@ impl ImageSpec {
         Self {
             width,
             height,
+            depth: 1,
             channel_format: ChannelFormat::Uniform(channel_type, channel_count as _),
             ..Default::default()
         }
@@ -213,8 +214,8 @@ pub(crate) struct ImageSpecInternal {
     }
 }*/
 
-impl From<&ImageSpec> for ImageSpecInternal {
-    fn from(i: &ImageSpec) -> Self {
+impl From<ImageSpec> for ImageSpecInternal {
+    fn from(i: ImageSpec) -> Self {
         let mut ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
 
         unsafe {

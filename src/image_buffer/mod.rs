@@ -126,7 +126,10 @@ impl ImageBuffer {
     }
 
     pub fn new_with(image_spec: &ImageSpec, initialize_pixels: InitializePixels) -> Self {
-        Self::new_empty_ffi(&ImageSpecInternal::from(image_spec), initialize_pixels)
+        Self::new_empty_ffi(
+            &ImageSpecInternal::from(image_spec.clone()),
+            initialize_pixels,
+        )
     }
 }
 
@@ -872,7 +875,7 @@ impl ImageBuffer {
                         .unwrap_or(ImageCache::null_ptr()),
                     options
                         .image_spec
-                        .map(|s| ImageSpecInternal::from(s).as_raw_ptr())
+                        .map(|image_spec| ImageSpecInternal::from(image_spec.clone()).as_raw_ptr())
                         .unwrap_or(ptr::null_mut()),
                     ptr::null_mut() as _,
                     &raw mut ptr as _,
@@ -880,6 +883,32 @@ impl ImageBuffer {
                 ptr.assume_init()
             },
             image_cache: options.image_cache.clone(),
+            //_marker: PhantomData,
+        }
+    }
+
+    pub(crate) fn from_dimensions_ffi(
+        width: u32,
+        height: u32,
+        nchannels: u16,
+        format: TypeDesc,
+        color_space: Option<&str>,
+    ) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
+
+        Self {
+            ptr: unsafe {
+                oiio_ImageBuf_from_dimensions(
+                    width as _,
+                    height as _,
+                    nchannels as _,
+                    format.into(),
+                    StringView::from(color_space.unwrap_or("")).as_raw_ptr() as _,
+                    &raw mut ptr as _,
+                );
+                ptr.assume_init()
+            },
+            image_cache: None,
             //_marker: PhantomData,
         }
     }

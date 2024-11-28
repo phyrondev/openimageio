@@ -35,3 +35,38 @@ impl CspanF32<'_> {
         self.ptr
     }
 }
+
+pub struct CspanU8<'a> {
+    ptr: *const oiio_CspanU8_t,
+    marker: PhantomData<*const &'a ()>,
+}
+
+impl<'a> CspanU8<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        let mut ptr = MaybeUninit::<*const oiio_CspanU8_t>::uninit();
+
+        unsafe {
+            oiio_CspanU8_ctor(data.as_ptr() as _, data.len() as _, &raw mut ptr as _);
+
+            Self {
+                ptr: ptr.assume_init(),
+                marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl Drop for CspanU8<'_> {
+    fn drop(&mut self) {
+        unsafe {
+            oiio_CspanF32_dtor(self.ptr as _);
+        }
+    }
+}
+
+impl CspanU8<'_> {
+    #[inline(always)]
+    pub fn as_raw_ptr(&self) -> *const oiio_CspanU8_t {
+        self.ptr
+    }
+}

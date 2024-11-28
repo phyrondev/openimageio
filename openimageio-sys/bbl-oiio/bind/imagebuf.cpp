@@ -70,6 +70,16 @@ void ImageBuf_expand_roi_full(OIIO::ImageBuf &buf) {
   buf.set_roi_full(buf.roi());
 }
 
+OIIO::ImageBuf ImageBuf_from_dimensions(int width, int height, int nchannels,
+                                        OIIO::TypeDesc format,
+                                        OIIO::string_view color_space) {
+  OIIO::ImageSpec i_s = OIIO::ImageSpec(width, height, nchannels, format);
+  i_s.set_colorspace(color_space);
+
+  OIIO::ImageBuf i_b = OIIO::ImageBuf(i_s);
+  return i_b;
+}
+
 } // namespace bblext
 
 BBL_MODULE(oiio) {
@@ -284,6 +294,9 @@ BBL_MODULE(oiio) {
   bbl::fn(&bblext::ImageBuf_set_pixels_u16);
   bbl::fn(&bblext::ImageBuf_set_pixels_u8);
   bbl::fn(&bblext::ImageBuf_expand_roi_full);
+
+  // FIXME: why can we not call ImageSpec::from_dimensions and have it work?
+  bbl::fn(&bblext::ImageBuf_from_dimensions);
 
   bbl::Class<std::shared_ptr<OIIO::ImageBuf>>("ImageBufSharedPtr")
       .smartptr_to<OIIO::ImageBuf>();

@@ -10,8 +10,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
 --no-system-header-prefix=/usr/lib/gcc/x86_64-linux-gnu/14/../../../../include/c++/14/backward \
 ")
 
-
-
 find_package(
     OpenImageIO 3
     REQUIRED
@@ -34,6 +32,7 @@ set(bindfiles
     bind/imagebufalgo.cpp
     bind/imagecache.cpp
     bind/imageio.cpp
+    bind/imagespec.cpp
     bind/paramlist.cpp
     bind/texture.cpp
     bind/typedesc.cpp

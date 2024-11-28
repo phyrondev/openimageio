@@ -70,6 +70,15 @@ impl oiio_TextAlignY {
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
 #[repr(transparent)]
+pub struct oiio_OpenMode (pub c_uint);
+impl oiio_OpenMode {
+    pub const oiio_OpenMode_Create: oiio_OpenMode = oiio_OpenMode(0);
+    pub const oiio_OpenMode_AppendSubimage: oiio_OpenMode = oiio_OpenMode(1);
+    pub const oiio_OpenMode_AppendMIPLevel: oiio_OpenMode = oiio_OpenMode(2);
+}
+
+#[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
+#[repr(transparent)]
 pub struct oiio_SerialFormat (pub c_uint);
 impl oiio_SerialFormat {
     pub const oiio_SerialFormat_SerialText: oiio_SerialFormat = oiio_SerialFormat(0);
@@ -83,15 +92,6 @@ impl oiio_SerialVerbose {
     pub const oiio_SerialVerbose_SerialBrief: oiio_SerialVerbose = oiio_SerialVerbose(0);
     pub const oiio_SerialVerbose_SerialDetailed: oiio_SerialVerbose = oiio_SerialVerbose(1);
     pub const oiio_SerialVerbose_SerialDetailedHuman: oiio_SerialVerbose = oiio_SerialVerbose(2);
-}
-
-#[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct oiio_OpenMode (pub c_uint);
-impl oiio_OpenMode {
-    pub const oiio_OpenMode_Create: oiio_OpenMode = oiio_OpenMode(0);
-    pub const oiio_OpenMode_AppendSubimage: oiio_OpenMode = oiio_OpenMode(1);
-    pub const oiio_OpenMode_AppendMIPLevel: oiio_OpenMode = oiio_OpenMode(2);
 }
 
 #[derive(Copy, Clone, Default, Debug, Hash, PartialEq, Eq)]
@@ -343,11 +343,6 @@ pub struct oiio_ROI_t {
 }
 
 #[repr(C)]
-pub struct oiio_ImageSpec_t {
-    _unused: [u8; 0],
-}
-
-#[repr(C)]
 pub struct oiio_ImageInputPtr_t {
     _unused: [u8; 0],
 }
@@ -369,6 +364,11 @@ pub struct oiio_ImageOutput_t {
 
 #[repr(C)]
 pub struct oiio_IOProxy_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_ImageSpec_t {
     _unused: [u8; 0],
 }
 
@@ -1238,72 +1238,6 @@ pub fn oiio_ROI_default(_result: *mut oiio_ROI_t) -> c_int;
 
 pub fn oiio_ROI_with_dimensions(xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, chbegin: c_int, chend: c_int, _result: *mut oiio_ROI_t) -> c_int;
 
-pub fn oiio_ImageSpec_set_format(_this: *mut oiio_ImageSpec_t, fmt: oiio_TypeDesc_t) -> c_int;
-
-pub fn oiio_ImageSpec_default_channel_names(_this: *mut oiio_ImageSpec_t) -> c_int;
-
-pub fn oiio_ImageSpec_channel_bytes_00(_this: *const oiio_ImageSpec_t, _result: *mut usize) -> c_int;
-
-pub fn oiio_ImageSpec_channel_bytes_01(_this: *const oiio_ImageSpec_t, chan: c_int, native: bool, _result: *mut usize) -> c_int;
-
-pub fn oiio_ImageSpec_pixel_bytes_00(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut usize) -> c_int;
-
-pub fn oiio_ImageSpec_pixel_bytes_01(_this: *const oiio_ImageSpec_t, chbegin: c_int, chend: c_int, native: bool, _result: *mut usize) -> c_int;
-
-pub fn oiio_ImageSpec_scanline_bytes(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut u64) -> c_int;
-
-pub fn oiio_ImageSpec_tile_pixels(_this: *const oiio_ImageSpec_t, _result: *mut u64) -> c_int;
-
-pub fn oiio_ImageSpec_tile_bytes(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut u64) -> c_int;
-
-pub fn oiio_ImageSpec_image_pixels(_this: *const oiio_ImageSpec_t, _result: *mut u64) -> c_int;
-
-pub fn oiio_ImageSpec_image_bytes(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut u64) -> c_int;
-
-pub fn oiio_ImageSpec_size_t_safe(_this: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageSpec_auto_stride_00(xstride: *mut i64, ystride: *mut i64, zstride: *mut i64, channelsize: i64, nchannels: c_int, width: c_int, height: c_int) -> c_int;
-
-pub fn oiio_ImageSpec_auto_stride_01(xstride: *mut i64, ystride: *mut i64, zstride: *mut i64, format: oiio_TypeDesc_t, nchannels: c_int, width: c_int, height: c_int) -> c_int;
-
-pub fn oiio_ImageSpec_auto_stride_02(xstride: *mut i64, format: oiio_TypeDesc_t, nchannels: c_int) -> c_int;
-
-pub fn oiio_ImageSpec_metadata_val(p: *const oiio_ParamValue_t, human: bool, _result: *mut *mut oiio_String_t) -> c_int;
-
-pub fn oiio_ImageSpec_serialize(_this: *const oiio_ImageSpec_t, format: oiio_SerialFormat, verbose: oiio_SerialVerbose, _result: *mut *mut oiio_String_t) -> c_int;
-
-pub fn oiio_ImageSpec_to_xml(_this: *const oiio_ImageSpec_t, _result: *mut *mut oiio_String_t) -> c_int;
-
-pub fn oiio_ImageSpec_from_xml(_this: *mut oiio_ImageSpec_t, xml: *const c_char) -> c_int;
-
-pub fn oiio_ImageSpec_valid_tile_range(_this: *mut oiio_ImageSpec_t, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageSpec_channelformat(_this: *const oiio_ImageSpec_t, chan: c_int, _result: *mut oiio_TypeDesc_t) -> c_int;
-
-pub fn oiio_ImageSpec_get_channelformats(_this: *const oiio_ImageSpec_t, formats: *mut oiio_TypeDescVector_t) -> c_int;
-
-pub fn oiio_ImageSpec_roi(_this: *const oiio_ImageSpec_t, _result: *mut oiio_ROI_t) -> c_int;
-
-pub fn oiio_ImageSpec_roi_full(_this: *const oiio_ImageSpec_t, _result: *mut oiio_ROI_t) -> c_int;
-
-pub fn oiio_ImageSpec_set_roi(_this: *mut oiio_ImageSpec_t, r: *const oiio_ROI_t) -> c_int;
-
-pub fn oiio_ImageSpec_set_roi_full(_this: *mut oiio_ImageSpec_t, r: *const oiio_ROI_t) -> c_int;
-
-pub fn oiio_ImageSpec_set_colorspace(_this: *mut oiio_ImageSpec_t, name: *mut oiio_StringView_t) -> c_int;
-
-pub fn oiio_ImageSpec_copy_dimensions(_this: *mut oiio_ImageSpec_t, other: *const oiio_ImageSpec_t) -> c_int;
-
-pub fn oiio_ImageSpec_undefined(_this: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageSpec_new(format: oiio_TypeDesc_t, _result: *mut *mut oiio_ImageSpec_t) -> c_int;
-
-pub fn oiio_ImageSpec_with_dimensions(xres: c_int, yres: c_int, nchans: c_int, fmt: oiio_TypeDesc_t, _result: *mut *mut oiio_ImageSpec_t) -> c_int;
-
-pub fn oiio_ImageSpec_with_region(roi: *const oiio_ROI_t, fmt: oiio_TypeDesc_t, _result: *mut *mut oiio_ImageSpec_t) -> c_int;
-
-pub fn oiio_ImageSpec_dtor(_this: *mut oiio_ImageSpec_t) -> c_int;
-
 pub fn oiio_ImageInputPtr_format_name(_this: *const oiio_ImageInputPtr_t, _result: *mut *const c_char) -> c_int;
 
 pub fn oiio_ImageInputPtr_spec(_this: *const oiio_ImageInputPtr_t, _result: *mut *const oiio_ImageSpec_t) -> c_int;
@@ -1512,6 +1446,72 @@ pub fn oiio_ImageOutput_getthreads(_this: *const oiio_ImageOutput_t, _result: *m
 
 pub fn oiio_ImageOutput_dtor(_this: *mut oiio_ImageOutput_t) -> c_int;
 
+pub fn oiio_ImageSpec_set_format(_this: *mut oiio_ImageSpec_t, fmt: oiio_TypeDesc_t) -> c_int;
+
+pub fn oiio_ImageSpec_default_channel_names(_this: *mut oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageSpec_channel_bytes_00(_this: *const oiio_ImageSpec_t, _result: *mut usize) -> c_int;
+
+pub fn oiio_ImageSpec_channel_bytes_01(_this: *const oiio_ImageSpec_t, chan: c_int, native: bool, _result: *mut usize) -> c_int;
+
+pub fn oiio_ImageSpec_pixel_bytes_00(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut usize) -> c_int;
+
+pub fn oiio_ImageSpec_pixel_bytes_01(_this: *const oiio_ImageSpec_t, chbegin: c_int, chend: c_int, native: bool, _result: *mut usize) -> c_int;
+
+pub fn oiio_ImageSpec_scanline_bytes(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut u64) -> c_int;
+
+pub fn oiio_ImageSpec_tile_pixels(_this: *const oiio_ImageSpec_t, _result: *mut u64) -> c_int;
+
+pub fn oiio_ImageSpec_tile_bytes(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut u64) -> c_int;
+
+pub fn oiio_ImageSpec_image_pixels(_this: *const oiio_ImageSpec_t, _result: *mut u64) -> c_int;
+
+pub fn oiio_ImageSpec_image_bytes(_this: *const oiio_ImageSpec_t, native: bool, _result: *mut u64) -> c_int;
+
+pub fn oiio_ImageSpec_size_t_safe(_this: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageSpec_auto_stride_00(xstride: *mut i64, ystride: *mut i64, zstride: *mut i64, channelsize: i64, nchannels: c_int, width: c_int, height: c_int) -> c_int;
+
+pub fn oiio_ImageSpec_auto_stride_01(xstride: *mut i64, ystride: *mut i64, zstride: *mut i64, format: oiio_TypeDesc_t, nchannels: c_int, width: c_int, height: c_int) -> c_int;
+
+pub fn oiio_ImageSpec_auto_stride_02(xstride: *mut i64, format: oiio_TypeDesc_t, nchannels: c_int) -> c_int;
+
+pub fn oiio_ImageSpec_metadata_val(p: *const oiio_ParamValue_t, human: bool, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageSpec_serialize(_this: *const oiio_ImageSpec_t, format: oiio_SerialFormat, verbose: oiio_SerialVerbose, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageSpec_to_xml(_this: *const oiio_ImageSpec_t, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_ImageSpec_from_xml(_this: *mut oiio_ImageSpec_t, xml: *const c_char) -> c_int;
+
+pub fn oiio_ImageSpec_valid_tile_range(_this: *mut oiio_ImageSpec_t, xbegin: c_int, xend: c_int, ybegin: c_int, yend: c_int, zbegin: c_int, zend: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageSpec_channelformat(_this: *const oiio_ImageSpec_t, chan: c_int, _result: *mut oiio_TypeDesc_t) -> c_int;
+
+pub fn oiio_ImageSpec_get_channelformats(_this: *const oiio_ImageSpec_t, formats: *mut oiio_TypeDescVector_t) -> c_int;
+
+pub fn oiio_ImageSpec_roi(_this: *const oiio_ImageSpec_t, _result: *mut oiio_ROI_t) -> c_int;
+
+pub fn oiio_ImageSpec_roi_full(_this: *const oiio_ImageSpec_t, _result: *mut oiio_ROI_t) -> c_int;
+
+pub fn oiio_ImageSpec_set_roi(_this: *mut oiio_ImageSpec_t, r: *const oiio_ROI_t) -> c_int;
+
+pub fn oiio_ImageSpec_set_roi_full(_this: *mut oiio_ImageSpec_t, r: *const oiio_ROI_t) -> c_int;
+
+pub fn oiio_ImageSpec_set_colorspace(_this: *mut oiio_ImageSpec_t, name: *mut oiio_StringView_t) -> c_int;
+
+pub fn oiio_ImageSpec_copy_dimensions(_this: *mut oiio_ImageSpec_t, other: *const oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageSpec_undefined(_this: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageSpec_new(format: oiio_TypeDesc_t, _result: *mut *mut oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageSpec_with_dimensions(xres: c_int, yres: c_int, nchans: c_int, fmt: oiio_TypeDesc_t, _result: *mut *mut oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageSpec_with_region(roi: *const oiio_ROI_t, fmt: oiio_TypeDesc_t, _result: *mut *mut oiio_ImageSpec_t) -> c_int;
+
+pub fn oiio_ImageSpec_dtor(_this: *mut oiio_ImageSpec_t) -> c_int;
+
 pub fn oiio_ParamValue_op_assign_00(_this: *mut oiio_ParamValue_t, p: *const oiio_ParamValue_t, _result: *mut *const oiio_ParamValue_t) -> c_int;
 
 pub fn oiio_ParamValue_op_assign_01(_this: *mut oiio_ParamValue_t, p: *mut oiio_ParamValue_t, _result: *mut *const oiio_ParamValue_t) -> c_int;
@@ -1712,6 +1712,8 @@ pub fn oiio_ImageBuf_set_pixels_u8(buf: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, p
 
 pub fn oiio_ImageBuf_expand_roi_full(buf: *mut oiio_ImageBuf_t) -> c_int;
 
+pub fn oiio_ImageBuf_from_dimensions(width: c_int, height: c_int, nchannels: c_int, format: oiio_TypeDesc_t, color_space: *mut oiio_StringView_t, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
+
 pub fn oiio_ImageBufAlgo_zero(dst: *mut oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufAlgo_checker(dst: *mut oiio_ImageBuf_t, width: c_int, height: c_int, depth: c_int, color1: *mut oiio_CspanF32_t, color2: *mut oiio_CspanF32_t, xoffset: c_int, yoffset: c_int, zoffset: c_int, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
@@ -1787,6 +1789,30 @@ pub fn oiio_ImageCacheSharedPtr_ctor(ptr: *mut oiio_ImageCache_t, _result: *mut 
 pub fn oiio_ImageCache_attribute(_this: *mut oiio_ImageCache_t, name: *const c_char, type_: oiio_TypeDesc_t, data: *const c_void, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageCache_getattribute(_this: *const oiio_ImageCache_t, name: *const c_char, type_: oiio_TypeDesc_t, data: *mut c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageInput_open_with_ioproxy(filename: *const c_char, spec: *const oiio_ImageSpec_t, ioproxy: *mut oiio_IOProxy_t, _result: *mut *mut oiio_ImageInputPtr_t) -> c_int;
+
+pub fn oiio_ImageInput_open(_this: *mut oiio_ImageInput_t, filename: *const c_char, spec: *mut oiio_ImageSpec_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageInput_open_with_config(_this: *mut oiio_ImageInput_t, filename: *const c_char, spec: *mut oiio_ImageSpec_t, config: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageInput_create_with_ioproxy(filename: *const c_char, doopen: bool, config: *const oiio_ImageSpec_t, ioproxy: *mut oiio_IOProxy_t, plugin_searchpath: *const c_char, _result: *mut *mut oiio_ImageInputPtr_t) -> c_int;
+
+pub fn oiio_ImageInput_supports(_this: *const oiio_ImageInput_t, feature: *const c_char, _result: *mut c_int) -> c_int;
+
+pub fn oiio_ImageInput_valid_file(_this: *const oiio_ImageInput_t, filename: *const c_char, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageOutput_create(filename: *const c_char, ioproxy: *mut oiio_IOProxy_t, plugin_searchpath: *const c_char, _result: *mut *mut oiio_ImageOutputPtr_t) -> c_int;
+
+pub fn oiio_ImageOutput_supports(_this: *const oiio_ImageOutput_t, feature: *const c_char, _result: *mut c_int) -> c_int;
+
+pub fn oiio_ImageOutput_open(_this: *mut oiio_ImageOutput_t, filename: *const c_char, spec: *const oiio_ImageSpec_t, openmode: oiio_OpenMode, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageOutput_open_multi_subimage(_this: *mut oiio_ImageOutput_t, filename: *const c_char, num_subimages: c_int, specs: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
+
+pub fn oiio_roi_union(A: *const oiio_ROI_t, B: *const oiio_ROI_t, _result: *mut oiio_ROI_t) -> c_int;
+
+pub fn oiio_roi_intersection(A: *const oiio_ROI_t, B: *const oiio_ROI_t, _result: *mut oiio_ROI_t) -> c_int;
 
 pub fn oiio_ImageSpec_set_format_with_typename(_this: *mut oiio_ImageSpec_t, fmt: *const c_char) -> c_int;
 
@@ -1899,30 +1925,6 @@ pub fn oiio_ImageSpec_push_channelformat(self_: *mut oiio_ImageSpec_t, value: oi
 pub fn oiio_ImageSpec_clear_and_reserve_channelnames(self_: *mut oiio_ImageSpec_t, size: usize) -> c_int;
 
 pub fn oiio_ImageSpec_push_channelname(self_: *mut oiio_ImageSpec_t, value: *const oiio_String_t) -> c_int;
-
-pub fn oiio_ImageInput_open_with_ioproxy(filename: *const c_char, spec: *const oiio_ImageSpec_t, ioproxy: *mut oiio_IOProxy_t, _result: *mut *mut oiio_ImageInputPtr_t) -> c_int;
-
-pub fn oiio_ImageInput_open(_this: *mut oiio_ImageInput_t, filename: *const c_char, spec: *mut oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageInput_open_with_config(_this: *mut oiio_ImageInput_t, filename: *const c_char, spec: *mut oiio_ImageSpec_t, config: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageInput_create_with_ioproxy(filename: *const c_char, doopen: bool, config: *const oiio_ImageSpec_t, ioproxy: *mut oiio_IOProxy_t, plugin_searchpath: *const c_char, _result: *mut *mut oiio_ImageInputPtr_t) -> c_int;
-
-pub fn oiio_ImageInput_supports(_this: *const oiio_ImageInput_t, feature: *const c_char, _result: *mut c_int) -> c_int;
-
-pub fn oiio_ImageInput_valid_file(_this: *const oiio_ImageInput_t, filename: *const c_char, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageOutput_create(filename: *const c_char, ioproxy: *mut oiio_IOProxy_t, plugin_searchpath: *const c_char, _result: *mut *mut oiio_ImageOutputPtr_t) -> c_int;
-
-pub fn oiio_ImageOutput_supports(_this: *const oiio_ImageOutput_t, feature: *const c_char, _result: *mut c_int) -> c_int;
-
-pub fn oiio_ImageOutput_open(_this: *mut oiio_ImageOutput_t, filename: *const c_char, spec: *const oiio_ImageSpec_t, openmode: oiio_OpenMode, _result: *mut bool) -> c_int;
-
-pub fn oiio_ImageOutput_open_multi_subimage(_this: *mut oiio_ImageOutput_t, filename: *const c_char, num_subimages: c_int, specs: *const oiio_ImageSpec_t, _result: *mut bool) -> c_int;
-
-pub fn oiio_roi_union(A: *const oiio_ROI_t, B: *const oiio_ROI_t, _result: *mut oiio_ROI_t) -> c_int;
-
-pub fn oiio_roi_intersection(A: *const oiio_ROI_t, B: *const oiio_ROI_t, _result: *mut oiio_ROI_t) -> c_int;
 
 pub fn oiio_ParamValue_ctor(name: *const oiio_ustring_t, type_: oiio_TypeDesc_t, nvalues: c_int, interp: oiio_Interp, value: *const c_void, copy: bool, _result: *mut *mut oiio_ParamValue_t) -> c_int;
 

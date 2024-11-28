@@ -1,11 +1,13 @@
 use crate::*;
 use anyhow::{anyhow, Result};
+use log::trace;
 
 pub trait ImageBufferFromSlice<T> {
     fn from_slice(
         width: u32,
         height: u32,
-        type_description: &TypeDesc,
+        channels: u16,
+        base_type: BaseType,
         color_space: Option<&str>,
         slice: &[T],
     ) -> Result<ImageBuffer>;
@@ -16,23 +18,46 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
     fn from_slice(
         width: u32,
         height: u32,
-        type_description: &TypeDesc,
+        channel_count: u16,
+        base_type: BaseType,
         color_space: Option<&str>,
         slice: &[u8],
     ) -> Result<Self> {
-        let min_size = width as usize * height as usize * type_description.size();
+        let min_size = width as usize * height as usize * channel_count as usize;
 
         if slice.len() < min_size {
             return Err(anyhow!("Slice length must be at least {min_size}"));
         }
 
-        let mut image_spec = ImageSpecInternal::new_with(type_description);
+        /*
+        let image_spec =
+            ImageSpec::new_with_dimensions(width, height, channel_count as _, base_type);
+
+        let mut image_spec: ImageSpecInternal = image_spec.into();
 
         if let Some(color_space) = color_space {
             image_spec.set_color_space(color_space);
-        }
+        }*/
 
-        let mut image_buffer = ImageBuffer::new_empty_ffi(&image_spec, InitializePixels::No);
+        let mut image_buffer = ImageBuffer::from_dimensions_ffi(
+            width,
+            height,
+            channel_count,
+            TypeDesc {
+                base_type: Some(base_type),
+                ..Default::default()
+            }
+            .into(),
+            color_space,
+        );
+
+        //let mut image_buffer = ImageBuffer::new_empty_ffi(&image_spec,
+        // InitializePixels::Yes);
+
+        trace!(
+            "image_buffer initialized: {:?}",
+            image_buffer.is_initialized()
+        );
 
         let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -40,7 +65,7 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
             oiio_ImageBuf_set_pixels_u8(
                 image_buffer.as_raw_ptr_mut(),
                 ALL.clone().into(),
-                slice.as_ptr() as *const _ as _,
+                CspanU8::new(slice).as_raw_ptr() as *const _ as _,
                 &raw mut is_ok as _,
             );
 
@@ -59,10 +84,8 @@ impl TryFrom<tiny_skia::Pixmap> for ImageBuffer {
         let image_buffer = ImageBuffer::from_slice(
             pix_map.width(),
             pix_map.height(),
-            &TypeDesc {
-                base_type: Some(BaseType::U8),
-                ..Default::default()
-            },
+            4,
+            BaseType::U8,
             Some("sRGB"),
             pix_map.data(),
         )?;
