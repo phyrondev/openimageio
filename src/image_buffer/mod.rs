@@ -455,7 +455,7 @@ impl ImageBuffer {
         .into()
     }
 
-    pub fn type_description(&self) -> TypeDesc {
+    pub fn type_desc(&self) -> TypeDesc {
         let mut pixel_type = MaybeUninit::<oiio_TypeDesc_t>::uninit();
 
         (&unsafe {

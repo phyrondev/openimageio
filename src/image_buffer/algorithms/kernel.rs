@@ -105,8 +105,8 @@ mod tests {
         // Load fg image. This is 1024×1024
         let blur_kernel = ImageBuffer::from_kernel_with(
             PixelFilter2D::Gaussian,
-            5.0,
-            5.0,
+            4.0,
+            4.0,
             &FromKernelOptions {
                 normalize: true,
                 ..Default::default()

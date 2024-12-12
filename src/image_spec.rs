@@ -300,7 +300,7 @@ impl ImageSpecInternal {
         }
     }
 
-    pub fn set_color_space(&mut self, color_space: &str) {
+    pub fn _set_color_space(&mut self, color_space: &str) {
         unsafe {
             oiio_ImageSpec_set_colorspace(
                 self.ptr,

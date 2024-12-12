@@ -46,6 +46,11 @@ BBL_MODULE(oiio) {
                 "data", "size"),
             "ctor");
 
+  bbl::Class<OIIO::cspan<int32_t>>("CspanI32")
+      .ctor(bbl::Class<OIIO::cspan<int32_t>>::Ctor<int32_t *, size_t>("data",
+                                                                      "size"),
+            "ctor");
+
   bbl::Class<OIIO::cspan<u_int16_t>>("CspanU16")
       .ctor(bbl::Class<OIIO::cspan<u_int16_t>>::Ctor<u_int16_t *, size_t>(
                 "data", "size"),
@@ -55,6 +60,11 @@ BBL_MODULE(oiio) {
       bbl::Class<OIIO::cspan<u_int8_t>>::Ctor<u_int8_t *, size_t>("data",
                                                                   "size"),
       "ctor");
+
+  bbl::Class<OIIO::cspan<std::string>>("CspanString")
+      .ctor(bbl::Class<OIIO::cspan<std::string>>::Ctor<std::string *, size_t>(
+                "data", "size"),
+            "ctor");
 
   bbl::Class<std::string>("String")
       .ctor(bbl::Class<std::string>::Ctor(), "ctor_default")

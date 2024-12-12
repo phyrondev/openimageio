@@ -224,12 +224,22 @@ pub struct oiio_CspanU32_t {
 }
 
 #[repr(C)]
+pub struct oiio_CspanI32_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
 pub struct oiio_CspanU16_t {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 pub struct oiio_CspanU8_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanString_t {
     _unused: [u8; 0],
 }
 
@@ -454,6 +464,10 @@ pub fn oiio_CspanU32_ctor(data: *mut c_uint, size: c_ulong, _result: *mut *mut o
 
 pub fn oiio_CspanU32_dtor(_this: *mut oiio_CspanU32_t) -> c_int;
 
+pub fn oiio_CspanI32_ctor(data: *mut c_int, size: c_ulong, _result: *mut *mut oiio_CspanI32_t) -> c_int;
+
+pub fn oiio_CspanI32_dtor(_this: *mut oiio_CspanI32_t) -> c_int;
+
 pub fn oiio_CspanU16_ctor(data: *mut c_ushort, size: c_ulong, _result: *mut *mut oiio_CspanU16_t) -> c_int;
 
 pub fn oiio_CspanU16_dtor(_this: *mut oiio_CspanU16_t) -> c_int;
@@ -461,6 +475,10 @@ pub fn oiio_CspanU16_dtor(_this: *mut oiio_CspanU16_t) -> c_int;
 pub fn oiio_CspanU8_ctor(data: *mut c_uchar, size: c_ulong, _result: *mut *mut oiio_CspanU8_t) -> c_int;
 
 pub fn oiio_CspanU8_dtor(_this: *mut oiio_CspanU8_t) -> c_int;
+
+pub fn oiio_CspanString_ctor(data: *mut oiio_String_t, size: c_ulong, _result: *mut *mut oiio_CspanString_t) -> c_int;
+
+pub fn oiio_CspanString_dtor(_this: *mut oiio_CspanString_t) -> c_int;
 
 pub fn oiio_String_c_str(_this: *const oiio_String_t, _result: *mut *const c_char) -> c_int;
 
@@ -1783,6 +1801,8 @@ pub fn oiio_ImageBufAlgo_from_kernel(name: *mut oiio_StringView_t, width: c_floa
 pub fn oiio_ImageBufAlgo_computePixelHashSHA1(src: *const oiio_ImageBuf_t, extrainfo: *mut oiio_StringView_t, roi: oiio_ROI_t, blocksize: c_int, nthreads: c_int, _result: *mut *mut oiio_String_t) -> c_int;
 
 pub fn oiio_ImageBufAlgo_crop(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, roi: oiio_ROI_t, nthreads: c_int, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufAlgo_channels(dst: *mut oiio_ImageBuf_t, src: *const oiio_ImageBuf_t, nchannels: c_int, channelorder: *mut oiio_CspanI32_t, channelvalues: *mut oiio_CspanF32_t, newchannelnames: *mut oiio_CspanString_t, shuffle_channel_names: bool, nthreads: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageCacheSharedPtr_ctor(ptr: *mut oiio_ImageCache_t, _result: *mut *mut oiio_ImageCacheSharedPtr_t) -> c_int;
 

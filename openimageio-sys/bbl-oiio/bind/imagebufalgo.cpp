@@ -215,4 +215,10 @@ BBL_MODULE(oiio) {
   bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, OIIO::ROI,
                     int))&OIIO::ImageBufAlgo::crop,
           "ImageBufAlgo_crop");
+
+  bbl::fn((bool (*)(OIIO::ImageBuf &, const OIIO::ImageBuf &, int,
+                    OIIO::cspan<int32_t>, OIIO::cspan<float>,
+                    OIIO::cspan<std::string>, bool,
+                    int))&OIIO::ImageBufAlgo::channels,
+          "ImageBufAlgo_channels");
 }

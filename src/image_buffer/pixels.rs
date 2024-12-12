@@ -58,11 +58,11 @@ pub struct PixelsOptions {
 /// The C++ version of this is called `get_pixels()`.
 pub trait Pixels<T: Primitive> {
     fn pixels(&self, region: &Region) -> Result<Vec<T>>;
-    fn set_pixels(&self, pixels: &[T], region: &Region) -> Result<()>;
+    fn set_pixels(&mut self, pixels: &[T], region: &Region) -> Result<()>;
 }
 
 macro_rules! pixels {
-    ($rust_type:ty, $base_type:expr, $fn_name:ident) => {
+    ($rust_type:ty, $cspan_type:ty, $base_type:expr, $fn_name:ident) => {
         impl Pixels<$rust_type> for ImageBuffer {
             /// Get a region of pixels from the image buffer.
             fn pixels(&self, region: &Region) -> Result<Vec<$rust_type>> {
@@ -110,7 +110,7 @@ macro_rules! pixels {
                 }
             }
 
-            fn set_pixels(&self, pixels: &[$rust_type], region: &Region) -> Result<()> {
+            fn set_pixels(&mut self, pixels: &[$rust_type], region: &Region) -> Result<()> {
                 let region = match region {
                     Region::All => match self.data_window() {
                         Region::All => {
@@ -137,7 +137,7 @@ macro_rules! pixels {
                     $fn_name(
                         self.ptr,
                         region.into(),
-                        pixels.as_ptr() as _,
+                        <$cspan_type>::new(pixels).as_raw_ptr() as _,
                         &raw mut is_ok as _,
                     );
 
@@ -156,16 +156,19 @@ macro_rules! pixels {
 
 pixels!(
     u8,
+    CspanU8,
     oiio_BASETYPE::oiio_BASETYPE_UINT8,
     oiio_ImageBuf_set_pixels_u8
 );
 pixels!(
     u16,
+    CspanU16,
     oiio_BASETYPE::oiio_BASETYPE_UINT16,
     oiio_ImageBuf_set_pixels_u16
 );
 pixels!(
     u32,
+    CspanU32,
     oiio_BASETYPE::oiio_BASETYPE_UINT32,
     oiio_ImageBuf_set_pixels_u32
 );
@@ -176,16 +179,19 @@ pixels!(
 );*/
 pixels!(
     i8,
+    CspanI8,
     oiio_BASETYPE::oiio_BASETYPE_INT8,
     oiio_ImageBuf_set_pixels_u8
 );
 pixels!(
     i16,
+    CspanI16,
     oiio_BASETYPE::oiio_BASETYPE_INT16,
     oiio_ImageBuf_set_pixels_u16
 );
 pixels!(
     i32,
+    CspanI32,
     oiio_BASETYPE::oiio_BASETYPE_INT32,
     oiio_ImageBuf_set_pixels_u32
 );
@@ -196,11 +202,13 @@ pixels!(
 );*/
 pixels!(
     f32,
+    CspanF32,
     oiio_BASETYPE::oiio_BASETYPE_FLOAT,
     oiio_ImageBuf_set_pixels_f32
 );
 pixels!(
     f64,
+    CspanF64,
     oiio_BASETYPE::oiio_BASETYPE_DOUBLE,
     oiio_ImageBuf_set_pixels_f64
 );

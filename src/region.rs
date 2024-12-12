@@ -224,13 +224,6 @@ impl Bounds {
 
     /// Number of channels in the region.
     ///
-    /// Beware -- this defaults to a huge number. To be meaningful you must
-    /// consider:
-    ///
-    /// ```ignore
-    /// let actual_channels = image_buf.channel_count().min(roi.channel_count());
-    /// ```
-    ///
     /// # C++
     ///
     /// The C++ method is called `nchannels()`.
@@ -421,7 +414,7 @@ impl Bounds {
         self
     }
 
-    /// Transform the region by the given 3×3 matrix and return the bounds of
+    /// Transform the region by the given 4×4 matrix and return the bounds of
     /// the transformed region.
     pub fn transform_3d<'a>(&mut self, transform: impl Into<Matrix4Ref<'a, f32>>) -> &mut Self {
         use nalgebra::{Matrix4, Point3};
