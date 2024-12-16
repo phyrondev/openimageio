@@ -63,7 +63,7 @@ impl Region {
                 // Do nothing.
             }
             Region::Bounds(a) => match b {
-                Region::All => *self = b.clone(),
+                Region::All => *self = Region::All,
                 Region::Bounds(b) => {
                     *self = Region::Bounds(a.union(b).clone());
                 }

@@ -1,6 +1,44 @@
 use crate::*;
 use core::{marker::PhantomData, mem::MaybeUninit};
 
+/*
+pub struct Cspan<'a, T> {
+    ptr: *const T,
+    marker: PhantomData<*const &'a ()>,
+}
+
+trait CspanImpl<T, N> {
+    fn new(data: &[T]) -> Self;
+    fn as_raw_ptr(&self) -> *const N;
+}
+
+impl<'a> CspanImpl<f32, oiio_CspanF32_t> for Cspan<'a, oiio_CspanF32_t> {
+    fn new(data: &[f32]) -> Self {
+        let mut ptr = MaybeUninit::<*const oiio_CspanF32_t>::uninit();
+
+        unsafe {
+            oiio_CspanF32_ctor(data.as_ptr() as _, data.len() as _, &raw mut ptr as _);
+
+            Self {
+                ptr: ptr.assume_init(),
+                marker: PhantomData,
+            }
+        }
+    }
+
+    fn as_raw_ptr(&self) -> *const oiio_CspanF32_t {
+        self.ptr
+    }
+}
+
+impl<'a> Drop for Cspan<'a, oiio_CspanF32_t> {
+    fn drop(&mut self) {
+        unsafe {
+            oiio_CspanF32_dtor(self.ptr as _);
+        }
+    }
+}*/
+
 macro_rules! cspan {
     ($oiio_type:ty, $ctor_name:ident, $dtor_name:ident, $rust_name:ident, $rust_type:ty) => {
         pub struct $rust_name<'a> {
@@ -37,6 +75,16 @@ macro_rules! cspan {
         }
     };
 }
+
+/*
+#[cfg(feature = "half")]
+cspan!(
+    oiio_CspanF16_t,
+    oiio_CspanF16_ctor,
+    oiio_CspanF16_dtor,
+    CspanF16,
+    f16
+);*/
 
 cspan!(
     oiio_CspanF32_t,

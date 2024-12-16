@@ -3,7 +3,7 @@ use crate::*;
 use anyhow::Result;
 
 #[cfg(test)]
-pub fn compare_images(image_buf: &ImageBuffer, name: &str) -> Result<()> {
+pub fn _compare_images(image_buf: &ImageBuffer, name: &str) -> Result<()> {
     use camino::Utf8Path;
 
     let other = ImageBuffer::from_file(&Utf8Path::new("test_results").join(name))?;

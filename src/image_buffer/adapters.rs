@@ -231,7 +231,7 @@ mod tests {
 
         // This will convert to either Rgb8 or Rgba8 and apply
         // a conversion to sRGB
-        let image: image::DynamicImage = image_buf.try_into()?;
+        let _image: image::DynamicImage = image_buf.try_into()?;
 
         Ok(())
     }

@@ -5,6 +5,7 @@ use core::mem::MaybeUninit;
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`replace_by_convolve_with()`](ImageBuffer::replace_by_convolve_with) and
 /// [`convolve_with()`](ImageBuffer::convolve_with) methods.
+#[derive(Clone)]
 pub struct ConvolveOptions {
     /// If `true`, the kernel will be normalized for the convolution, otherwise
     /// the original values will be used.

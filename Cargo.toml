@@ -15,8 +15,8 @@ algorithms = []
 egui = ["dep:egui"]
 ## Enable support for `glam::f32::Mat3`.
 glam = ["dep:glam"]
-# Enable `f16` support.
-#half = ["dep:half"]
+## Enable `f16` support. Not yet implemented.
+half = ["dep:half"]
 ## Enable one-way conversion from `ImageBuffer` to
 ## [`image::DynamicImage`](https://docs.rs/image/latest/image/enum.DynamicImage.html).
 image = ["dep:image"]
@@ -46,7 +46,7 @@ egui = { version = "0.29", default-features = false, optional = true }
 float-derive = "0.1"
 function_name = "0.3"
 glam = { version = "0.29", optional = true }
-#half = { version = "2.4", features = ["num-traits"], optional = true }
+half = { version = "2.4", features = ["num-traits"], optional = true }
 image = { version = "0.25", default-features = false, features = [
     "rayon",
     "png",

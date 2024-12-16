@@ -4,7 +4,7 @@ use core::{mem::MaybeUninit, ptr};
 pub struct ColorConvertOptions<'a> {
     /// If `true` (the default), unpremultiply the image (divide the RGB
     /// channels by alpha if it exists and is nonzero) before color
-    /// conversion, then repremult after the after the color conversion.
+    /// conversion, then re-premultiply after the color conversion.
     ///
     /// Passing `false` skips this step, which may be desirable if
     /// you know that the image is "unassociated alpha" (a.k.a., "not

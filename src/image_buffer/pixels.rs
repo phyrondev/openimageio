@@ -1,6 +1,7 @@
 use crate::*;
 use anyhow::{anyhow, Result};
-
+#[cfg(feature = "half")]
+use half::f16;
 /*
 pub struct PixelsOptions {
     x_stride: Option<u32>,
@@ -56,7 +57,7 @@ pub struct PixelsOptions {
 /// # C++
 ///
 /// The C++ version of this is called `get_pixels()`.
-pub trait Pixels<T: Primitive> {
+pub trait Pixels<T> {
     fn pixels(&self, region: &Region) -> Result<Vec<T>>;
     fn set_pixels(&mut self, pixels: &[T], region: &Region) -> Result<()>;
 }
@@ -200,6 +201,13 @@ pixels!(
     oiio_BASETYPE::oiio_BASETYPE_INT64,
     oiio_ImageBuf_set_pixels_u64
 );*/
+/*#[cfg(feature = "half")]
+pixels!(
+    f16,
+    CspanF16,
+    oiio_BASETYPE::oiio_BASETYPE_HALF,
+    oiio_ImageBuf_set_pixels_f16
+);*/
 pixels!(
     f32,
     CspanF32,
@@ -212,3 +220,93 @@ pixels!(
     oiio_BASETYPE::oiio_BASETYPE_DOUBLE,
     oiio_ImageBuf_set_pixels_f64
 );
+
+#[cfg(feature = "half")]
+impl Pixels<f16> for ImageBuffer {
+    /// Get a region of pixels from the image buffer.
+    fn pixels(&self, region: &Region) -> Result<Vec<f16>> {
+        if ImageBufferStorage::Uninitialized == self.storage() {
+            // An uninitialized image buffer has no pixels but it's not
+            // an error to ask for them.
+            return Ok(Vec::new());
+        }
+
+        let region = match region {
+            Region::All => match self.data_window() {
+                Region::All => {
+                    // If this image buffer is uninitialized, we can't
+                    // get here because
+                    // `self.storage()` will return
+                    // `ImageBufferStorage::Uninitialized`.
+                    unreachable!()
+                }
+                Region::Bounds(roi) => roi,
+            },
+            Region::Bounds(roi) => roi.clone(),
+        };
+
+        let size = region.pixel_count() * region.channel_count() as usize;
+        let mut data = Vec::<f16>::with_capacity(size);
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBuf_get_pixels(
+                self.ptr,
+                region.clone().into(),
+                oiio_BASETYPE::oiio_BASETYPE_HALF,
+                data.as_mut_ptr() as _,
+                &raw mut is_ok as _,
+            );
+
+            if is_ok.assume_init() {
+                data.set_len(size);
+                Ok(data)
+            } else {
+                Err(anyhow!(self
+                    .error(true)
+                    .unwrap_or("ImageBuffer::pixels(): unknown error".into())))
+            }
+        }
+    }
+
+    fn set_pixels(&mut self, pixels: &[f16], region: &Region) -> Result<()> {
+        let region = match region {
+            Region::All => match self.data_window() {
+                Region::All => {
+                    // If this image buffer is uninitialized, we can't
+                    // get here because
+                    // `self.storage()` will return
+                    // `ImageBufferStorage::Uninitialized`.
+                    unreachable!()
+                }
+                Region::Bounds(roi) => roi,
+            },
+            Region::Bounds(roi) => roi.clone(),
+        };
+
+        let size = region.pixel_count() * region.channel_count() as usize;
+
+        if size > pixels.len() {
+            return Err(anyhow!("Pixel data is too small"));
+        }
+
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBuf_set_pixels_u16(
+                self.ptr,
+                region.into(),
+                CspanU16::new(std::mem::transmute(pixels)).as_raw_ptr() as _,
+                &raw mut is_ok as _,
+            );
+
+            if is_ok.assume_init() {
+                Ok(())
+            } else {
+                Err(anyhow!(self.error(true).unwrap_or(
+                    "ImageBuffer::set_pixels(): unknown error".into()
+                )))
+            }
+        }
+    }
+}

@@ -1,5 +1,7 @@
 #include <babble>
 
+#include <Imath/half.h>
+#include <OpenImageIO/half.h>
 #include <OpenImageIO/imagebuf.h>
 #include <OpenImageIO/texture.h>
 #include <sys/types.h>
@@ -43,6 +45,11 @@ bool ImageBuf_set_pixels_f64(OIIO::ImageBuf &buf, OIIO::ROI roi,
 
 bool ImageBuf_set_pixels_f32(OIIO::ImageBuf &buf, OIIO::ROI roi,
                              OIIO::cspan<float> pixels) {
+  return buf.set_pixels(roi, pixels);
+}
+
+bool ImageBuf_set_pixels_f16(OIIO::ImageBuf &buf, OIIO::ROI roi,
+                             OIIO::cspan<half> pixels) {
   return buf.set_pixels(roi, pixels);
 }
 
@@ -110,10 +117,10 @@ BBL_MODULE(oiio) {
                                              OIIO::stride_t>(
                 "spec", "buffer", "xstride", "ystride", "zstride"),
             "ctor_05")
-      .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<OIIO::string_view,
+      /* .ctor(bbl::Class<OIIO::ImageBuf>::Ctor<OIIO::string_view,
                                              const OIIO::ImageSpec &, void *>(
                 "name", "spec", "buffer"),
-            "ctor_06")
+            "ctor_06")*/
       .m(&OIIO::ImageBuf::clear)
       .m((void(OIIO::ImageBuf::*)()) & OIIO::ImageBuf::reset, "reset_00")
       //.m((void (OIIO::ImageBuf::*)(OIIO::string_view, OIIO::ImageCache *))
@@ -287,6 +294,7 @@ BBL_MODULE(oiio) {
   bbl::fn(&bblext::ImageBuf_write);
   bbl::fn(&bblext::ImageBuf_write_with_spec);
   bbl::fn(&bblext::ImageBuf_get_pixels);
+  // bbl::fn(&bblext::ImageBuf_set_pixels_f16);
   bbl::fn(&bblext::ImageBuf_set_pixels_f32);
   bbl::fn(&bblext::ImageBuf_set_pixels_f64);
   // bbl::fn(&bblext::ImageBuf_set_pixels_u64);

@@ -18,16 +18,16 @@ use core::mem::MaybeUninit;
 ///
 /// ## Uniform Fill
 ///
-/// A single set of channel values that will apply to the whole
-/// `RegionOfInterest`.
+/// A single set of channel values that will apply to the whole region within
+/// `bounds`.
 impl ImageBuffer {
     #[named]
-    pub fn from_fill(values: &[f32], region: &Bounds) -> Result<Self> {
+    pub fn from_fill(values: &[f32], bounds: &Bounds) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_ffi(
             values,
             &Options {
-                region: Region::Bounds(region.clone()),
+                region: Region::Bounds(bounds.clone()),
                 ..Default::default()
             },
         );
@@ -36,12 +36,12 @@ impl ImageBuffer {
     }
 
     #[named]
-    pub fn from_fill_with(values: &[f32], region: &Bounds, thread_count: u16) -> Result<Self> {
+    pub fn from_fill_with(values: &[f32], bounds: &Bounds, thread_count: u16) -> Result<Self> {
         let mut image_buffer = ImageBuffer::new();
         let is_ok = image_buffer.fill_ffi(
             values,
             &Options {
-                region: Region::Bounds(region.clone()),
+                region: Region::Bounds(bounds.clone()),
                 thread_count,
             },
         );

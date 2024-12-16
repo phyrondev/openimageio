@@ -132,6 +132,8 @@
 use crate::*;
 use core::mem::MaybeUninit;
 
+pub mod checker;
+pub use checker::*;
 pub mod color_convert;
 pub use color_convert::*;
 pub mod compare;

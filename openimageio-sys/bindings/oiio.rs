@@ -199,17 +199,27 @@ impl oiio_VECSEMANTICS {
 }
 
 #[repr(C)]
+pub struct oiio_Half_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
 pub struct oiio_ParamValueSpan_t {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
-pub struct oiio_CspanF64_t {
+pub struct oiio_CspanF32_t {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
-pub struct oiio_CspanF32_t {
+pub struct oiio_CspanF16_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+pub struct oiio_CspanF64_t {
     _unused: [u8; 0],
 }
 
@@ -444,17 +454,23 @@ pub struct oiio_oiio_M33fParam_t_t {
 
 unsafe extern "C" {
 
+pub fn oiio_Half_dtor(_this: *mut oiio_Half_t) -> c_int;
+
 pub fn oiio_ParamValueSpan_ctor(list: *const oiio_ParamValueList_t, _result: *mut *mut oiio_ParamValueSpan_t) -> c_int;
 
 pub fn oiio_ParamValueSpan_dtor(_this: *mut oiio_ParamValueSpan_t) -> c_int;
 
-pub fn oiio_CspanF64_ctor(data: *mut c_double, size: c_ulong, _result: *mut *mut oiio_CspanF64_t) -> c_int;
-
-pub fn oiio_CspanF64_dtor(_this: *mut oiio_CspanF64_t) -> c_int;
-
 pub fn oiio_CspanF32_ctor(data: *mut c_float, size: c_ulong, _result: *mut *mut oiio_CspanF32_t) -> c_int;
 
 pub fn oiio_CspanF32_dtor(_this: *mut oiio_CspanF32_t) -> c_int;
+
+pub fn oiio_CspanF16_ctor(data: *mut oiio_Half_t, size: c_ulong, _result: *mut *mut oiio_CspanF16_t) -> c_int;
+
+pub fn oiio_CspanF16_dtor(_this: *mut oiio_CspanF16_t) -> c_int;
+
+pub fn oiio_CspanF64_ctor(data: *mut c_double, size: c_ulong, _result: *mut *mut oiio_CspanF64_t) -> c_int;
+
+pub fn oiio_CspanF64_dtor(_this: *mut oiio_CspanF64_t) -> c_int;
 
 pub fn oiio_CspanU63_ctor(data: *mut c_ulong, size: c_ulong, _result: *mut *mut oiio_CspanU63_t) -> c_int;
 
@@ -813,8 +829,6 @@ pub fn oiio_ImageBuf_ctor_03(spec: *const oiio_ImageSpec_t, zero: oiio_Initializ
 pub fn oiio_ImageBuf_ctor_04(name: *mut oiio_StringView_t, spec: *const oiio_ImageSpec_t, zero: oiio_InitializePixels, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
 pub fn oiio_ImageBuf_ctor_05(spec: *const oiio_ImageSpec_t, buffer: *mut c_void, xstride: c_long, ystride: c_long, zstride: c_long, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
-
-pub fn oiio_ImageBuf_ctor_06(name: *mut oiio_StringView_t, spec: *const oiio_ImageSpec_t, buffer: *mut c_void, _result: *mut *mut oiio_ImageBuf_t) -> c_int;
 
 pub fn oiio_ImageBuf_dtor(_this: *mut oiio_ImageBuf_t) -> c_int;
 

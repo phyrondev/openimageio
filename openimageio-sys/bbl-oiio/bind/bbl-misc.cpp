@@ -1,6 +1,7 @@
-#include <OpenImageIO/paramlist.h>
 #include <babble>
 
+#include <Imath/half.h>
+#include <OpenImageIO/half.h>
 #include <OpenImageIO/imagebuf.h>
 #include <OpenImageIO/paramlist.h>
 #include <OpenImageIO/span.h>
@@ -16,6 +17,8 @@ BBL_MODULE(oiio) {
 
   bbl::fn(&OIIO::geterror);
 
+  bbl::Class<Imath::half>("Half");
+
   /*bbl::Class<OIIO::StrongParam<Bool, bool>>("StrongParamBool")
       .ctor(bbl::Class<OIIO::StrongParam<Bool, bool>>::Ctor<bool>("value"),
       "ctor");*/
@@ -26,15 +29,19 @@ BBL_MODULE(oiio) {
               "list"),
           "ctor");
 
-  bbl::Class<OIIO::cspan<double>>("CspanF64")
-      .ctor(bbl::Class<OIIO::cspan<double>>::Ctor<double *, size_t>("data",
-                                                                    "size"),
-            "ctor");
-
   bbl::Class<OIIO::cspan<float>>("CspanF32")
       .ctor(
           bbl::Class<OIIO::cspan<float>>::Ctor<float *, size_t>("data", "size"),
           "ctor");
+
+  bbl::Class<OIIO::cspan<half>>("CspanF16")
+      .ctor(bbl::Class<OIIO::cspan<half>>::Ctor<half *, size_t>("data", "size"),
+            "ctor");
+
+  bbl::Class<OIIO::cspan<double>>("CspanF64")
+      .ctor(bbl::Class<OIIO::cspan<double>>::Ctor<double *, size_t>("data",
+                                                                    "size"),
+            "ctor");
 
   bbl::Class<OIIO::cspan<u_int64_t>>("CspanU63")
       .ctor(bbl::Class<OIIO::cspan<u_int64_t>>::Ctor<u_int64_t *, size_t>(
