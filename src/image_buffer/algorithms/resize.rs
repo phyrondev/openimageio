@@ -179,7 +179,7 @@ mod tests {
 
         #[cfg(feature = "image")]
         {
-            image_buffer.color_convert(None, ustr("sRGB"))?;
+            image_buffer.color_convert(None, "sRGB")?;
             let image: image::DynamicImage = image_buffer.try_into()?;
 
             viuer::print(

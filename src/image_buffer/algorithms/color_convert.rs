@@ -33,45 +33,39 @@ impl Default for ColorConvertOptions<'_> {
 /// # Color Conversion
 impl ImageBuffer {
     #[named]
-    pub fn replace_by_color_convert(
-        &mut self,
+    pub fn from_color_convert(
         source: &ImageBuffer,
-        from_space: Option<Ustr>,
-        to_space: Ustr,
-    ) -> Result<&mut Self> {
-        let is_ok = self.color_convert_ffi(
+        from_space: Option<&str>,
+        to_space: &str,
+    ) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.color_convert_ffi(
             source,
             from_space,
             to_space,
             &ColorConvertOptions::default(),
         );
 
-        self.mut_self_or_error(is_ok, function_name!())
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn replace_by_color_convert_with(
-        &mut self,
+    pub fn from_color_convert_with(
         source: &ImageBuffer,
-        from_space: Option<Ustr>,
-        to_space: Ustr,
+        from_space: Option<&str>,
+        to_space: &str,
         options: &ColorConvertOptions,
-    ) -> Result<&mut Self> {
-        let is_ok = self.color_convert_ffi(source, from_space, to_space, options);
+    ) -> Result<Self> {
+        let mut image_buffer = ImageBuffer::new();
+        let is_ok = image_buffer.color_convert_ffi(source, from_space, to_space, options);
 
-        self.mut_self_or_error(is_ok, function_name!())
+        image_buffer.self_or_error(is_ok, function_name!())
     }
 
     #[named]
-    pub fn color_convert(&mut self, from_space: Option<Ustr>, to_space: Ustr) -> Result<&mut Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.color_convert_ffi(
-            self,
-            from_space,
-            to_space,
-            &ColorConvertOptions::default(),
-        );
-        *self = image_buffer;
+    pub fn color_convert(&mut self, from_space: Option<&str>, to_space: &str) -> Result<&mut Self> {
+        let is_ok =
+            self.color_convert_in_place_ffi(from_space, to_space, &ColorConvertOptions::default());
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -79,13 +73,11 @@ impl ImageBuffer {
     #[named]
     pub fn color_convert_with(
         &mut self,
-        from_space: Option<Ustr>,
-        to_space: Ustr,
+        from_space: Option<&str>,
+        to_space: &str,
         options: &ColorConvertOptions,
     ) -> Result<&mut Self> {
-        let mut image_buffer = ImageBuffer::new();
-        let is_ok = image_buffer.color_convert_ffi(self, from_space, to_space, options);
-        *self = image_buffer;
+        let is_ok = self.color_convert_in_place_ffi(from_space, to_space, options);
 
         self.mut_self_or_error(is_ok, function_name!())
     }
@@ -97,8 +89,8 @@ impl ImageBuffer {
     fn color_convert_ffi(
         &mut self,
         source: &ImageBuffer,
-        from_space: Option<Ustr>,
-        to_space: Ustr,
+        from_space: Option<&str>,
+        to_space: &str,
         options: &ColorConvertOptions,
     ) -> bool {
         let mut is_ok = MaybeUninit::<bool>::uninit();
@@ -107,6 +99,45 @@ impl ImageBuffer {
             oiio_ImageBufAlgo_colorconvert(
                 self.as_raw_ptr_mut(),
                 source.as_raw_ptr(),
+                from_space
+                    .map_or(StringView::default(), StringView::from)
+                    .as_raw_ptr() as _,
+                StringView::from(to_space).as_raw_ptr() as _,
+                options.unpremultiply,
+                options
+                    .context
+                    .map_or(StringView::default(), |c| StringView::from(c.0))
+                    .as_raw_ptr() as _,
+                options
+                    .context
+                    .map_or(StringView::default(), |c| StringView::from(c.1))
+                    .as_raw_ptr() as _,
+                options
+                    .config
+                    .as_ref()
+                    .map_or(ptr::null_mut(), |s| *s.read_arc()),
+                options.region.clone().into(),
+                options.thread_count as _,
+                &raw mut is_ok as _,
+            );
+
+            is_ok.assume_init()
+        }
+    }
+
+    #[inline]
+    fn color_convert_in_place_ffi(
+        &mut self,
+        from_space: Option<&str>,
+        to_space: &str,
+        options: &ColorConvertOptions,
+    ) -> bool {
+        let mut is_ok = MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_ImageBufAlgo_colorconvert(
+                self.as_raw_ptr_mut(),
+                self.as_raw_ptr(),
                 from_space
                     .map_or(StringView::default(), StringView::from)
                     .as_raw_ptr() as _,

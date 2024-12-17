@@ -79,7 +79,7 @@ mod tests {
         let bounds = Bounds::new_2d(0..80, 0..80);
 
         image_buffer.cut(&bounds)?;
-        image_buffer.color_convert(None, ustr("sRGB"))?;
+        image_buffer.color_convert(None, "sRGB")?;
 
         //image_buffer.write(Utf8Path::new("cutd.png"))?;
 
