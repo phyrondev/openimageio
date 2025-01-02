@@ -1,7 +1,7 @@
+#include <Imath/half.h>
+
 #include <babble>
 
-#include <Imath/half.h>
-#include <OpenImageIO/half.h>
 #include <OpenImageIO/imagebuf.h>
 #include <OpenImageIO/paramlist.h>
 #include <OpenImageIO/span.h>
@@ -97,9 +97,11 @@ BBL_MODULE(oiio) {
   //     .m(&std::wstring::c_str)
   // ;
 
-  // bbl::fn((bool (*)(string_view, TypeDesc, const void *))
-  //         &OIIO::attribute, "attribute_00");
+  bbl::fn((bool (*)(OIIO::string_view, OIIO::TypeDesc,
+                    const void *))&OIIO::attribute,
+          "set_attribute");
 
-  // bbl::fn((bool (*)(string_view, TypeDesc, void *))
-  //         &OIIO::getattribute, "getattribute_00");
+  bbl::fn(
+      (bool (*)(OIIO::string_view, OIIO::TypeDesc, void *))&OIIO::getattribute,
+      "attribute");
 }

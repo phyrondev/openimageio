@@ -16,7 +16,7 @@ find_package(
     HINTS
     ${OIIO_DIST}
 )
-find_package(babble 0.8 CONFIG REQUIRED)
+find_package(babble 0.9 CONFIG REQUIRED)
 
 include(GNUInstallDirs)
 

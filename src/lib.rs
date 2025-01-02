@@ -236,9 +236,13 @@
 //! # Features
 #![doc = document_features::document_features!()]
 
+use anyhow::anyhow;
 pub use anyhow::Result;
 pub use camino::{Utf8Path, Utf8PathBuf};
-use core::mem::transmute;
+use core::{
+    mem::{transmute, MaybeUninit},
+    ptr,
+};
 pub(crate) use function_name::named;
 use num_traits::{Bounded, Num, NumCast};
 #[cfg(feature = "ffi")]
@@ -246,6 +250,9 @@ pub use openimageio_sys::*;
 #[cfg(not(feature = "ffi"))]
 pub(crate) use openimageio_sys::*;
 pub use ustr::{ustr, Ustr};
+
+mod attribute;
+pub use attribute::*;
 
 mod color;
 pub use color::*;
@@ -378,39 +385,39 @@ impl<'a> From<Matrix4Ref<'a, f32>> for &'a nalgebra::Matrix4<f32> {
 
 /// The type of each channel in a pixel. For example, this can be `u8`, `u16`,
 /// `f32`.
-pub trait Primitive: Copy + NumCast + Num + PartialOrd<Self> + Clone + Bounded {
-    /// The maximum value for this type of primitive within the context of
+pub trait ChannelData: Copy + NumCast + Num + PartialOrd<Self> + Clone + Bounded {
+    /// The value of *one* for this type of primitive within the context of
     /// color. For floats, the maximum is `1.0`, whereas the integer types
     /// inherit their usual maximum values.
-    const DEFAULT_MAX_VALUE: Self;
+    const ONE: Self;
 
-    /// The minimum value for this type of primitive within the context of
+    /// The value of *zero* for this type of primitive within the context of
     /// color. For floats, the minimum is `0.0`, whereas the integer types
     /// inherit their usual minimum values.
-    const DEFAULT_MIN_VALUE: Self;
+    const ZERO: Self;
 }
 
-macro_rules! declare_primitive {
+macro_rules! declare_channel_data {
     ($base:ty: ($from:expr)..$to:expr) => {
-        impl Primitive for $base {
-            const DEFAULT_MAX_VALUE: Self = $to;
-            const DEFAULT_MIN_VALUE: Self = $from;
+        impl ChannelData for $base {
+            const ONE: Self = $to;
+            const ZERO: Self = $from;
         }
     };
 }
 
 // Unsigned primitive types.
-declare_primitive!(usize: (0)..Self::MAX);
-declare_primitive!(u8: (0)..Self::MAX);
-declare_primitive!(u16: (0)..Self::MAX);
-declare_primitive!(u32: (0)..Self::MAX);
-declare_primitive!(u64: (0)..Self::MAX);
+declare_channel_data!(usize: (0)..Self::MAX);
+declare_channel_data!(u8: (0)..Self::MAX);
+declare_channel_data!(u16: (0)..Self::MAX);
+declare_channel_data!(u32: (0)..Self::MAX);
+declare_channel_data!(u64: (0)..Self::MAX);
 
 // Unsigned primitive types.
-declare_primitive!(isize: (Self::MIN)..Self::MAX);
-declare_primitive!(i8: (Self::MIN)..Self::MAX);
-declare_primitive!(i16: (Self::MIN)..Self::MAX);
-declare_primitive!(i32: (Self::MIN)..Self::MAX);
-declare_primitive!(i64: (Self::MIN)..Self::MAX);
-declare_primitive!(f32: (0.0)..1.0);
-declare_primitive!(f64: (0.0)..1.0);
+declare_channel_data!(isize: (Self::MIN)..Self::MAX);
+declare_channel_data!(i8: (Self::MIN)..Self::MAX);
+declare_channel_data!(i16: (Self::MIN)..Self::MAX);
+declare_channel_data!(i32: (Self::MIN)..Self::MAX);
+declare_channel_data!(i64: (Self::MIN)..Self::MAX);
+declare_channel_data!(f32: (0.0)..1.0);
+declare_channel_data!(f64: (0.0)..1.0);

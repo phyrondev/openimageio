@@ -1,5 +1,5 @@
 use crate::*;
-use core::{mem::MaybeUninit, num::NonZeroU32};
+use core::num::NonZeroU32;
 
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`replace_by_checker()`](ImageBuffer::replace_by_checker) and

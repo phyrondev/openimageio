@@ -1,5 +1,4 @@
 use crate::{algorithms::*, *};
-use core::mem::MaybeUninit;
 
 impl ImageBuffer {
     #[named]

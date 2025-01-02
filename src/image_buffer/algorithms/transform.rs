@@ -1,5 +1,4 @@
 use crate::{algorithms::*, *};
-use core::ptr;
 
 /// # Transform
 ///
@@ -73,7 +72,7 @@ pub struct TransformOptions {
     /// image. If the width is zero the default width of the resp. filter will
     /// be used.
     pub filter: Option<Filter2D>,
-    /// If this is true the image will (re-)sized to be an large enough to
+    /// If this is `true` the image will (re-)sized to be an large enough to
     /// hold the transformed image, or will have the same region of
     /// interest as the source image otherwise.
     ///
@@ -82,12 +81,11 @@ pub struct TransformOptions {
     /// the buffer will be sized to be large enough to hold the transformed
     /// image.
     ///
-    /// If `false` the image will have the same region as the
-    /// source image.
+    /// If `false` the image will have the same region as the source image.
     ///
     /// If the `tranform_with()` variant is used and the destination image is
-    /// already is initialized, its size will not be changed and this
-    /// option will be ignored.
+    /// already is initialized, its size will not be changed and this option
+    /// will be ignored.
     pub recompute_region: bool,
     /// The wrap mode controlling the value of pixel lookups that need to occur
     /// beyond the boundary of the source image.

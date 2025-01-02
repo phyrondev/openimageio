@@ -1,6 +1,4 @@
 use crate::*;
-use anyhow::Result;
-use core::mem::MaybeUninit;
 
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`replace_by_convolve_with()`](ImageBuffer::replace_by_convolve_with) and

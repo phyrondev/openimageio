@@ -1,5 +1,4 @@
 use crate::{algorithms::*, *};
-use core::ptr;
 
 /// # Warp
 ///

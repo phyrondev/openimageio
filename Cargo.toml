@@ -39,6 +39,7 @@ ffi = []
 [dependencies]
 ahash = "0.8"
 anyhow = "1"
+bitflags = "2.6.0"
 bytemuck = "1.19.0"
 camino = "1"
 document-features = "0.2"
@@ -76,4 +77,13 @@ viuer = "0.9"
 #viuer = { git = "https://github.com/virtualritz/viuer" }
 
 [package.metadata.docs.rs]
-features = ["algorithms", "egui", "glam", "image", "nalgebra", "cpp_api_names"]
+features = [
+    "algorithms",
+    "egui",
+    "glam",
+    "half",
+    "image",
+    "mint",
+    "tiny-skia",
+    "cpp_api_names",
+]

@@ -1,10 +1,124 @@
 use crate::*;
+use bitflags::bitflags;
 use core::{
     marker::PhantomData,
     mem::{transmute, MaybeUninit},
+    ops::{Add, Div, Mul},
     ptr,
 };
-use ustr::Ustr;
+use num_traits::{
+    float::Float,
+    identities::{One, Zero},
+};
+
+mod options;
+pub use options::*;
+mod batch_options;
+pub use batch_options::*;
+
+pub const BATCH_SIZE: usize = 16;
+
+bitflags! {
+    /// An integer large enough to hold at least
+    /// [`BATCH_SIZE`] bits. The least significant bit corresponds to the first
+    /// (i.e., `[0]`) position of all batch arrays. For each position `i` in the
+    /// batch, the bit identified by `(1 << i)` controls whether that position
+    /// will be computed.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct TextureBatchMask: u64 {
+        const FULL = 0xffffffffffffffff;
+    }
+}
+
+struct Dual2<T: Float + Add<T, Output = T> + Mul<T, Output = T> + Div<T, Output = T> + Zero + One> {
+    pub value: T,
+    pub dx: T,
+    pub dy: T,
+}
+
+impl<T: Zero + Float> Dual2<T> {
+    fn _new(value: T) -> Self {
+        Self {
+            value,
+            dy: T::zero(),
+            dx: T::zero(),
+        }
+    }
+}
+
+impl<T: Float> Add<Dual2<T>> for Dual2<T> {
+    type Output = Dual2<T>;
+
+    fn add(self, rhs: Dual2<T>) -> Self::Output {
+        Self {
+            value: self.value + rhs.value,
+            dx: self.dx + rhs.dx,
+            dy: self.dy + rhs.dy,
+        }
+    }
+}
+
+impl<T: Float> Add<T> for Dual2<T> {
+    type Output = Dual2<T>;
+
+    fn add(self, rhs: T) -> Self::Output {
+        Self {
+            value: self.value + rhs,
+            dx: self.dx,
+            dy: self.dy,
+        }
+    }
+}
+
+impl<T: Float> Mul<T> for Dual2<T> {
+    type Output = Dual2<T>;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        Self {
+            value: self.value * rhs,
+            dx: self.dx * rhs,
+            dy: self.dy * rhs,
+        }
+    }
+}
+impl<T: Float> Mul<Dual2<T>> for Dual2<T> {
+    type Output = Dual2<T>;
+
+    fn mul(self, rhs: Dual2<T>) -> Self::Output {
+        Self {
+            value: self.value * rhs.value,
+            dx: self.value * rhs.dx + self.dx * rhs.value,
+            dy: self.value * rhs.dy + self.dy * rhs.value,
+        }
+    }
+}
+
+impl<T: Float> Div<T> for Dual2<T> {
+    type Output = Dual2<T>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        Self {
+            value: self.value / rhs,
+            dx: self.dx / rhs,
+            dy: self.dy / rhs,
+        }
+    }
+}
+
+impl<T: Float + One> Div<Dual2<T>> for Dual2<T> {
+    type Output = Dual2<T>;
+
+    fn div(self, rhs: Dual2<T>) -> Self::Output {
+        let rhs_val_inv = T::one() / rhs.value;
+        let aval_rhs_val = self.value * rhs_val_inv;
+
+        Self {
+            value: aval_rhs_val,
+            dx: rhs_val_inv * (self.dx - aval_rhs_val * rhs.dx),
+            dy: rhs_val_inv * (self.dy - aval_rhs_val * rhs.dy),
+        }
+    }
+}
 
 /// Describes what happens when texture coordinates hit a value outside the
 /// usual *\[0, 1\]* range where a texture is defined.
@@ -78,144 +192,6 @@ impl From<InterpolationMode> for oiio_InterpMode {
     }
 }
 
-/// Holds many options controlling single-point texture lookups. Because each
-/// texture lookup call takes a reference to a `TextureOptions`.
-#[derive(Debug, PartialEq)]
-pub struct TextureOptions<'a> {
-    // We use u16 for some only-ever-positive `i32` values in the FFI struct that can reasonably
-    // never even be close to `u16::MAX` in practice to avoid any chance of overflow (and using
-    // `try_into()` at the FFI boundary).
-    /// First channel of the lookup.
-    pub first_channel: u16,
-    /// Sub-image or [`Ptex`](https://ptex.us/) face ID.
-    pub sub_image: u16,
-    /// Sub-image name.
-    pub sub_image_name: Ustr,
-    /// Wrap mode in the `s` direction.
-    pub s_wrap: Wrap,
-    /// Wrap mode in the `t` direction.
-    pub t_wrap: Wrap,
-    /// Wrap mode in the `r` direction for 3D volume texture lookups only.
-    pub r_wrap: Wrap,
-    /// Mip mode.
-    pub mip_mode: MipMode,
-    /// Interpolation mode.
-    pub interpolation_mode: InterpolationMode,
-    /// Maximum anisotropic ratio.
-    pub anisotropic: u32,
-    /// If `true` then the lookup will rather over-blur than alias.
-    pub conservative_filter: bool,
-    /// Blur amount in `s` direction.
-    pub s_blur: f32,
-    /// Blur amount in `t` direction.
-    pub t_blur: f32,
-    /// Blur amount in the `r` direction
-    pub r_blur: f32,
-    /// Multiplier for derivative in `s` direction.
-    pub s_width: f32,
-    /// Multiplier for derivative in `t` direction.
-    pub t_width: f32,
-    /// Multiplier for derivatives in `r` direction.
-    pub r_width: f32,
-    /// Fill value for missing channels.
-    pub fill: f32,
-    /// Color for missing texture.
-    pub missing_color: Option<&'a [f32]>,
-    /// Stratified sample value.
-    pub random: f32,
-}
-
-impl From<&TextureOptions<'_>> for oiio_TextureOpt_v2_t {
-    fn from(t: &TextureOptions<'_>) -> Self {
-        let mut dst = MaybeUninit::<oiio_TextureOpt_v2_t>::uninit();
-
-        unsafe {
-            oiio_TextureSystem_make_texture_options(
-                t.first_channel as _,
-                t.sub_image as _,
-                t.sub_image_name.as_char_ptr(),
-                t.s_wrap.into(),
-                t.t_wrap.into(),
-                t.mip_mode.into(),
-                t.interpolation_mode.into(),
-                t.anisotropic.try_into().unwrap(),
-                t.conservative_filter,
-                t.s_blur,
-                t.t_blur,
-                t.s_width,
-                t.t_width,
-                t.fill,
-                t.missing_color
-                    .as_ref()
-                    .map(|c| c as *const _ as *const _)
-                    .unwrap_or(ptr::null()) as _,
-                t.random,
-                t.r_wrap.into(),
-                t.r_blur,
-                t.r_width,
-                &mut dst as *mut _ as _,
-            );
-            dst.assume_init()
-        }
-    }
-}
-
-impl Default for TextureOptions<'_> {
-    fn default() -> Self {
-        Self {
-            first_channel: 0,
-            sub_image: 0,
-            sub_image_name: Ustr::default(),
-            s_wrap: Wrap::default(),
-            t_wrap: Wrap::default(),
-            r_wrap: Wrap::default(),
-            mip_mode: MipMode::default(),
-            interpolation_mode: InterpolationMode::default(),
-            anisotropic: 32,
-            conservative_filter: true,
-            s_blur: 0.0,
-            t_blur: 0.0,
-            r_blur: 0.0,
-            s_width: 1.0,
-            t_width: 1.0,
-            r_width: 1.0,
-            fill: 0.0,
-            missing_color: None,
-            random: -1.0,
-        }
-    }
-}
-
-/// Used to for interop until we have binary compatibility between
-/// `TextureOptions` and `oiio_TextureOpt_t`.
-/// This hinges on `Ustring`.
-struct TextureOpt {
-    ptr: *mut oiio_TextureOpt_v2_t,
-}
-
-impl Default for TextureOpt {
-    fn default() -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_TextureOpt_v2_t>::uninit();
-
-        Self {
-            ptr: unsafe {
-                oiio_TextureOpt_v2_default(&raw mut ptr as _);
-                ptr.assume_init()
-            },
-        }
-    }
-}
-
-impl TextureOpt {
-    fn as_raw_ptr(&self) -> *const oiio_TextureOpt_v2_t {
-        self.ptr as _
-    }
-
-    fn _as_raw_ptr_mut(&mut self) -> *mut oiio_TextureOpt_v2_t {
-        self.ptr
-    }
-}
-
 /// An opaque handle to a texture file.
 ///
 /// Use [`TextureSystem::texture_handle()`] to create a handle.
@@ -232,17 +208,21 @@ pub struct TextureHandle<'a, 'b> {
 impl TextureHandle<'_, '_> {
     pub fn texture(
         &self,
-        st: (f32, f32),
-        delta_st_dx: (f32, f32),
-        delta_st_dy: (f32, f32),
-        channel_count: u32,
+        s: f32,
+        t: f32,
+        delta_s_dx: f32,
+        delta_t_dx: f32,
+        delta_s_dy: f32,
+        delta_t_dy: f32,
+        channel_count: u16,
         options: Option<&TextureOptions>,
-    ) -> Vec<f32> {
+    ) -> Result<Vec<f32>> {
         let options: *const oiio_TextureOpt_v2_t = options
             .map(|o| &o.into() as *const _ as _)
             .unwrap_or(TextureOpt::default().as_raw_ptr());
 
         let mut result = Vec::with_capacity(channel_count as _);
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
         unsafe {
             oiio_TextureSystem_texture(
@@ -251,21 +231,80 @@ impl TextureHandle<'_, '_> {
                 // Perthread
                 std::ptr::null_mut() as _,
                 options as *mut _,
-                st.0,
-                st.1,
-                delta_st_dx.0,
-                delta_st_dx.1,
-                delta_st_dy.0,
-                delta_st_dy.1,
-                channel_count.try_into().unwrap(),
+                s,
+                t,
+                delta_s_dx,
+                delta_t_dx,
+                delta_s_dy,
+                delta_t_dy,
+                channel_count as _,
                 result.as_mut_ptr(),
                 std::ptr::null_mut(),
                 std::ptr::null_mut(),
+                &raw mut is_ok as _,
             );
 
             result.set_len(channel_count as _);
+
+            if is_ok.assume_init() {
+                Ok(result)
+            } else {
+                Err(anyhow!("Texture lookup failed"))
+            }
         }
-        result
+    }
+
+    pub fn texture_batch_16(
+        &self,
+        mask: TextureBatchMask,
+        s: &[f32; 16],
+        t: &[f32; 16],
+        delta_s_dx: &[f32; 16],
+        delta_t_dx: &[f32; 16],
+        delta_s_dy: &[f32; 16],
+        delta_t_dy: &[f32; 16],
+        channel_count: u16,
+        options: Option<&TextureBatchOptions>,
+    ) -> Result<Vec<f32>> {
+        debug_assert!(s.len() <= t.len());
+        debug_assert!(s.len() == t.len());
+
+        let options: *const oiio_TextureOptBatch_v1_t = options
+            .map(|o| &o.into() as *const _ as _)
+            .unwrap_or(TextureBatchOpt::default().as_raw_ptr());
+
+        let mut result = Vec::with_capacity(channel_count as _);
+        let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
+
+        unsafe {
+            oiio_TextureSystem_texture_multi(
+                self.system.ptr,
+                self.ptr,
+                // Perthread
+                std::ptr::null_mut() as _,
+                options as *mut _,
+                mask.bits(),
+                s as *const _ as _,
+                t as *const _ as _,
+                delta_s_dx as *const _ as _,
+                delta_t_dx as *const _ as _,
+                delta_s_dy as *const _ as _,
+                delta_t_dy as *const _ as _,
+                channel_count as _,
+                result.as_mut_ptr(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                &raw mut is_ok as _,
+            );
+
+            result.set_len(channel_count as _);
+
+            if is_ok.assume_init() {
+                Ok(result)
+            } else {
+                Err(anyhow!("Texture lookup failed"))
+            }
+        }
     }
 }
 

@@ -13,7 +13,7 @@
 //! 1. Overwrite an `ImageBuffer` with the result of the operation.
 //!
 //!    When the ImageBuffer that gets overwritten is uninitialized, it will be
-//!    resized to be an ImageBuf large enough to hold the result.
+//!    resized to be an `ImageBuffer` large enough to hold the result.
 //!
 //!    If the `ImageBuffer` is already initialized, the operation will be
 //!    performed on the pixels in the destination that overlap the
@@ -78,8 +78,8 @@
 //!
 //! ## Region (of Interest)
 //!
-//! Most functions take an optional [`Options::region`] parameter
-//! that restricts the operation to a range in x, y, z, and channels.
+//! Most functions take an optional [`Region`] parameter that restricts the
+//! operation to a range in x, y, z, and channels.
 //!
 //! [`Region::default()`] (also known as [`Region::All`]) means no region
 //! restriction -- the whole image will be copied or altered.
@@ -130,7 +130,6 @@
 //! spawning additional threads, which might tend to crowd out the other
 //! application threads.
 use crate::*;
-use core::mem::MaybeUninit;
 
 pub mod checker;
 pub use checker::*;
@@ -152,6 +151,7 @@ pub mod pixel_hash;
 pub mod premult;
 pub mod render_text;
 pub use render_text::*;
+pub mod re_orient;
 pub mod resize;
 pub use resize::*;
 pub mod rotate;

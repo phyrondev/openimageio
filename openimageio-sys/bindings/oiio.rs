@@ -423,6 +423,11 @@ pub struct oiio_TextureOpt_v2_t {
 }
 
 #[repr(C)]
+pub struct oiio_TextureOptBatch_v1_t {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
 pub struct oiio_TextureHandle_t {
     _unused: [u8; 0],
 }
@@ -1612,6 +1617,10 @@ pub fn oiio_TextureOpt_v2_default(_result: *mut *mut oiio_TextureOpt_v2_t) -> c_
 
 pub fn oiio_TextureOpt_v2_dtor(_this: *mut oiio_TextureOpt_v2_t) -> c_int;
 
+pub fn oiio_TextureOptBatch_v1_default(_result: *mut *mut oiio_TextureOptBatch_v1_t) -> c_int;
+
+pub fn oiio_TextureOptBatch_v1_dtor(_this: *mut oiio_TextureOptBatch_v1_t) -> c_int;
+
 pub fn oiio_TypeDesc_c_str(_this: *const oiio_TypeDesc_t, _result: *mut *const c_char) -> c_int;
 
 pub fn oiio_TypeDesc_numelements(_this: *const oiio_TypeDesc_t, _result: *mut usize) -> c_int;
@@ -1713,6 +1722,10 @@ pub fn oiio_openimageio_version(_result: *mut c_int) -> c_int;
 pub fn oiio_has_error(_result: *mut bool) -> c_int;
 
 pub fn oiio_geterror(clear: bool, _result: *mut *mut oiio_String_t) -> c_int;
+
+pub fn oiio_set_attribute(name: *mut oiio_StringView_t, type_: oiio_TypeDesc_t, val: *const c_void, _result: *mut bool) -> c_int;
+
+pub fn oiio_attribute(name: *mut oiio_StringView_t, type_: oiio_TypeDesc_t, val: *mut c_void, _result: *mut bool) -> c_int;
 
 pub fn oiio_DeepData_all_channeltypes(_this: *const oiio_DeepData_t, types: *mut *const oiio_TypeDesc_t, num_types: *mut c_longlong) -> c_int;
 
@@ -1984,9 +1997,13 @@ pub fn oiio_ParamValueList_getattribute(_this: *const oiio_ParamValueList_t, nam
 
 pub fn oiio_TextureSystem_texture_handle(self_: *mut oiio_TextureSystemSharedPtr_t, file_name: *mut oiio_ustring_t, per_thread: *mut oiio_Perthread_t, _result: *mut *mut oiio_TextureHandle_t) -> c_int;
 
-pub fn oiio_TextureSystem_texture(self_: *mut oiio_TextureSystemSharedPtr_t, texture_handle: *mut oiio_TextureHandle_t, per_thread: *mut oiio_Perthread_t, options: *mut oiio_TextureOpt_v2_t, s: c_float, t: c_float, ds_dx: c_float, dt_dx: c_float, ds_dy: c_float, dt_dy: c_float, channel_count: c_int, result: *mut c_float, d_result_ds: *mut c_float, d_result_dt: *mut c_float) -> c_int;
+pub fn oiio_TextureSystem_texture(self_: *mut oiio_TextureSystemSharedPtr_t, texture_handle: *mut oiio_TextureHandle_t, per_thread: *mut oiio_Perthread_t, options: *mut oiio_TextureOpt_v2_t, s: c_float, t: c_float, ds_dx: c_float, dt_dx: c_float, ds_dy: c_float, dt_dy: c_float, channel_count: c_int, result: *mut c_float, d_result_ds: *mut c_float, d_result_dt: *mut c_float, _result: *mut bool) -> c_int;
+
+pub fn oiio_TextureSystem_texture_multi(self_: *mut oiio_TextureSystemSharedPtr_t, texture_handle: *mut oiio_TextureHandle_t, per_thread: *mut oiio_Perthread_t, options: *mut oiio_TextureOptBatch_v1_t, mask: u64, s: *const c_float, t: *const c_float, ds_dx: *const c_float, dt_dx: *const c_float, ds_dy: *const c_float, dt_dy: *const c_float, channel_count: c_int, result: *mut c_float, d_result_ds: *mut c_float, d_result_dt: *mut c_float, _result: *mut bool) -> c_int;
 
 pub fn oiio_TextureSystem_make_texture_options(first_channel: c_int, sub_image: c_int, sub_image_name: *const c_char, s_wrap: oiio_Wrap, t_wrap: oiio_Wrap, mip_mode: oiio_MipMode, interpolation_mode: oiio_InterpMode, anisotropic_samples: c_int, conservative_filter: bool, s_blur: c_float, t_blur: c_float, s_width: c_float, t_width: c_float, fill: c_float, missing_color: *mut c_float, random: c_float, r_wrap: oiio_Wrap, r_blur: c_float, r_width: c_float, dest: *mut oiio_TextureOpt_v2_t) -> c_int;
+
+pub fn oiio_TextureSystem_make_texture_batch_options(first_channel: c_int, sub_image: c_int, sub_image_name: *const c_char, s_wrap: oiio_Wrap, t_wrap: oiio_Wrap, mip_mode: oiio_MipMode, interpolation_mode: oiio_InterpMode, anisotropic_samples: c_int, conservative_filter: bool, s_blur: *mut c_float, t_blur: *mut c_float, s_width: *mut c_float, t_width: *mut c_float, fill: c_float, missing_color: *mut c_float, random: *mut c_float, r_wrap: oiio_Wrap, r_blur: *mut c_float, r_width: *mut c_float, dest: *mut oiio_TextureOptBatch_v1_t) -> c_int;
 
 pub fn oiio_TypeDesc_fromstring(_this: *mut oiio_TypeDesc_t, typestring: *const c_char, _result: *mut usize) -> c_int;
 

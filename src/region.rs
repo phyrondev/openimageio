@@ -381,10 +381,22 @@ impl Bounds {
         let transform: &Matrix3<f32> = transform.into();
 
         let corners = [
-            transform.transform_point(&Point2::<f32>::new(self.x.start as _, self.y.start as _)),
-            transform.transform_point(&Point2::<f32>::new(self.x.start as _, self.y.end as _)),
-            transform.transform_point(&Point2::<f32>::new(self.x.end as _, self.y.start as _)),
-            transform.transform_point(&Point2::<f32>::new(self.x.end as _, self.y.end as _)),
+            transform.transform_point(&Point2::<f32>::new(
+                self.x.start as f32 + 0.5,
+                self.y.start as f32 + 0.5,
+            )),
+            transform.transform_point(&Point2::<f32>::new(
+                self.x.start as f32 + 0.5,
+                self.y.end as f32 - 0.5,
+            )),
+            transform.transform_point(&Point2::<f32>::new(
+                self.x.end as f32 - 0.5,
+                self.y.start as f32 + 0.5,
+            )),
+            transform.transform_point(&Point2::<f32>::new(
+                self.x.end as f32 - 0.5,
+                self.y.end as f32 - 0.5,
+            )),
         ];
 
         self.x.start =
@@ -424,34 +436,34 @@ impl Bounds {
 
         let corners = [
             transform.transform_point(&Point3::<f32>::new(
-                self.x.start as _,
-                self.y.start as _,
-                self.z.start as _,
+                self.x.start as f32 + 0.5,
+                self.y.start as f32 + 0.5,
+                self.z.start as f32 + 0.5,
             )),
             transform.transform_point(&Point3::<f32>::new(
-                self.x.start as _,
-                self.y.start as _,
-                self.z.end as _,
+                self.x.start as f32 + 0.5,
+                self.y.start as f32 + 0.5,
+                self.z.end as f32 - 0.5,
             )),
             transform.transform_point(&Point3::<f32>::new(
-                self.x.start as _,
-                self.y.end as _,
-                self.z.end as _,
+                self.x.start as f32 + 0.5,
+                self.y.end as f32 - 0.5,
+                self.z.end as f32 - 0.5,
             )),
             transform.transform_point(&Point3::<f32>::new(
-                self.x.end as _,
-                self.y.end as _,
-                self.z.end as _,
+                self.x.end as f32 - 0.5,
+                self.y.end as f32 - 0.5,
+                self.z.end as f32 - 0.5,
             )),
             transform.transform_point(&Point3::<f32>::new(
-                self.x.end as _,
-                self.y.end as _,
-                self.z.start as _,
+                self.x.end as f32 - 0.5,
+                self.y.end as f32 - 0.5,
+                self.z.start as f32 + 0.5,
             )),
             transform.transform_point(&Point3::<f32>::new(
-                self.x.end as _,
-                self.y.start as _,
-                self.z.start as _,
+                self.x.end as f32 - 0.5,
+                self.y.start as f32 + 0.5,
+                self.z.start as f32 + 0.5,
             )),
         ];
 

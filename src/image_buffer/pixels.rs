@@ -9,55 +9,55 @@ pub struct PixelsOptions {
     z_stride: Option<u32>,
 }*/
 
-/// Retrieve a region of pixels.
-///
-/// The region is the [`Region`] specified by the current subimage and MIP-map
-/// level, and converting into the data type implied by the requested
-/// [`Primitive`] type.
-///
-/// Returns a `Vec` of the chosen type if successful, or an error if the reading
-/// of the pixels failed.
-///
-/// # Examples
-///
-/// This is probably the preferred way to get pixels into a format you need for
-/// display or processing outside of this crate.
-///
-/// Below is an example of how to get the pixels of an `ImageBuffer` buffer into
-/// a [`image::ImageBuffer`](https://docs.rs/image/latest/image/struct.ImageBuffer.html).
-///
-/// Note that this is readily available behind the `image` feature as
-/// [`image::ImageBuffer::TryFrom<ImageBuffer>`](ImageBuffer::try_into::<image::ImageBuffer>).
-///
-/// ```ignore
-/// let image_buffer = openimageio::ImageBuffer::from_file(Utf8Path::new(
-///     "assets/j0.3toD__F16_RGBA.exr",
-/// ))?;
-///
-/// let mut region = image_buffer
-///     .data_window()
-///     .region()
-///     .ok_or(anyhow!("Image is empty"))?
-///     .clone();
-///
-/// // Make sure we're in the expected color space.
-/// image_buffer.color_convert(None, "sRGB".into())?;
-///
-/// // Strip the alpha channel from the image and/or fill missing channels
-/// // with 0.
-/// region.set_channel(0..3);
-///
-/// let image_buffer: image::RgbImage = image::ImageBuffer::from_vec(
-///     region.width(),
-///     region.height(),
-///     image_buffer.pixels(&Region::Bounds(region))?,
-/// )?;
-/// ```
-///
-/// # C++
-///
-/// The C++ version of this is called `get_pixels()`.
 pub trait Pixels<T> {
+    /// Retrieve a region of pixels.
+    ///
+    /// The region is the [`Region`] specified by the current subimage and
+    /// MIP-map level, and converting into the data type implied by the
+    /// requested [`ChannelData`] type.
+    ///
+    /// Returns a `Vec` of the chosen type if successful, or an error if the
+    /// reading of the pixels failed.
+    ///
+    /// # Examples
+    ///
+    /// This is probably the preferred way to get pixels into a format you need
+    /// for display or processing outside of this crate.
+    ///
+    /// Below is an example of how to get the pixels of an `ImageBuffer` buffer
+    /// into a [`image::ImageBuffer`](https://docs.rs/image/latest/image/struct.ImageBuffer.html).
+    ///
+    /// Note that this is readily available behind the `image` feature as
+    /// [`image::ImageBuffer::TryFrom<ImageBuffer>`](ImageBuffer::try_into::<image::ImageBuffer>).
+    ///
+    /// ```ignore
+    /// let image_buffer = openimageio::ImageBuffer::from_file(Utf8Path::new(
+    ///     "assets/j0.3toD__F16_RGBA.exr",
+    /// ))?;
+    ///
+    /// let mut region = image_buffer
+    ///     .data_window()
+    ///     .region()
+    ///     .ok_or(anyhow!("Image is empty"))?
+    ///     .clone();
+    ///
+    /// // Make sure we're in the expected color space.
+    /// image_buffer.color_convert(None, "sRGB".into())?;
+    ///
+    /// // Strip the alpha channel from the image and/or fill missing channels
+    /// // with 0.
+    /// region.set_channel(0..3);
+    ///
+    /// let image_buffer: image::RgbImage = image::ImageBuffer::from_vec(
+    ///     region.width(),
+    ///     region.height(),
+    ///     image_buffer.pixels(&Region::Bounds(region))?,
+    /// )?;
+    /// ```
+    ///
+    /// # C++
+    ///
+    /// The C++ version of this is called `get_pixels()`.
     fn pixels(&self, region: &Region) -> Result<Vec<T>>;
     fn set_pixels(&mut self, pixels: &[T], region: &Region) -> Result<()>;
 }

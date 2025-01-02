@@ -1,5 +1,4 @@
 use crate::algorithms::*;
-use core::mem::MaybeUninit;
 use std::hash::{Hash, Hasher};
 
 /// Compute the [SHA-1](https://en.wikipedia.org/wiki/SHA-1) byte hash for all

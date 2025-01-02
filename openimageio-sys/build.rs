@@ -6,13 +6,19 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Do not generate anything during a `doc` build or the user told us so.
     if cfg!(doc) || env::var("OIIO_DO_NOT_GENERATE_BINDINGS").is_ok() {
+        if let Ok(oiio_dist) = env::var("OIIO_DIST") {
+            let oiio_lib_path = PathBuf::from(oiio_dist).join("lib");
+            println!("cargo:rustc-link-search={}", oiio_lib_path.display());
+        }
+
+        println!("cargo:rustc-link-lib=OpenImageIO");
         return Ok(());
     }
 
     println!("cargo:rerun-if-changed=bbl-oiio/*");
 
     #[cfg(target_os = "linux")]
-    println!("cargo::rustc-link-arg=-lstdc++");
+    println!("cargo:rustc-link-arg=-lstdc++");
 
     if let Ok(cmake_install_prefix) = std::env::var("CMAKE_INSTALL_PREFIX") {
         println!("cargo:rustc-link-search={}/lib", cmake_install_prefix);

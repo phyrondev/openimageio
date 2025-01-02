@@ -375,11 +375,11 @@ BBL_MODULE(oiio) {
       .m(&OIIO::ImageBuf::Iterator<float, float>::operator*, "op_mul")
       .m((float(OIIO::ImageBuf::Iterator<float, float>::*)(int) const) &
              OIIO::ImageBuf::Iterator<float, float>::operator[],
-         "op_index_00")
+         "op_index_ref")
       .m((OIIO::DataProxy<float, float>(
              OIIO::ImageBuf::Iterator<float, float>::*)(int)) &
              OIIO::ImageBuf::Iterator<float, float>::operator[],
-         "op_index_01")
+         "op_index_mut")
       .m(&OIIO::ImageBuf::Iterator<float, float>::rawptr)
       .m(&OIIO::ImageBuf::Iterator<float, float>::set_deep_samples)
       .m(&OIIO::ImageBuf::Iterator<float, float>::deep_value)

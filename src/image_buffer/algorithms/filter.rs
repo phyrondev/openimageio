@@ -2,7 +2,7 @@ use crate::*;
 use ahash::AHashMap as HashMap;
 use float_derive::{FloatEq, FloatHash, FloatPartialEq};
 use parking_lot::RwLock;
-use std::{mem::MaybeUninit, sync::LazyLock};
+use std::sync::LazyLock;
 
 // Global 2D pixel filter registry.
 // FIXME: This is never freed over the lifetime of the program.

@@ -1,6 +1,4 @@
 use crate::*;
-use anyhow::Result;
-use core::mem::MaybeUninit;
 
 /// # Cut
 ///
