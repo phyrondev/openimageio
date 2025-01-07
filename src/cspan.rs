@@ -185,3 +185,51 @@ impl CspanF32<'_> {
         self.ptr
     }
 }*/
+
+pub(crate) struct CspanRawOiioString<'a> {
+    ptr: *const oiio_CspanString_t,
+    marker: PhantomData<*const &'a ()>,
+}
+
+impl Default for CspanRawOiioString<'_> {
+    fn default() -> Self {
+        let mut ptr = MaybeUninit::<*const oiio_CspanString_t>::uninit();
+
+        unsafe {
+            oiio_CspanString_default(&raw mut ptr as _);
+
+            Self {
+                ptr: ptr.assume_init(),
+                marker: PhantomData,
+            }
+        }
+    }
+}
+
+impl<'a> CspanRawOiioString<'a> {
+    pub fn _new(data: &'a [*const oiio_String_t]) -> Self {
+        let mut ptr = MaybeUninit::<*const oiio_CspanString_t>::uninit();
+
+        unsafe {
+            oiio_CspanString_ctor(data.as_ptr() as _, data.len() as _, &raw mut ptr as _);
+
+            Self {
+                ptr: ptr.assume_init(),
+                marker: PhantomData,
+            }
+        }
+    }
+
+    #[inline(always)]
+    pub fn as_raw_ptr(&self) -> *const oiio_CspanString_t {
+        self.ptr
+    }
+}
+
+impl Drop for CspanRawOiioString<'_> {
+    fn drop(&mut self) {
+        unsafe {
+            oiio_CspanString_dtor(self.ptr as _);
+        }
+    }
+}

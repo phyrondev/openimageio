@@ -73,6 +73,9 @@ BBL_MODULE(oiio) {
                 "data", "size"),
             "ctor");
 
+  bbl::Class<OIIO::cspan<std::string>>("CspanString")
+      .ctor(bbl::Class<OIIO::cspan<std::string>>::Ctor(), "default");
+
   bbl::Class<std::string>("String")
       .ctor(bbl::Class<std::string>::Ctor(), "ctor_default")
       .ctor(bbl::Class<std::string>::Ctor<const char *, size_t>("s", "count"),

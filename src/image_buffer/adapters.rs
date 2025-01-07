@@ -220,11 +220,11 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
     }
 }
 
+#[cfg(feature = "image")]
 #[cfg(test)]
 mod tests {
     use crate::*;
 
-    #[cfg(feature = "image")]
     #[test]
     fn adapter() -> Result<()> {
         let image_buf = ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;

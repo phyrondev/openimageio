@@ -499,6 +499,8 @@ pub fn oiio_CspanU8_dtor(_this: *mut oiio_CspanU8_t) -> c_int;
 
 pub fn oiio_CspanString_ctor(data: *mut oiio_String_t, size: c_ulong, _result: *mut *mut oiio_CspanString_t) -> c_int;
 
+pub fn oiio_CspanString_default(_result: *mut *mut oiio_CspanString_t) -> c_int;
+
 pub fn oiio_CspanString_dtor(_this: *mut oiio_CspanString_t) -> c_int;
 
 pub fn oiio_String_c_str(_this: *const oiio_String_t, _result: *mut *const c_char) -> c_int;

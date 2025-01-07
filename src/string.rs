@@ -12,6 +12,21 @@ pub(crate) struct OiioString {
 }
 
 impl OiioString {
+    pub fn new(s: &str) -> Self {
+        let mut ptr = MaybeUninit::<*mut oiio_String_t>::uninit();
+
+        unsafe {
+            oiio_String_ctor(
+                s.as_ptr() as _,
+                s.len().try_into().unwrap(),
+                &raw mut ptr as _,
+            );
+            Self {
+                ptr: ptr.assume_init(),
+            }
+        }
+    }
+
     pub(crate) fn is_empty(&self) -> bool {
         let mut is_empty = std::mem::MaybeUninit::<bool>::uninit();
 
@@ -73,21 +88,6 @@ impl Display for OiioString {
 }
 
 impl OiioString {
-    pub fn new(s: &str) -> Self {
-        let mut ptr = MaybeUninit::<*mut oiio_String_t>::uninit();
-
-        unsafe {
-            oiio_String_ctor(
-                s.as_ptr() as _,
-                s.len().try_into().unwrap(),
-                &raw mut ptr as _,
-            );
-            Self {
-                ptr: ptr.assume_init(),
-            }
-        }
-    }
-
     pub fn as_raw_ptr(&self) -> *const oiio_String_t {
         self.ptr
     }

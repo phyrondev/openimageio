@@ -131,6 +131,8 @@
 //! application threads.
 use crate::*;
 
+pub mod channels;
+pub use channels::*;
 pub mod checker;
 pub use checker::*;
 pub mod color_convert;
