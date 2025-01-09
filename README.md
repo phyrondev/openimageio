@@ -61,7 +61,7 @@ fn main() -> Result<()> {
 
     // Load fg image. This is 1024×1024.
     // The `_with` variants of OIIO methods take additional parameters.
-    let mut image_a = ImageBuffer::from_file_with(
+    let mut image_fg = ImageBuffer::from_file_with(
         &Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"),
         &FromFileOptions {
             image_cache,
@@ -70,27 +70,30 @@ fn main() -> Result<()> {
     )?;
 
     // Load bg image. This is 2048×1024.
-    let image_b = ImageBuffer::from_file(
+    let image_bg = ImageBuffer::from_file(
         &Utf8Path::new("assets/wooden_lounge_2k__F32_RGBA.exr"),
     )?;
 
     // Compose fg over bg, replacing the data window of fg
     // with the result. I.e. the result will be cropped at
     // fg's original dimensions of 1024×1024.
-    image_a.over(&image_b)?;
+    //
+    // Note that for this variant the order of the arguments is
+    // swapped. I.e. image_b
+    image_bg.over(&image_fg)?;
 
     // Write the result.
-    image_a.write(&Utf8Path::new("a_over_b.exr"))?;
+    image_bg.write(&Utf8Path::new("fg_over_bgexr"))?;
 
     // Alternatively we could combine both images and get a buffer
     // with the combined data windows.
-    let combined_image = ImageBuffer::from_over(image_a, image_b)?;
+    let combined_image = ImageBuffer::from_over(image_fg, image_bg)?;
 
-    combined_image.write(&Utf8Path::new("from_a_over_b.exr"))?;
+    combined_image.write(&Utf8Path::new("from_fg_over_bg.exr"))?;
 
     // `image_cache` gets dropped here but the shared cache still exists
-    // and can be accessed by creating a new `ImageCache::shared()` which
-    // will access this instance.
+    // and can be accessed by creating a new `ImageCache::shared(true)`
+    // which would give access this same instance.
 
     Ok(())
 }
@@ -98,7 +101,7 @@ fn main() -> Result<()> {
 
 ## Features
 
-- `algorithms` – enables useful `ImageBuffer` algorithms (enabled by default).
+- `algorithms` – Add a lot of useful `ImageBuffer` algorithms (enabled by default).
 
 - `ffi` – exposes the low-level FFI bindings to OIIO.
 
@@ -149,10 +152,10 @@ export BBL_PLUGIN_PATH=/usr/local/plugins/
 > output)!
 
 If you use a local build of OpenImageIO you can point CMake to it by setting
-the `CMAKE_PREFIX_PATH` to the `dist` directory of your build.
+the `OIIO_DIST` to the `dist` directory of your build.
 
 For example:
 
 ```
-CMAKE_PREFIX_PATH=$HOME/code/OpenImageIO/dist cargo test
+OIIO_DIST=$HOME/code/OpenImageIO/dist cargo test
 ```
