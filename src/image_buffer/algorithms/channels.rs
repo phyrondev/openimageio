@@ -1,27 +1,11 @@
 use crate::*;
 use smallvec::SmallVec;
 
-/// Optional parameters for [`ImageBuffer`]'s
-/// [`replace_by_convolve_with()`](ImageBuffer::replace_by_convolve_with) and
-/// [`convolve_with()`](ImageBuffer::convolve_with) methods.
-#[derive(Clone, Default)]
-pub struct ChannelsOptions {
-    /// If `true` the channel names will be taken from the corresponding
-    /// channels of the source image.
-    ///
-    /// Be careful with this, shuffling both channel ordering and their names
-    /// could result in no semantic change at all, if you catch the drift.
-    ///
-    /// If `false` (the default), the resulting dst image will have default
-    /// channel names in the usual order (`R`, `G`, etc.).
-    pub shuffle_names: bool,
-    /// See the [Multithreading](module@algorithms#multithreading) section
-    /// in the [module@algorithms] module.
-    pub thread_count: u16,
-}
-
+/// How to fill a resp. channel.
 pub enum Channel<'a> {
+    /// Fill the resp. channel with a constant value.
     Constant(f32, Option<&'a str>),
+    /// Use the channel at the given index in the source image.
     Index(u32, Option<&'a str>),
 }
 
@@ -29,11 +13,8 @@ pub enum Channel<'a> {
 ///
 /// Generic channel shuffling.
 ///
-/// return (or store in dst) a copy of src, but with
-/// channels in the order channelorder[0..channel_count-1] (or set to a constant
-/// value, designated by channelorder[i] = -1 and having the fill value in
-/// channelvalues[i]. In-place operation is allowed (i.e., dst and src the same
-/// image, but an extra copy will occur).
+/// Change `self` or udpdate it from a copy of `source` with channels in the
+/// resp. `order`.
 impl ImageBuffer {
     #[named]
     pub fn replace_by_channels(
@@ -79,6 +60,25 @@ impl ImageBuffer {
 
         self.mut_self_or_error(is_ok, function_name!())
     }
+}
+
+/// Optional parameters for [`ImageBuffer`]'s
+/// [`replace_by_convolve_with()`](ImageBuffer::replace_by_convolve_with) and
+/// [`convolve_with()`](ImageBuffer::convolve_with) methods.
+#[derive(Clone, Default)]
+pub struct ChannelsOptions {
+    /// If `true` the channel names will be taken from the corresponding
+    /// channels of the source image.
+    ///
+    /// Be careful with this, shuffling both channel ordering and their names
+    /// could result in no semantic change at all, if you catch the drift.
+    ///
+    /// If `false` (the default), the resulting dst image will have default
+    /// channel names in the usual order (`R`, `G`, etc.).
+    pub shuffle_names: bool,
+    /// See the [Multithreading](module@algorithms#multithreading) section
+    /// in the [module@algorithms] module.
+    pub thread_count: u16,
 }
 
 impl ImageBuffer {

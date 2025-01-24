@@ -29,14 +29,14 @@ BBL_MODULE(oiio) {
               "list"),
           "ctor");
 
+  bbl::Class<OIIO::cspan<half>>("CspanF16")
+      .ctor(bbl::Class<OIIO::cspan<half>>::Ctor<half *, size_t>("data", "size"),
+            "ctor");
+
   bbl::Class<OIIO::cspan<float>>("CspanF32")
       .ctor(
           bbl::Class<OIIO::cspan<float>>::Ctor<float *, size_t>("data", "size"),
           "ctor");
-
-  bbl::Class<OIIO::cspan<half>>("CspanF16")
-      .ctor(bbl::Class<OIIO::cspan<half>>::Ctor<half *, size_t>("data", "size"),
-            "ctor");
 
   bbl::Class<OIIO::cspan<double>>("CspanF64")
       .ctor(bbl::Class<OIIO::cspan<double>>::Ctor<double *, size_t>("data",

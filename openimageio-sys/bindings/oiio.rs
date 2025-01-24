@@ -209,12 +209,12 @@ pub struct oiio_ParamValueSpan_t {
 }
 
 #[repr(C)]
-pub struct oiio_CspanF32_t {
+pub struct oiio_CspanF16_t {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
-pub struct oiio_CspanF16_t {
+pub struct oiio_CspanF32_t {
     _unused: [u8; 0],
 }
 
@@ -465,13 +465,13 @@ pub fn oiio_ParamValueSpan_ctor(list: *const oiio_ParamValueList_t, _result: *mu
 
 pub fn oiio_ParamValueSpan_dtor(_this: *mut oiio_ParamValueSpan_t) -> c_int;
 
-pub fn oiio_CspanF32_ctor(data: *mut c_float, size: c_ulong, _result: *mut *mut oiio_CspanF32_t) -> c_int;
-
-pub fn oiio_CspanF32_dtor(_this: *mut oiio_CspanF32_t) -> c_int;
-
 pub fn oiio_CspanF16_ctor(data: *mut oiio_Half_t, size: c_ulong, _result: *mut *mut oiio_CspanF16_t) -> c_int;
 
 pub fn oiio_CspanF16_dtor(_this: *mut oiio_CspanF16_t) -> c_int;
+
+pub fn oiio_CspanF32_ctor(data: *mut c_float, size: c_ulong, _result: *mut *mut oiio_CspanF32_t) -> c_int;
+
+pub fn oiio_CspanF32_dtor(_this: *mut oiio_CspanF32_t) -> c_int;
 
 pub fn oiio_CspanF64_ctor(data: *mut c_double, size: c_ulong, _result: *mut *mut oiio_CspanF64_t) -> c_int;
 

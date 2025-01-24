@@ -33,10 +33,11 @@ impl AsTypeDesc for i32 {
 /// If the name is known, valid attribute that matches the type specified, the
 /// attribute will be set to the new value and attribute() will return true. If
 /// name is not recognized, or if the types do not match (e.g., type is
-/// TypeFloat but the named attribute is a string), the attribute will not be
-/// modified, and attribute() will return false.
+/// `f32` but the named attribute is a `String`), the attribute will not be
+/// modified, and `set_attributes()` will return an error.
 ///
 /// ```
+/// # use openimageio::set_attributes;
 /// set_attributes("threads=4,log_times=1");
 /// ```
 ///
@@ -129,9 +130,9 @@ impl AsTypeDesc for i32 {
 ///   use the absolute value, but draw alternating diagonal stripes of the
 ///   color. For example:
 ///
-///   ```
+///   ```ignore
 ///   let missing = [ -1.0f32, 0.0, 0.0, 0.0 ]; // striped red
-///   attribute("missingcolor", &missing);
+///   set_attribute("missingcolor", &missing);
 ///   ```
 ///
 ///   Note that only some file formats support files with missing tiles or
