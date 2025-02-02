@@ -194,7 +194,7 @@ impl ImageBuffer {
     /// type.
     ///
     /// A `base_type` of `None` signifies to use the data type of the buffer),
-    /// `file_format -- `None` means to infer the type from the
+    /// `file_format` -- `None` means to infer the type from the
     /// `file_name`'s extension).
     ///
     /// By default, it will always try to write a
@@ -465,6 +465,19 @@ impl ImageBuffer {
         })
             .into()
     }
+
+    /*pub fn image_spec(&self) -> ImageSpec {
+        let mut image_spec_ptr = MaybeUninit::<*mut oiio_ImageSpec_t>::uninit();
+
+        ImageSpecInternal {
+            ptr: unsafe {
+                oiio_ImageBuf_spec(self.ptr, &mut image_spec_ptr as *mut _ as _);
+
+                image_spec_ptr.assume_init()
+            },
+        }
+        .into()
+    }*/
 
     /*
     pub fn spec(&self) -> ImageSpec {
@@ -880,6 +893,7 @@ impl ImageBuffer {
                     ptr::null_mut() as _,
                     &raw mut ptr as _,
                 );
+
                 ptr.assume_init()
             },
             image_cache: options.image_cache.clone(),

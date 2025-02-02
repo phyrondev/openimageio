@@ -60,6 +60,6 @@ BBL_MODULE(oiio) {
   bbl::Enum<OIIO::TypeDesc::BASETYPE>();
   bbl::Enum<OIIO::TypeDesc::VECSEMANTICS>();
 
-  bbl::Class<std::vector<OIIO::TypeDesc>>("TypeDescVector")
+  bbl::Class<std::vector<OIIO::TypeDesc>>("VecTypeDesc")
       BBL_STD_VECTOR_METHODS(OIIO::TypeDesc);
 }

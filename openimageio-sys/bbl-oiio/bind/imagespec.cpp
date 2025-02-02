@@ -170,6 +170,11 @@ void ImageSpec_push_channelname(OIIO::ImageSpec &self,
                                 std::string const &value) {
   self.channelnames.push_back(value);
 }
+
+std::vector<std::string> const &
+ImageSpec_get_channelnames(OIIO::ImageSpec const &self) {
+  return self.channelnames;
+}
 } // namespace bblext
 
 BBL_MODULE(oiio) {
@@ -340,7 +345,7 @@ BBL_MODULE(oiio) {
   bbl::fn(&bblext::ImageSpec_set_nchannels);
   bbl::fn(&bblext::ImageSpec_get_format_basetype);
   bbl::fn(&bblext::ImageSpec_set_format_basetype);
-  bbl::fn(&bblext::ImageSpec_get_channelformats_ref);
+  // bbl::fn(&bblext::ImageSpec_get_channelformats_ref);
   bbl::fn(&bblext::ImageSpec_set_channelformats);
   bbl::fn(&bblext::ImageSpec_get_alpha_channel);
   bbl::fn(&bblext::ImageSpec_set_alpha_channel);
@@ -352,6 +357,7 @@ BBL_MODULE(oiio) {
   bbl::fn(&bblext::ImageSpec_push_channelformat);
   bbl::fn(&bblext::ImageSpec_clear_and_reserve_channelnames);
   bbl::fn(&bblext::ImageSpec_push_channelname);
+  bbl::fn(&bblext::ImageSpec_get_channelnames);
 
   bbl::Enum<OIIO::ImageSpec::SerialFormat>();
   bbl::Enum<OIIO::ImageSpec::SerialVerbose>();

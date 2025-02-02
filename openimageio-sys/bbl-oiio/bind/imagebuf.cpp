@@ -148,7 +148,7 @@ BBL_MODULE(oiio) {
       // .m((bool (OIIO::ImageBuf::*)(int, int, int, int, bool, OIIO::TypeDesc,
       // OIIO::ProgressCallback, void *))
       //     &OIIO::ImageBuf::read, "read_01")
-      // .m(&OIIO::ImageBuf::init_spec)
+      .m(&OIIO::ImageBuf::init_spec)
       //.m((bool (OIIO::ImageBuf::*)(OIIO::string_view, OIIO::TypeDesc,
       // OIIO::string_view, OIIO::ProgressCallback, void *) const)
       //     &OIIO::ImageBuf::write, "write_00")

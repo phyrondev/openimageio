@@ -1,5 +1,6 @@
 use crate::*;
 use core::mem::MaybeUninit;
+use std::ptr::slice_from_raw_parts;
 use ustr::Ustr;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -199,7 +200,7 @@ impl ImageSpec {
 }
 
 pub(crate) struct ImageSpecInternal {
-    ptr: *mut oiio_ImageSpec_t,
+    pub ptr: *mut oiio_ImageSpec_t,
 }
 
 /*impl From<ImageSpec> for oiio_ImageSpec_t {
@@ -280,6 +281,92 @@ impl From<ImageSpec> for ImageSpecInternal {
 
             Self { ptr }
         }
+    }
+}
+
+impl From<ImageSpecInternal> for ImageSpec {
+    fn from(i: ImageSpecInternal) -> Self {
+        let ptr = i.ptr;
+
+        let mut r = Self::default();
+
+        unsafe {
+            oiio_ImageSpec_get_x(ptr, &mut r.x as *mut _ as _);
+            oiio_ImageSpec_get_y(ptr, &mut r.y as *mut _ as _);
+            oiio_ImageSpec_get_z(ptr, &mut r.z as *mut _ as _);
+
+            oiio_ImageSpec_get_width(ptr, &mut r.width as *mut _ as _);
+            oiio_ImageSpec_get_height(ptr, &mut r.height as *mut _ as _);
+            oiio_ImageSpec_get_depth(ptr, &mut r.depth as *mut _ as _);
+            oiio_ImageSpec_get_full_x(ptr, &mut r.display_window_x as *mut _ as _);
+            oiio_ImageSpec_get_full_x(ptr, &mut r.display_window_y as *mut _ as _);
+            oiio_ImageSpec_get_full_x(ptr, &mut r.display_window_z as *mut _ as _);
+            oiio_ImageSpec_get_full_width(ptr, &mut r.display_window_width as *mut _ as _);
+            oiio_ImageSpec_get_full_height(ptr, &mut r.display_window_height as *mut _ as _);
+            oiio_ImageSpec_get_full_depth(ptr, &mut r.display_window_depth as *mut _ as _);
+            oiio_ImageSpec_get_tile_width(ptr, &mut r.tile_width as *mut _ as _);
+            oiio_ImageSpec_get_tile_height(ptr, &mut r.tile_height as *mut _ as _);
+            oiio_ImageSpec_get_tile_depth(ptr, &mut r.tile_depth as *mut _ as _);
+
+            let mut channel_formats = MaybeUninit::<*mut oiio_VecTypeDesc_t>::uninit();
+            oiio_ImageSpec_get_channelformats(ptr, &mut channel_formats as *mut _ as _);
+            let channel_formats = channel_formats.assume_init();
+
+            let mut len = MaybeUninit::<u32>::uninit();
+            oiio_VecTypeDesc_size(channel_formats, &mut len as *mut _ as _);
+            let len = len.assume_init() as _;
+
+            if 0 == len {
+                let mut basetype = MaybeUninit::<u8>::uninit();
+                oiio_ImageSpec_get_format_basetype(ptr, &mut basetype as *mut _ as _);
+                let basetype = basetype.assume_init();
+
+                let mut len = MaybeUninit::<u32>::uninit();
+                oiio_ImageSpec_get_nchannels(ptr, &mut len as *mut _ as _);
+                let len = len.assume_init() as _;
+
+                r.channel_format = ChannelFormat::Uniform(basetype.try_into().unwrap(), len);
+            } else {
+                let mut data = MaybeUninit::<*mut *const oiio_TypeDesc_t>::uninit();
+                oiio_VecTypeDesc_data(channel_formats, &mut data as *mut _ as _);
+                let data = data.assume_init();
+
+                let channel_formats = &*slice_from_raw_parts(data, len);
+
+                r.channel_format = ChannelFormat::PerChannel(
+                    channel_formats
+                        .iter()
+                        .map(|&c| (*c).basetype.try_into().unwrap())
+                        .collect::<Vec<_>>(),
+                );
+            }
+
+            // TODO: get channel names
+
+            let alpha_channel_index = MaybeUninit::<i32>::uninit();
+            oiio_ImageSpec_get_alpha_channel(ptr, &mut r.alpha_channel_index as *mut _ as _);
+            let alpha_channel_index = alpha_channel_index.assume_init();
+            if alpha_channel_index < 0 {
+                r.alpha_channel_index = None;
+            } else {
+                r.alpha_channel_index = Some(alpha_channel_index as _);
+            }
+
+            let z_channel_index = MaybeUninit::<i32>::uninit();
+            oiio_ImageSpec_get_z_channel(ptr, &mut r.z_channel_index as *mut _ as _);
+            let z_channel_index = z_channel_index.assume_init();
+            if z_channel_index < 0 {
+                r.z_channel_index = None;
+            } else {
+                r.z_channel_index = Some(z_channel_index as _);
+            }
+
+            oiio_ImageSpec_get_deep(ptr, &mut r.deep as *mut _ as _);
+
+            // TODO: get `extra_attribs`
+        }
+
+        r
     }
 }
 

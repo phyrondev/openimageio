@@ -51,23 +51,20 @@ impl TryFrom<oiio_BASETYPE> for BaseType {
 
     fn try_from(base_type: oiio_BASETYPE) -> Result<BaseType, Self::Error> {
         match base_type {
-            oiio_BASETYPE::oiio_BASETYPE_NONE => Err(()),
-            _ => match base_type {
-                oiio_BASETYPE::oiio_BASETYPE_UINT8 => Ok(BaseType::U8),
-                oiio_BASETYPE::oiio_BASETYPE_INT8 => Ok(BaseType::I8),
-                oiio_BASETYPE::oiio_BASETYPE_UINT16 => Ok(BaseType::U16),
-                oiio_BASETYPE::oiio_BASETYPE_INT16 => Ok(BaseType::I16),
-                oiio_BASETYPE::oiio_BASETYPE_UINT32 => Ok(BaseType::U32),
-                oiio_BASETYPE::oiio_BASETYPE_INT32 => Ok(BaseType::I32),
-                oiio_BASETYPE::oiio_BASETYPE_INT64 => Ok(BaseType::I64),
-                oiio_BASETYPE::oiio_BASETYPE_UINT64 => Ok(BaseType::U64),
-                oiio_BASETYPE::oiio_BASETYPE_HALF => Ok(BaseType::F16),
-                oiio_BASETYPE::oiio_BASETYPE_FLOAT => Ok(BaseType::F32),
-                oiio_BASETYPE::oiio_BASETYPE_DOUBLE => Ok(BaseType::F64),
-                oiio_BASETYPE::oiio_BASETYPE_STRING => Ok(BaseType::String),
-                oiio_BASETYPE::oiio_BASETYPE_PTR => Ok(BaseType::Ptr),
-                _ => Err(()),
-            },
+            oiio_BASETYPE::oiio_BASETYPE_UINT8 => Ok(BaseType::U8),
+            oiio_BASETYPE::oiio_BASETYPE_INT8 => Ok(BaseType::I8),
+            oiio_BASETYPE::oiio_BASETYPE_UINT16 => Ok(BaseType::U16),
+            oiio_BASETYPE::oiio_BASETYPE_INT16 => Ok(BaseType::I16),
+            oiio_BASETYPE::oiio_BASETYPE_UINT32 => Ok(BaseType::U32),
+            oiio_BASETYPE::oiio_BASETYPE_INT32 => Ok(BaseType::I32),
+            oiio_BASETYPE::oiio_BASETYPE_INT64 => Ok(BaseType::I64),
+            oiio_BASETYPE::oiio_BASETYPE_UINT64 => Ok(BaseType::U64),
+            oiio_BASETYPE::oiio_BASETYPE_HALF => Ok(BaseType::F16),
+            oiio_BASETYPE::oiio_BASETYPE_FLOAT => Ok(BaseType::F32),
+            oiio_BASETYPE::oiio_BASETYPE_DOUBLE => Ok(BaseType::F64),
+            oiio_BASETYPE::oiio_BASETYPE_STRING => Ok(BaseType::String),
+            oiio_BASETYPE::oiio_BASETYPE_PTR => Ok(BaseType::Ptr),
+            _ => Err(()),
         }
     }
 }
@@ -451,10 +448,7 @@ impl From<TypeDesc> for oiio_TypeDesc_t {
 impl From<&oiio_TypeDesc_t> for TypeDesc {
     fn from(t: &oiio_TypeDesc_t) -> Self {
         Self {
-            base_type: match t.basetype {
-                b if oiio_BASETYPE::oiio_BASETYPE_NONE.0 == b as _ => None,
-                b => b.try_into().ok(),
-            },
+            base_type: t.basetype.try_into().ok(),
             aggregate: t.aggregate.try_into().unwrap(),
             vec_semantics: match t.vecsemantics {
                 b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 == b as _

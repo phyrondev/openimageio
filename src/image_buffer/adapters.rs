@@ -46,8 +46,7 @@ impl ImageBufferFromSlice<u8> for ImageBuffer {
             TypeDesc {
                 base_type: Some(base_type),
                 ..Default::default()
-            }
-            .into(),
+            },
             color_space,
         );
 
@@ -95,10 +94,76 @@ impl TryFrom<tiny_skia::Pixmap> for ImageBuffer {
 }
 
 #[cfg(feature = "image")]
-impl TryFrom<ImageBuffer> for image::RgbImage {
+impl TryFrom<&ImageBuffer> for image::GrayImage {
     type Error = anyhow::Error;
 
-    fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..1);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to GrayImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::GrayImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::GrayAlphaImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..2);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to GrayAlphaImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::GrayAlphaImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::RgbImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
         let mut bounds = image_buffer
             .data_window()
             .bounds()
@@ -106,10 +171,10 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
             .clone();
 
         // Make sure we're in the expected color space.
-        image_buffer.color_convert(None, "sRGB".into())?;
+        let image_buffer = ImageBuffer::from_color_convert(image_buffer, None, "sRGB")?;
 
-        // Strip the alpha channel from the image and/or fill missing channels
-        // with 0.
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
         bounds.set_channel(0..3);
 
         image::ImageBuffer::from_vec(
@@ -122,7 +187,7 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
 }
 
 #[cfg(feature = "image")]
-impl TryFrom<ImageBuffer> for image::RgbaImage {
+impl TryFrom<ImageBuffer> for image::RgbImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
@@ -133,7 +198,34 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
             .clone();
 
         // Make sure we're in the expected color space.
-        image_buffer.color_convert(None, "sRGB".into())?;
+        image_buffer.color_convert(None, "sRGB")?;
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..3);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to RgbImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::RgbaImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Make sure we're in the expected color space.
+        let image_buffer = ImageBuffer::from_color_convert(image_buffer, None, "sRGB")?;
 
         // Strip superfluous channels from the image and/or fill missing
         // channels with 0.
@@ -149,24 +241,276 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
 }
 
 #[cfg(feature = "image")]
-impl TryFrom<ImageBuffer> for image::DynamicImage {
+impl TryFrom<ImageBuffer> for image::RgbaImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let bounds = image_buffer
+        let mut bounds = image_buffer
             .data_window()
             .bounds()
             .ok_or(anyhow!("Image is empty"))?
             .clone();
 
         // Make sure we're in the expected color space.
-        image_buffer.color_convert(None, "sRGB".into())?;
+        image_buffer.color_convert(None, "sRGB")?;
 
-        if bounds.channel_count() < 4 {
-            Ok(image::DynamicImage::ImageRgb8(image_buffer.try_into()?))
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..4);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to RgbaImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::ImageBuffer<image::Luma<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..1);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to ImageLuma16"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::ImageBuffer<image::Luma<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::ImageBuffer<image::LumaA<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..2);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to ImageLumaA16"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::ImageBuffer<image::LumaA<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::ImageBuffer<image::Rgb<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..3);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to ImageRgb16"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::ImageBuffer<image::Rgb<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::ImageBuffer<image::Rgba<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..4);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to ImageRgba16"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::ImageBuffer<image::Rgba<u16>, Vec<u16>> {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::Rgb32FImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..3);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to Rgb32FImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::Rgb32FImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::Rgba32FImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let mut bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        // Strip superfluous channels from the image and/or fill missing
+        // channels with 0.
+        bounds.set_channel(0..4);
+
+        image::ImageBuffer::from_vec(
+            bounds.width(),
+            bounds.height(),
+            image_buffer.pixels(&Region::Bounds(bounds))?,
+        )
+        .ok_or(anyhow!("Failed to convert to Rgba32FImage"))
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::Rgba32FImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<&ImageBuffer> for image::DynamicImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
+        let bounds = image_buffer
+            .data_window()
+            .bounds()
+            .ok_or(anyhow!("Image is empty"))?
+            .clone();
+
+        if let Some(base_type) = image_buffer.type_desc().base_type {
+            match base_type {
+                BaseType::U8 => match bounds.channel_count() {
+                    1 => Ok(image::DynamicImage::ImageLuma8(image_buffer.try_into()?)),
+                    2 => Ok(image::DynamicImage::ImageLumaA8(image_buffer.try_into()?)),
+                    3 => Ok(image::DynamicImage::ImageRgb8(image_buffer.try_into()?)),
+                    _ => Ok(image::DynamicImage::ImageRgba8(image_buffer.try_into()?)),
+                },
+                BaseType::U16 => match bounds.channel_count() {
+                    1 => Ok(image::DynamicImage::ImageLuma16(image_buffer.try_into()?)),
+                    2 => Ok(image::DynamicImage::ImageLumaA16(image_buffer.try_into()?)),
+                    3 => Ok(image::DynamicImage::ImageRgb16(image_buffer.try_into()?)),
+                    _ => Ok(image::DynamicImage::ImageRgba16(image_buffer.try_into()?)),
+                },
+                // We promote all other types to RGB(A) `f32`.
+                _ => {
+                    if bounds.channel_count() < 4 {
+                        Ok(image::DynamicImage::ImageRgb32F(image_buffer.try_into()?))
+                    } else {
+                        Ok(image::DynamicImage::ImageRgba32F(image_buffer.try_into()?))
+                    }
+                }
+            }
         } else {
-            Ok(image::DynamicImage::ImageRgba8(image_buffer.try_into()?))
+            Err(anyhow!("ImageBuffer has no BaseType"))
         }
+    }
+}
+
+#[cfg(feature = "image")]
+impl TryFrom<ImageBuffer> for image::DynamicImage {
+    type Error = anyhow::Error;
+
+    fn try_from(image_buffer: ImageBuffer) -> Result<Self> {
+        (&image_buffer).try_into()
     }
 }
 
@@ -231,7 +575,7 @@ mod tests {
 
         // This will convert to either Rgb8 or Rgba8 and apply
         // a conversion to sRGB
-        let _image: image::DynamicImage = image_buf.try_into()?;
+        let _image: Result<image::DynamicImage> = image_buf.try_into();
 
         Ok(())
     }

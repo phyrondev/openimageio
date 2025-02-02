@@ -443,7 +443,7 @@ pub struct oiio_TypeDesc_t {
 }
 
 #[repr(C)]
-pub struct oiio_TypeDescVector_t {
+pub struct oiio_VecTypeDesc_t {
     _unused: [u8; 0],
 }
 
@@ -653,6 +653,8 @@ pub fn oiio_ImageBuf_reset_05(_this: *mut oiio_ImageBuf_t, spec: *const oiio_Ima
 
 pub fn oiio_ImageBuf_make_writable(_this: *mut oiio_ImageBuf_t, keep_cache_type: bool, _result: *mut bool) -> c_int;
 
+pub fn oiio_ImageBuf_init_spec(_this: *mut oiio_ImageBuf_t, filename: *mut oiio_StringView_t, subimage: c_int, miplevel: c_int, _result: *mut bool) -> c_int;
+
 pub fn oiio_ImageBuf_set_write_tiles(_this: *mut oiio_ImageBuf_t, width: c_int, height: c_int, depth: c_int) -> c_int;
 
 pub fn oiio_ImageBuf_set_write_ioproxy(_this: *mut oiio_ImageBuf_t, ioproxy: *mut oiio_IOProxy_t) -> c_int;
@@ -848,6 +850,8 @@ pub fn oiio_ImageBufSharedPtr_reset_03(_this: *mut oiio_ImageBufSharedPtr_t, spe
 pub fn oiio_ImageBufSharedPtr_reset_05(_this: *mut oiio_ImageBufSharedPtr_t, spec: *const oiio_ImageSpec_t, buffer: *mut c_void, xstride: i64, ystride: i64, zstride: i64) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_make_writable(_this: *mut oiio_ImageBufSharedPtr_t, keep_cache_type: bool, _result: *mut bool) -> c_int;
+
+pub fn oiio_ImageBufSharedPtr_init_spec(_this: *mut oiio_ImageBufSharedPtr_t, filename: *mut oiio_StringView_t, subimage: c_int, miplevel: c_int, _result: *mut bool) -> c_int;
 
 pub fn oiio_ImageBufSharedPtr_set_write_tiles(_this: *mut oiio_ImageBufSharedPtr_t, width: c_int, height: c_int, depth: c_int) -> c_int;
 
@@ -1527,7 +1531,7 @@ pub fn oiio_ImageSpec_valid_tile_range(_this: *mut oiio_ImageSpec_t, xbegin: c_i
 
 pub fn oiio_ImageSpec_channelformat(_this: *const oiio_ImageSpec_t, chan: c_int, _result: *mut oiio_TypeDesc_t) -> c_int;
 
-pub fn oiio_ImageSpec_get_channelformats(_this: *const oiio_ImageSpec_t, formats: *mut oiio_TypeDescVector_t) -> c_int;
+pub fn oiio_ImageSpec_get_channelformats(_this: *const oiio_ImageSpec_t, formats: *mut oiio_VecTypeDesc_t) -> c_int;
 
 pub fn oiio_ImageSpec_roi(_this: *const oiio_ImageSpec_t, _result: *mut oiio_ROI_t) -> c_int;
 
@@ -1673,27 +1677,27 @@ pub fn oiio_TypeDesc_ctor_01(btype: oiio_BASETYPE, arraylen: c_int, _result: *mu
 
 pub fn oiio_TypeDesc_ctor_02(btype: oiio_BASETYPE, agg: oiio_AGGREGATE, arraylen: c_int, _result: *mut oiio_TypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_data(_this: *mut oiio_TypeDescVector_t, _result: *mut *mut oiio_TypeDesc_t) -> c_int;
+pub fn oiio_VecTypeDesc_data(_this: *mut oiio_VecTypeDesc_t, _result: *mut *mut oiio_TypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_data_const(_this: *const oiio_TypeDescVector_t, _result: *mut *const oiio_TypeDesc_t) -> c_int;
+pub fn oiio_VecTypeDesc_data_const(_this: *const oiio_VecTypeDesc_t, _result: *mut *const oiio_TypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_empty(_this: *const oiio_TypeDescVector_t, _result: *mut bool) -> c_int;
+pub fn oiio_VecTypeDesc_empty(_this: *const oiio_VecTypeDesc_t, _result: *mut bool) -> c_int;
 
-pub fn oiio_TypeDescVector_size(_this: *const oiio_TypeDescVector_t, _result: *mut usize) -> c_int;
+pub fn oiio_VecTypeDesc_size(_this: *const oiio_VecTypeDesc_t, _result: *mut usize) -> c_int;
 
-pub fn oiio_TypeDescVector_max_size(_this: *const oiio_TypeDescVector_t, _result: *mut usize) -> c_int;
+pub fn oiio_VecTypeDesc_max_size(_this: *const oiio_VecTypeDesc_t, _result: *mut usize) -> c_int;
 
-pub fn oiio_TypeDescVector_capacity(_this: *const oiio_TypeDescVector_t, _result: *mut usize) -> c_int;
+pub fn oiio_VecTypeDesc_capacity(_this: *const oiio_VecTypeDesc_t, _result: *mut usize) -> c_int;
 
-pub fn oiio_TypeDescVector_clear(_this: *mut oiio_TypeDescVector_t) -> c_int;
+pub fn oiio_VecTypeDesc_clear(_this: *mut oiio_VecTypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_pop_back(_this: *mut oiio_TypeDescVector_t) -> c_int;
+pub fn oiio_VecTypeDesc_pop_back(_this: *mut oiio_VecTypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_op_index(_this: *const oiio_TypeDescVector_t, __n: usize, _result: *mut *const oiio_TypeDesc_t) -> c_int;
+pub fn oiio_VecTypeDesc_op_index(_this: *const oiio_VecTypeDesc_t, __n: usize, _result: *mut *const oiio_TypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_default(_result: *mut *mut oiio_TypeDescVector_t) -> c_int;
+pub fn oiio_VecTypeDesc_default(_result: *mut *mut oiio_VecTypeDesc_t) -> c_int;
 
-pub fn oiio_TypeDescVector_dtor(_this: *mut oiio_TypeDescVector_t) -> c_int;
+pub fn oiio_VecTypeDesc_dtor(_this: *mut oiio_VecTypeDesc_t) -> c_int;
 
 pub fn oiio_ustring_c_str(_this: *const oiio_ustring_t, _result: *mut *const c_char) -> c_int;
 
@@ -1951,9 +1955,7 @@ pub fn oiio_ImageSpec_get_format_basetype(self_: *const oiio_ImageSpec_t, _resul
 
 pub fn oiio_ImageSpec_set_format_basetype(self_: *mut oiio_ImageSpec_t, value: c_uchar) -> c_int;
 
-pub fn oiio_ImageSpec_get_channelformats_ref(self_: *const oiio_ImageSpec_t, _result: *mut *const oiio_TypeDescVector_t) -> c_int;
-
-pub fn oiio_ImageSpec_set_channelformats(self_: *mut oiio_ImageSpec_t, value: *mut oiio_TypeDescVector_t) -> c_int;
+pub fn oiio_ImageSpec_set_channelformats(self_: *mut oiio_ImageSpec_t, value: *mut oiio_VecTypeDesc_t) -> c_int;
 
 pub fn oiio_ImageSpec_get_alpha_channel(self_: *const oiio_ImageSpec_t, _result: *mut c_int) -> c_int;
 
