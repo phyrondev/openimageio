@@ -573,9 +573,8 @@ mod tests {
     fn adapter() -> Result<()> {
         let image_buf = ImageBuffer::from_file(Utf8Path::new("assets/j0.3toD__F16_RGBA.exr"))?;
 
-        // This will convert to either Rgb8 or Rgba8 and apply
-        // a conversion to sRGB
-        let _image: Result<image::DynamicImage> = image_buf.try_into();
+        // This will convert to either RgbaF32.
+        let _image: image::DynamicImage = image_buf.try_into()?;
 
         Ok(())
     }
