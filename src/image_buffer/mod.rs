@@ -605,29 +605,30 @@ impl ImageBuffer {
 }
 
 /// # Copying
-///
-/// Try to copy the pixels and metadata from src to *this (optionally with an
-/// explicit data format conversion).
-///
-/// If the previous state of *this was uninitialized, owning its own local pixel
-/// memory, or referring to a read-only image backed by ImageCache, then local
-/// pixel memory will be allocated to hold the new pixels and the call always
-/// succeeds unless the memory cannot be allocated. In this case, the format
-/// parameter may request a pixel data type that is different from that of the
-/// source buffer.
-///
-/// If *this previously referred to an app-owned memory buffer, the memory
-/// cannot be re-allocated, so the call will only succeed if the app-owned
-/// buffer is already the correct resolution and number of channels. The data
-/// type of the pixels will be converted automatically to the data type of the
-/// app buffer.
-///
-/// Optionally request the pixel data type to be used. The default of
-/// `None` means to use whatever data type is used by the source. If *this is
-/// already initialized and has [`AppBuffer`](ImageBufferStorage::AppBuffer)
-/// storage ('wrapping' an application buffer), this parameter is ignored.
 impl ImageBuffer {
-    pub fn copy(&self, type_description: &TypeDesc) -> Self {
+    /// Try to copy the pixels and metadata from src to *this (optionally with
+    /// an explicit data format conversion).
+    ///
+    /// If the previous state of *this was uninitialized, owning its own local
+    /// pixel memory, or referring to a read-only image backed by
+    /// ImageCache, then local pixel memory will be allocated to hold the
+    /// new pixels and the call always succeeds unless the memory cannot be
+    /// allocated. In this case, the format parameter may request a pixel
+    /// data type that is different from that of the source buffer.
+    ///
+    /// If *this previously referred to an app-owned memory buffer, the memory
+    /// cannot be re-allocated, so the call will only succeed if the app-owned
+    /// buffer is already the correct resolution and number of channels. The
+    /// data type of the pixels will be converted automatically to the data
+    /// type of the app buffer.
+    ///
+    /// Optionally request the pixel data type to be used. The default of
+    /// `None` means to use whatever data type is used by the source. If *this
+    /// is already initialized and has
+    /// [`AppBuffer`](ImageBufferStorage::AppBuffer) storage ('wrapping' an
+    /// application buffer), this parameter is ignored.
+    #[named]
+    pub fn copy(&self, type_description: &TypeDesc) -> Result<Self> {
         let mut ptr = MaybeUninit::<*mut oiio_ImageBuf_t>::uninit();
 
         unsafe {
@@ -638,13 +639,8 @@ impl ImageBuffer {
                 image_cache: self.image_cache.clone(),
                 //_marker: PhantomData,
             }
+            .self_or_error(true, function_name!())
         }
-    }
-
-    pub fn from_copy(type_description: &TypeDesc) -> Self {
-        let image_buffer = Self::new();
-
-        image_buffer.copy(type_description)
     }
 }
 

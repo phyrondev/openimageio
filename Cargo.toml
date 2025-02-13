@@ -17,8 +17,9 @@ egui = ["dep:egui"]
 glam = ["dep:glam"]
 ## Enable `f16` support. Not yet implemented.
 half = ["dep:half"]
-## Enable one-way conversion from `ImageBuffer` to
-## [`image::DynamicImage`](https://docs.rs/image/latest/image/enum.DynamicImage.html).
+## Enable conversion of `ImageBuffer` from/to
+## [`image::DynamicImage`](https://docs.rs/image/latest/image/enum.DynamicImage.html)
+## and its variants.
 image = ["dep:image"]
 ## Enable support for `mint::ColumnMatrix3<f32>`.
 mint = ["dep:mint"]

@@ -237,35 +237,29 @@ impl ValueTypeDesc<&[&str]> for &[&str] {
 /// parameter, versus the type of the value having multiple components (such
 /// as a point or color). Any combination of these may be present.
 ///
-/// To clarify, if you have an array of 4 colors for each of 15 mesh
-/// vertices, that means:
+/// To clarify, if you have an array of 4 colors for each of 15 mesh vertices,
+/// that means:
 ///
 ///  - There are 15 *values* (one for each vertex).
 ///  - Each value has an array of 4 *elements*.
-///  - Each element is a color.
+///  - Each element is a *color*.
 ///  - A color has 3 *components* (R, G, B)
 ///
-/// Thus, it would be constructed as
+/// Thus, it would be constructed as:
+///
 /// ```
 /// #  use openimageio::{ParamValue, ParamValueOptions, VecSemantics};
-/// //let red_times_15 =
-/// //   ParamValue::new_with("mycolor", &[[1.0, 0.0, 0.0]; 15], &ParamValueOptions {
-/// //        vec_semantics: Some(VecSemantics::Color),
-/// //        ..Default::default()
-/// //    });
+/// let red_times_15 = ParamValue::new_with(
+///     "mycolor",
+///     &[[[1.0, 0.0, 0.0]; 4]; 15],
+///     &ParamValueOptions {
+///         vec_semantics: Some(VecSemantics::Color),
+///         ..Default::default()
+///     },
+/// );
 /// ```
 ///
-/// The main constructor is `ParamValue(name, type, nvalues, dataptr)`. It can
-/// be confusing at first to remember that the data argument is a pointer to
-/// the first values to copy, not the values themselves, even if the values
-/// are themselves pointers, and even if the number of values is 1. In other
-/// words, it's behaving as if you're always pointing it to an array even if
-/// the "array" has only one element. This is extra confusing for strings,
-/// because the strings themselves are `char*` (or ustring), so the pointer
-/// you need to pass is `char**`. For this reason, there are also convenience
-/// constructors for simple types such as a single int, float, or string.
-///
-/// Here are some examples:
+/// # Examples
 ///
 /// ```
 /// # use openimageio::ParamValue;
@@ -275,10 +269,10 @@ impl ValueTypeDesc<&[&str]> for &[&str] {
 ///
 /// // *Three* `u32` values (say, one per vertex index of a triangle):
 /// let my_u32_array = [1u32, 2, 3];
-/// //ParamValue::new_multi("foo", &my_u32_array);
+/// let multi = ParamValue::new_multi("foo", &my_u32_array);
 ///
 /// // A *single* value which is an array of *three* `u32`s:
-/// //ParamValue::new("baz", &my_u32_array);
+/// let simgle = ParamValue::new("baz", &my_u32_array);
 /// ```
 ///
 /// Single values:

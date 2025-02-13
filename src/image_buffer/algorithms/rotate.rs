@@ -124,7 +124,7 @@ impl ImageBuffer {
 /// methods.
 #[derive(Clone, Default)]
 pub struct RotateOptions {
-    pub filter: Option<Filter2D>,
+    pub filter: Filter2D,
     pub recompute_region: bool,
     pub region: Region,
     pub thread_count: u16,
@@ -140,7 +140,7 @@ impl ImageBuffer {
                 self.as_raw_ptr_mut(),
                 other.as_raw_ptr(),
                 angle,
-                options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
+                options.filter.as_raw_ptr() as _,
                 options.recompute_region,
                 options.region.clone().into(),
                 options.thread_count as _,
@@ -169,7 +169,7 @@ impl ImageBuffer {
                 angle,
                 center_x,
                 center_y,
-                options.filter.map_or(ptr::null(), |f| f.as_raw_ptr()) as _,
+                options.filter.as_raw_ptr() as _,
                 options.recompute_region,
                 options.region.clone().into(),
                 options.thread_count as _,
@@ -199,7 +199,7 @@ mod tests {
                 // Use a Blackmann-Harris filter to avoid halos easily
                 // introduced when operating on HDRs with the default one,
                 // Lanczos3.
-                filter: Some(PixelFilter2D::BlackmanHarris.into()),
+                filter: PixelFilter2D::BlackmanHarris.into(),
                 recompute_region: true,
                 ..Default::default()
             },

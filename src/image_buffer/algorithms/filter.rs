@@ -116,6 +116,12 @@ pub struct Filter2D {
     pub(crate) filter: PixelFilter2D,
 }
 
+impl Default for Filter2D {
+    fn default() -> Self {
+        Self::new(PixelFilter2D::Lanczos3, 6.0, 6.0)
+    }
+}
+
 impl Filter2D {
     /// Create a new 2D pixel filter.
     ///

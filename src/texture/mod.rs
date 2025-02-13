@@ -20,10 +20,11 @@ pub const BATCH_SIZE: usize = 16;
 
 bitflags! {
     /// An integer large enough to hold at least
-    /// [`BATCH_SIZE`] bits. The least significant bit corresponds to the first
-    /// (i.e., `[0]`) position of all batch arrays. For each position `i` in the
-    /// batch, the bit identified by `(1 << i)` controls whether that position
-    /// will be computed.
+    /// [`BATCH_SIZE`] bits.
+    ///
+    /// The least significant bit corresponds to the first (i.e., `[0]`) position
+    /// of all batch arrays. For each position `i` in the batch, the bit
+    /// identified by `(1 << i)` controls whether that position will be computed.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct TextureBatchMask: u64 {
         const FULL = 0xffffffffffffffff;

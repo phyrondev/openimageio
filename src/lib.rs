@@ -182,7 +182,7 @@
 //! is mostly used for opaque/side-effects-free `struct` initalization in the
 //! wild and quite verbose. But it is seldom used for optional function
 //! parameters. It requires a lot of boilerplate code. Even when such code is
-//! automatically generated this incurs a cost for generationand compilation.
+//! automatically generated this incurs a cost for generation and compilation.
 //!
 //! Instead the
 //! [init-struct pattern](https://xaeroxe.github.io/init-struct-pattern/)
@@ -225,7 +225,7 @@
 //!     &RotateOptions {
 //!         // Use a Blackmann-Harris filter to avoid halos easily introduced
 //!         // when operating on HDRs using the default filter (Lanczos3).
-//!         filter: Some(PixelFilter2D::BlackmanHarris.into()),
+//!         filter: PixelFilter2D::BlackmanHarris.into(),
 //!         ..Default::default()
 //!     },
 //! );
