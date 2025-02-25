@@ -1,5 +1,4 @@
 use crate::*;
-use core::mem::MaybeUninit;
 
 /// # Render Text
 ///

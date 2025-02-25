@@ -47,7 +47,7 @@ document-features = "0.2"
 egui = { version = "0.31", default-features = false, optional = true }
 float-derive = "0.1"
 function_name = "0.3"
-glam = { version = "0.29", optional = true }
+glam = { version = "0.30", optional = true }
 half = { version = "2.4", features = ["num-traits"], optional = true }
 image = { version = "0.25", default-features = false, features = [
     "rayon",
@@ -65,7 +65,8 @@ parking_lot = { version = "0.12", features = [
     "deadlock_detection",
     "nightly",
 ] }
-smallvec = { version = "1.13", features = [
+refined = "0.0.3"
+smallvec = { version = "1", features = [
     "const_generics",
     "const_new",
     "specialization",

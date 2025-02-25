@@ -1,8 +1,7 @@
 use crate::*;
 use anyhow::anyhow;
-use core::num::NonZeroU32;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-//use std::num::NonZeroUsize;
+use refined::{boundable::unsigned::ClosedInterval, Refinement};
 
 /// Describes the base data types that correspond (mostly) to the Rust
 /// primitive/`std` types.
@@ -127,7 +126,7 @@ pub enum Aggregate {
 /// direction vector, or surface normal.
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
-pub enum VecSemantics {
+pub enum Semantics {
     /// A color.
     #[default]
     Color = oiio_VECSEMANTICS::oiio_VECSEMANTICS_COLOR.0 as _,
@@ -152,10 +151,14 @@ pub enum VecSemantics {
     Box = oiio_VECSEMANTICS::oiio_VECSEMANTICS_BOX.0 as _,
 }
 
+const I32_MAX: usize = i32::MAX as _;
+
+pub type Len = Refinement<u32, ClosedInterval<1, I32_MAX>>;
+
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 #[repr(i32)]
 pub enum ArrayLen {
-    Specific(NonZeroU32),
+    Specific(Len),
     #[default]
     Unspecific = -1,
 }
@@ -190,7 +193,8 @@ pub enum ArrayLen {
 pub struct TypeDesc {
     pub base_type: Option<BaseType>,
     pub aggregate: Aggregate,
-    pub vec_semantics: Option<VecSemantics>,
+    pub semantics: Option<Semantics>,
+    pub _filler: u8,
     pub array_len: Option<ArrayLen>,
 }
 
@@ -198,139 +202,162 @@ impl TypeDesc {
     pub const COLOR_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
-        vec_semantics: Some(VecSemantics::Color),
+        semantics: Some(Semantics::Color),
+        _filler: 0,
         array_len: None,
     };
     pub const F16: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F16),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const F64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F64),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const I16: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I16),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const I32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I32),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const I64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I64),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const I8: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I8),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
-    pub const KEY_CODE: TypeDesc = TypeDesc {
+    /*pub const KEY_CODE: TypeDesc = TypeDesc {
         base_type: Some(BaseType::I32),
         aggregate: Aggregate::Scalar,
-        vec_semantics: Some(VecSemantics::KeyCode),
-        array_len: Some(ArrayLen::Specific(NonZeroU32::new(7).unwrap())),
-    };
+        semantics: Some(Semantics::KeyCode),
+        _filler: 0,
+        array_len: Some(ArrayLen::Specific(Len::refine(7).unwrap())),
+    };*/
     pub const MATRIX3_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Matrix3,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const MATRIX4_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Matrix4,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const MATRIX4_F64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F64),
         aggregate: Aggregate::Matrix4,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const NORMAL_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
-        vec_semantics: Some(VecSemantics::Normal),
+        semantics: Some(Semantics::Normal),
+        _filler: 0,
         array_len: None,
     };
     pub const POINT_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
-        vec_semantics: Some(VecSemantics::Point),
+        semantics: Some(Semantics::Point),
+        _filler: 0,
         array_len: None,
     };
     pub const PTR: TypeDesc = TypeDesc {
         base_type: Some(BaseType::Ptr),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const STRING: TypeDesc = TypeDesc {
         base_type: Some(BaseType::String),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
-    pub const TIMECODE: TypeDesc = TypeDesc {
+    /*pub const TIMECODE: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U32),
         aggregate: Aggregate::Scalar,
-        vec_semantics: Some(VecSemantics::TimeCode),
-        array_len: Some(ArrayLen::Specific(NonZeroU32::new(2).unwrap())),
-    };
+        semantics: Some(Semantics::TimeCode),
+        _filler: 0,
+        array_len: Some(ArrayLen::Specific(Len::refine(2).unwrap())),
+    };*/
     pub const U16: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U16),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const U32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U32),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const U64: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U64),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const U8: TypeDesc = TypeDesc {
         base_type: Some(BaseType::U8),
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const UNKNOWN: TypeDesc = TypeDesc {
         base_type: None,
         aggregate: Aggregate::Scalar,
-        vec_semantics: None,
+        semantics: None,
+        _filler: 0,
         array_len: None,
     };
     pub const VECTOR_F32: TypeDesc = TypeDesc {
         base_type: Some(BaseType::F32),
         aggregate: Aggregate::Vec3,
-        vec_semantics: Some(VecSemantics::Vector),
+        semantics: Some(Semantics::Vector),
+        _filler: 0,
         array_len: None,
     };
 }
@@ -434,7 +461,7 @@ impl From<TypeDesc> for oiio_TypeDesc_t {
         Self {
             basetype: unsafe { transmute(t.basetype) },
             aggregate: t.aggregate as _,
-            vecsemantics: unsafe { transmute(t.vecsemantics) },
+            Semantics: unsafe { transmute(t.Semantics) },
             arraylen: match t.array_len {
                 None => 0,
                 Some(ArrayLen::Unspecific) => -1,
@@ -450,7 +477,7 @@ impl From<&oiio_TypeDesc_t> for TypeDesc {
         Self {
             base_type: t.basetype.try_into().ok(),
             aggregate: t.aggregate.try_into().unwrap(),
-            vec_semantics: match t.vecsemantics {
+            semantics: match t.vecsemantics {
                 b if oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOXFORM.0 == b as _
                     || oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0 == b as _ =>
                 {
@@ -458,10 +485,11 @@ impl From<&oiio_TypeDesc_t> for TypeDesc {
                 }
                 v => v.try_into().ok(),
             },
+            _filler: 0,
             array_len: match t.arraylen {
                 l if 0 == l || l < -1 => None,
                 -1 => Some(ArrayLen::Unspecific),
-                l => Some(ArrayLen::Specific(NonZeroU32::new(l as _).unwrap())),
+                l => Some(ArrayLen::Specific(Len::refine(l as _).unwrap())),
             },
         }
     }
@@ -475,14 +503,14 @@ impl From<&TypeDesc> for oiio_TypeDesc_t {
                 Some(b) => b.into(),
             },
             aggregate: Into::<u8>::into(t.aggregate) as _,
-            vecsemantics: match t.vec_semantics {
+            vecsemantics: match t.semantics {
                 None => oiio_VECSEMANTICS::oiio_VECSEMANTICS_NOSEMANTICS.0 as _,
                 Some(v) => Into::<u8>::into(v) as _,
             },
             arraylen: match t.array_len {
                 None => 0,
                 Some(ArrayLen::Unspecific) => -1,
-                Some(ArrayLen::Specific(l)) => l.get() as _,
+                Some(ArrayLen::Specific(l)) => l.extract() as _,
             },
             reserved: 0,
         }
@@ -500,10 +528,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn type_description() {
+    fn type_desc() {
         let t = TypeDesc::default();
 
         let c_type = oiio_TypeDesc_t::from(&t);
+
+        println!(
+            "Size of TypeDesc2: {:?}",
+            std::mem::size_of::<Option<TypeDesc>>()
+        );
 
         println!("C TypeDesc: {:?}", c_type);
     }

@@ -1,5 +1,4 @@
 use crate::*;
-use core::{mem::MaybeUninit, ptr};
 
 pub struct ColorConvertOptions<'a> {
     /// If `true` (the default), unpremultiply the image (divide the RGB

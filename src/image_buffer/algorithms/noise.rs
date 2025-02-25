@@ -1,5 +1,4 @@
 use crate::algorithms::*;
-use core::mem::MaybeUninit;
 
 /// Optional parameters for [`ImageBuffer`]'s
 /// [`noise_with()`](ImageBuffer::noise_with) method.

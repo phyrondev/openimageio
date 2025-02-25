@@ -1,5 +1,5 @@
 use crate::*;
-use std::{marker::PhantomData, num::NonZeroU32};
+use std::marker::PhantomData;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -44,8 +44,7 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Scalar,
-                    vec_semantics: None,
-                    array_len: None,
+                    ..Default::default()
                 }
             }
         }
@@ -57,10 +56,9 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Scalar,
-                    vec_semantics: None,
-                    array_len: Some(ArrayLen::Specific(
-                        NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-                    )),
+
+                    array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+                    ..Default::default()
                 }
             }
         }
@@ -70,8 +68,7 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Vec2,
-                    vec_semantics: None,
-                    array_len: None,
+                    ..Default::default()
                 }
             }
         }
@@ -81,8 +78,7 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Vec3,
-                    vec_semantics: None,
-                    array_len: None,
+                    ..Default::default()
                 }
             }
         }
@@ -92,8 +88,7 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Vec4,
-                    vec_semantics: None,
-                    array_len: None,
+                    ..Default::default()
                 }
             }
         }
@@ -103,8 +98,7 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Matrix3,
-                    vec_semantics: None,
-                    array_len: None,
+                    ..Default::default()
                 }
             }
         }
@@ -114,8 +108,7 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Matrix4,
-                    vec_semantics: None,
-                    array_len: None,
+                    ..Default::default()
                 }
             }
         }
@@ -125,10 +118,8 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Vec2,
-                    vec_semantics: None,
-                    array_len: Some(ArrayLen::Specific(
-                        NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-                    )),
+                    array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+                    ..Default::default()
                 }
             }
         }
@@ -138,10 +129,8 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Vec3,
-                    vec_semantics: None,
-                    array_len: Some(ArrayLen::Specific(
-                        NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-                    )),
+                    array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+                    ..Default::default()
                 }
             }
         }
@@ -151,10 +140,8 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Vec4,
-                    vec_semantics: None,
-                    array_len: Some(ArrayLen::Specific(
-                        NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-                    )),
+                    array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+                    ..Default::default()
                 }
             }
         }
@@ -164,10 +151,8 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Matrix3,
-                    vec_semantics: None,
-                    array_len: Some(ArrayLen::Specific(
-                        NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-                    )),
+                    array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+                    ..Default::default()
                 }
             }
         }
@@ -177,10 +162,8 @@ macro_rules! value_type_desc {
                 TypeDesc {
                     base_type: Some($base_type),
                     aggregate: Aggregate::Matrix4,
-                    vec_semantics: None,
-                    array_len: Some(ArrayLen::Specific(
-                        NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-                    )),
+                    array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+                    ..Default::default()
                 }
             }
         }
@@ -204,8 +187,7 @@ impl ValueTypeDesc<&str> for &str {
         TypeDesc {
             base_type: Some(BaseType::String),
             aggregate: Aggregate::Scalar,
-            vec_semantics: None,
-            array_len: None,
+            ..Default::default()
         }
     }
 }
@@ -215,10 +197,8 @@ impl ValueTypeDesc<&[&str]> for &[&str] {
         TypeDesc {
             base_type: Some(BaseType::String),
             aggregate: Aggregate::Scalar,
-            vec_semantics: None,
-            array_len: Some(ArrayLen::Specific(
-                NonZeroU32::new(value.len().try_into().unwrap()).unwrap(),
-            )),
+            array_len: Some(ArrayLen::Specific(Len::refine(value.len() as _).unwrap())),
+            ..Default::default()
         }
     }
 }
@@ -293,14 +273,14 @@ pub struct ParamValue {
 }
 
 pub struct ParamValueOptions {
-    pub vec_semantics: Option<VecSemantics>,
+    pub semantics: Option<Semantics>,
     pub interpolation: Interpolation,
 }
 
 impl Default for ParamValueOptions {
     fn default() -> Self {
         Self {
-            vec_semantics: None,
+            semantics: None,
             interpolation: Interpolation::Constant,
         }
     }
@@ -327,7 +307,7 @@ impl ParamValue {
         options: &ParamValueOptions,
     ) -> Self {
         let mut type_desc = T::type_desc(&value);
-        type_desc.vec_semantics = options.vec_semantics;
+        type_desc.semantics = options.semantics;
 
         Self::new_ffi(name, value, type_desc, 1, options)
     }
@@ -338,7 +318,7 @@ impl ParamValue {
         options: &ParamValueOptions,
     ) -> Self {
         let mut type_desc = T::type_desc(&value);
-        type_desc.vec_semantics = options.vec_semantics;
+        type_desc.semantics = options.semantics;
         type_desc.array_len = None;
 
         let len = value.as_ref().len();

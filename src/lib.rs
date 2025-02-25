@@ -4,6 +4,8 @@
 //#![feature(once_cell_get_mut)]
 #![feature(structural_match)]
 #![feature(str_from_raw_parts)]
+#![allow(incomplete_features)]
+#![feature(generic_const_exprs)]
 #![doc(
     html_logo_url = "https://artwork.aswf.io/projects/openimageio/icon/color/openimageio-icon-color.svg"
 )]
@@ -145,6 +147,10 @@
 //!   * Abbreviations were removed to make naming more stringent across the API.
 //!     For example `ImageBuf` (C++) became `ImageBuffer` (Rust) (an `ImageBuf`
 //!     `type` alias is available).
+//!
+//!     On that note: the 'standard' crate for image processing in Rust,
+//!     [`image`](https://crates.io/crates/image) (almost 3k dependent crates),
+//!     also uses [`ImageBuffer`](https://docs.rs/image/latest/image/struct.ImageBuffer.html).
 //!
 //!     The C++ API uses abbreviations sometimes and other times not. It is not
 //!     obvious why, especially to a non-native speaker.
