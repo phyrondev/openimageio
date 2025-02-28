@@ -1,6 +1,5 @@
 #![feature(c_size_t)]
 #![feature(f16)]
-#![feature(hash_extract_if)]
 //#![feature(once_cell_get_mut)]
 #![feature(structural_match)]
 #![feature(str_from_raw_parts)]
