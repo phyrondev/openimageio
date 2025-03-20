@@ -139,6 +139,7 @@ pub mod color_convert;
 pub use color_convert::*;
 pub mod compare;
 pub mod convolve;
+pub mod crop;
 pub mod cut;
 pub mod fill;
 pub mod filter;

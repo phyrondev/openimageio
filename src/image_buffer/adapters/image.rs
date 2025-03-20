@@ -78,11 +78,7 @@ macro_rules! try_image_from_image_buffer {
             type Error = anyhow::Error;
 
             fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
-                let mut bounds = image_buffer
-                    .data_window()
-                    .bounds()
-                    .ok_or(anyhow!("Image is empty"))?
-                    .clone();
+                let mut bounds = image_buffer.data_window().clone();
 
                 // Strip superfluous channels from the image and/or fill missing
                 // channels with 0.
@@ -120,11 +116,7 @@ impl TryFrom<&ImageBuffer> for image::RgbImage {
     type Error = anyhow::Error;
 
     fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
-        let mut bounds = image_buffer
-            .data_window()
-            .bounds()
-            .ok_or(anyhow!("Image is empty"))?
-            .clone();
+        let mut bounds = image_buffer.data_window().clone();
 
         // Make sure we're in the expected color space.
         let image_buffer = ImageBuffer::from_color_convert(image_buffer, None, "sRGB")?;
@@ -146,11 +138,7 @@ impl TryFrom<ImageBuffer> for image::RgbImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut bounds = image_buffer
-            .data_window()
-            .bounds()
-            .ok_or(anyhow!("Image is empty"))?
-            .clone();
+        let mut bounds = image_buffer.data_window().clone();
 
         // Make sure we're in the expected color space.
         image_buffer.color_convert(None, "sRGB")?;
@@ -172,11 +160,7 @@ impl TryFrom<&ImageBuffer> for image::RgbaImage {
     type Error = anyhow::Error;
 
     fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
-        let mut bounds = image_buffer
-            .data_window()
-            .bounds()
-            .ok_or(anyhow!("Image is empty"))?
-            .clone();
+        let mut bounds = image_buffer.data_window().clone();
 
         // Make sure we're in the expected color space.
         let image_buffer = ImageBuffer::from_color_convert(image_buffer, None, "sRGB")?;
@@ -198,11 +182,7 @@ impl TryFrom<ImageBuffer> for image::RgbaImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut bounds = image_buffer
-            .data_window()
-            .bounds()
-            .ok_or(anyhow!("Image is empty"))?
-            .clone();
+        let mut bounds = image_buffer.data_window().clone();
 
         // Make sure we're in the expected color space.
         image_buffer.color_convert(None, "sRGB")?;
@@ -224,11 +204,7 @@ impl TryFrom<&ImageBuffer> for image::DynamicImage {
     type Error = anyhow::Error;
 
     fn try_from(image_buffer: &ImageBuffer) -> Result<Self> {
-        let bounds = image_buffer
-            .data_window()
-            .bounds()
-            .ok_or(anyhow!("Image is empty"))?
-            .clone();
+        let bounds = image_buffer.data_window().clone();
 
         if let Some(base_type) = image_buffer.type_desc().base_type {
             match base_type {

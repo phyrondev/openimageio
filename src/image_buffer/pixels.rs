@@ -73,28 +73,19 @@ macro_rules! pixels {
                     return Ok(Vec::new());
                 }
 
-                let region = match region {
-                    Region::All => match self.data_window() {
-                        Region::All => {
-                            // If this image buffer is uninitialized, we can't
-                            // get here because
-                            // `self.storage()` will return
-                            // `ImageBufferStorage::Uninitialized`.
-                            unreachable!()
-                        }
-                        Region::Bounds(roi) => roi,
-                    },
+                let bounds = match region {
+                    Region::All => self.data_window(),
                     Region::Bounds(roi) => roi.clone(),
                 };
 
-                let size = region.pixel_count() * region.channel_count() as usize;
+                let size = bounds.pixel_count() * bounds.channel_count() as usize;
                 let mut data = Vec::<$rust_type>::with_capacity(size);
                 let mut is_ok = std::mem::MaybeUninit::<bool>::uninit();
 
                 unsafe {
                     oiio_ImageBuf_get_pixels(
                         self.ptr,
-                        region.clone().into(),
+                        bounds.clone().into(),
                         $base_type,
                         data.as_mut_ptr() as _,
                         &raw mut is_ok as _,
@@ -112,21 +103,12 @@ macro_rules! pixels {
             }
 
             fn set_pixels(&mut self, pixels: &[$rust_type], region: &Region) -> Result<()> {
-                let region = match region {
-                    Region::All => match self.data_window() {
-                        Region::All => {
-                            // If this image buffer is uninitialized, we can't
-                            // get here because
-                            // `self.storage()` will return
-                            // `ImageBufferStorage::Uninitialized`.
-                            unreachable!()
-                        }
-                        Region::Bounds(roi) => roi,
-                    },
+                let bounds = match region {
+                    Region::All => self.data_window(),
                     Region::Bounds(roi) => roi.clone(),
                 };
 
-                let size = region.pixel_count() * region.channel_count() as usize;
+                let size = bounds.pixel_count() * bounds.channel_count() as usize;
 
                 if size > pixels.len() {
                     return Err(anyhow!("Pixel data is too small"));
@@ -137,7 +119,7 @@ macro_rules! pixels {
                 unsafe {
                     $fn_name(
                         self.ptr,
-                        region.into(),
+                        bounds.into(),
                         <$cspan_type>::new(pixels).as_raw_ptr() as _,
                         &raw mut is_ok as _,
                     );

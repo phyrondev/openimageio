@@ -228,12 +228,12 @@ impl ValueTypeDesc<&[&str]> for &[&str] {
 /// Thus, it would be constructed as:
 ///
 /// ```
-/// #  use openimageio::{ParamValue, ParamValueOptions, VecSemantics};
+/// #  use openimageio::{ParamValue, ParamValueOptions, Semantics};
 /// let red_times_15 = ParamValue::new_with(
 ///     "mycolor",
 ///     &[[[1.0, 0.0, 0.0]; 4]; 15],
 ///     &ParamValueOptions {
-///         vec_semantics: Some(VecSemantics::Color),
+///         semantics: Some(Semantics::Color),
 ///         ..Default::default()
 ///     },
 /// );
@@ -249,10 +249,10 @@ impl ValueTypeDesc<&[&str]> for &[&str] {
 ///
 /// // *Three* `u32` values (say, one per vertex index of a triangle):
 /// let my_u32_array = [1u32, 2, 3];
-/// let multi = ParamValue::new_multi("foo", &my_u32_array);
+/// let multi = ParamValue::new_multi("foo", my_u32_array.clone());
 ///
 /// // A *single* value which is an array of *three* `u32`s:
-/// let simgle = ParamValue::new("baz", &my_u32_array);
+/// let simgle = ParamValue::new("baz", my_u32_array);
 /// ```
 ///
 /// Single values:

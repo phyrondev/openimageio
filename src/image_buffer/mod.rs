@@ -426,7 +426,7 @@ impl ImageBuffer {
     /// [The C++ version](https://openimageio.readthedocs.io/en/latest/imagebuf.html#_CPPv4NK4OIIO8ImageBuf3roiEv)
     /// of this is called [`roi()`](Self::roi).
     #[inline]
-    pub fn data_window(&self) -> Region {
+    pub fn data_window(&self) -> Bounds {
         let mut dst = MaybeUninit::<oiio_ROI_t>::uninit();
 
         unsafe {
@@ -946,6 +946,15 @@ mod tests {
         println!("Channel Count: {:?}", image_buffer.channel_count());
 
         image_buffer.write(Utf8Path::new("target/test_out.png"))?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn data_window() -> Result<()> {
+        let image_buffer = ImageBuffer::new();
+
+        println!("{:?}", image_buffer.data_window());
 
         Ok(())
     }
