@@ -125,11 +125,18 @@ fn main() -> Result<()> {
 sudo apt install clang-17 libclang-17-dev
 ```
 
-The rest of the dependencies (note that latest Ubuntu is still on `v2.4` – you
-may need to build from source):
+As of Ubuntu `25.x` the officially maintained OIIO distribution is still on `v2.5`; i.e. a year behind the current release.
+
+As such you will likely need to build from source. Additional minimal required dependencies are:
 
 ```
-sudo apt install cmake libimath-dev libopenimageio-dev
+sudo apt install cmake libc++-dev libimath-dev
+```
+
+Assuming `apt` will install an OIIO package that is ≥`v3.x` you can do:
+
+```
+sudo apt install libopenimageio-dev
 ```
 
 ### Prerequisites

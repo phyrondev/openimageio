@@ -5,11 +5,7 @@ impl TryFrom<ImageBuffer> for egui::ColorImage {
     type Error = anyhow::Error;
 
     fn try_from(mut image_buffer: ImageBuffer) -> Result<Self> {
-        let mut bounds = image_buffer
-            .data_window()
-            .bounds()
-            .ok_or(anyhow!("Image is empty"))?
-            .clone();
+        let mut bounds = image_buffer.data_window().clone();
 
         let dimensions = [bounds.width() as usize, bounds.height() as _];
 
